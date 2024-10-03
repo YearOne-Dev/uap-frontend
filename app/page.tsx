@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import LandingBox from '@/components/LandingBox';
 
 export const metadata: Metadata = {
-  title: 'UAP - Universal Assistant Protocol',
+  title: 'UPAC - 🆙 Assistants Catalog',
   description: 'tbd',
 };
 

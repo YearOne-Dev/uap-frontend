@@ -56,7 +56,7 @@ export default function Contracts() {
             fontFamily={'Tomorrow'}
             color={'#053241'}
           >
-            View hashlists protocol contract deployments
+            View Universal Assistant protocol contract deployments
           </Heading>
           {Object.keys(supportedNetworks).map((networkId: string) => {
             const network = supportedNetworks[networkId];

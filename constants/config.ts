@@ -3,7 +3,7 @@
  */
 export const config = {
   metadata: {
-    title: 'UAP - Universal Assistant Protocol',
+    title: '🆙AC - 🆙 Assistants Catalog',
     description: 'TBD', // todo
     url: 'https://tbd.com/', /// todo
     icon: '/logo-uap.png',

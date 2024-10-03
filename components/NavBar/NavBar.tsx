@@ -22,17 +22,12 @@ const NavBar = () => {
         <Box>
           <Link href="/">
             <Flex flexDirection={'row'} align="center" justify="center" gap={2}>
-              <Image
-                src="/logo-uap.png"
-                alt="Hashlists logo"
-                height={{ base: '30px', md: '45px' }}
-              />
               <Text
                 fontSize={{ base: 'large', md: 'larger' }}
                 fontFamily={'Tomorrow'}
                 fontWeight="500"
               >
-                UAP
+                UPAC
               </Text>
             </Flex>
           </Link>
@@ -50,7 +45,7 @@ const NavBar = () => {
             fontWeight={500}
             backgroundColor={'hashlists.yellow'}
             as={Link}
-            href="/urd/4201"
+            href="/4201/urd"
           >
             Configure
           </Button>

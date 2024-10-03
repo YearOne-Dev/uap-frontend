@@ -27,6 +27,7 @@ export default function WalletConnectButton() {
   const { open } = useWeb3Modal();
   const { disconnect } = useDisconnect();
   const { address, isConnected, chainId } = useWeb3ModalAccount();
+  console.log('address', address, 'isConnected', isConnected, 'chainId', chainId);
   const { profile } = useProfile();
   const [networkIcon, setNetworkIcon] = useState<string>();
   const [networkName, setNetworkName] = useState<string>();

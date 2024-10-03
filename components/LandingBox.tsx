@@ -12,6 +12,12 @@ const LandingBox = () => {
       w={'100%'}
     >
       <VStack textAlign="center" spacing={0}>
+
+      <Image
+                src="/logo-uap.png"
+                alt="Hashlists logo"
+                height={{ base: '150px', md: '285px' }}
+              />
         <Text
           as="h1"
           fontFamily={'Tomorrow'}
@@ -20,14 +26,6 @@ const LandingBox = () => {
           color="hashlists.grey"
         >
           <Flex align="center" justify="center">
-            <Text as="span" mr={2}>
-              <Image
-                src="/logo-uap.png"
-                alt="Hashlists logo"
-                height={'100px'}
-                width={'120px'}
-              />
-            </Text>
             <Text
               as="span"
               fontSize={{
@@ -36,7 +34,7 @@ const LandingBox = () => {
                 md: '4xl',
               }}
             >
-              Universal Assistant Protocol
+              🆙 Assistants Catalog
             </Text>
           </Flex>
         </Text>
@@ -52,10 +50,10 @@ const LandingBox = () => {
           fontWeight={500}
           align="center"
         >
-          Engage your personal blockchain assistant
+          Engage your personal digital assistant
         </Text>
         <Flex gap={4} mt="30px">
-          <Link href={'/urd/config'}>
+          <Link href={'/4201/urd'}>
             <Button
               color={'hashlists.grey'}
               borderRadius="10px"
