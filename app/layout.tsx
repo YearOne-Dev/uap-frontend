@@ -5,7 +5,7 @@ import { Providers } from './providers';
 import './globals.css';
 import { Flex } from '@chakra-ui/react';
 
-const title = 'Hashlists';
+const title = 'UAP';
 const description = '';
 
 export const metadata: Metadata = {

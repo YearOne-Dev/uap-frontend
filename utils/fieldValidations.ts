@@ -1,4 +1,4 @@
-import { CreateFormData } from '@/types/create';
+import { getAddress, isAddress } from 'ethers';
 
 export function isValidEVMAddress(address: string) {
   if (address.startsWith('0x') && address.length === 42) {
@@ -39,20 +39,13 @@ export function bytes32ToAddress(bytes32: string) {
   return address.toLowerCase();
 }
 
-export function getDetailsEmptyState(address?: string): CreateFormData {
-  return {
-    title: '',
-    ticker: '',
-    urls: [],
-    description: '',
-    icon: null,
-    iconWidth: null,
-    iconHeight: null,
-    iconIpfsHash: null,
-    image: null,
-    imageHeight: null,
-    imageWidth: null,
-    imageIpfsHash: null,
-    by: !!address ? address : '',
-  };
-}
+export const getChecksumAddress = (address: string | null) => {
+  // Check if the address is valid
+  if (!address || !isAddress(address)) {
+    // Handle invalid address
+    return address;
+  }
+
+  // Convert to checksum address
+  return getAddress(address);
+};

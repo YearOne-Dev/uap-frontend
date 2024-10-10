@@ -1,21 +1,5 @@
 import { supportedNetworks } from '@/constants/supportedNetworks';
 
-export const creationSteps = [
-  { title: 'Publish list details', complete: false },
-  {
-    title: 'Publish list entries',
-    complete: false,
-  },
-];
-
-export const UpdateSteps = [
-  { title: 'Update list details', complete: false },
-  {
-    title: 'Update entries',
-    complete: false,
-  },
-];
-
 export const validNetworkIds = Object.keys(supportedNetworks).map(networkId =>
   parseInt(networkId)
 );
