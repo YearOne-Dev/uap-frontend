@@ -1,17 +1,17 @@
-import React from 'react';
+import React from "react";
 import {
-  Heading,
-  Image,
-  Button,
-  Flex,
   Box,
-  Link as ChakraLink,
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
-} from '@chakra-ui/react';
-import { supportedNetworks } from '@/constants/supportedNetworks';
-import { FaExternalLinkAlt } from 'react-icons/fa';
+  Button,
+  Flex,
+  Heading,
+  Image,
+  Link as ChakraLink
+} from "@chakra-ui/react";
+import { supportedNetworks } from "@/constants/supportedNetworks";
+import { FaExternalLinkAlt } from "react-icons/fa";
 
 export default function Contracts() {
   return (
@@ -59,12 +59,12 @@ export default function Contracts() {
             View Universal Assistant protocol contract deployments
           </Heading>
           {Object.keys(supportedNetworks).map((networkId: string) => {
-            const network = supportedNetworks[networkId];
+            const supportedNetwork = supportedNetworks[networkId];
             return (
               <ChakraLink
                 isExternal
                 key={networkId}
-                href={`${supportedNetworks[networkId].explorer}address/${supportedNetworks[networkId].hashlistsProtocolAddress}`}
+                href={`${supportedNetwork.explorer}address/${supportedNetwork.protocolAddress}`}
               >
                 <Button>
                   <Flex
@@ -74,11 +74,11 @@ export default function Contracts() {
                     flexDirection="row"
                     w="250px"
                   >
-                    <Box>{network.name}</Box>
+                    <Box>{supportedNetwork.name}</Box>
                     <FaExternalLinkAlt />
                     <Image
-                      src={supportedNetworks[networkId].icon}
-                      alt={supportedNetworks[networkId].icon}
+                      src={supportedNetwork.icon}
+                      alt={supportedNetwork.icon}
                       height={'30px'}
                     />
                   </Flex>

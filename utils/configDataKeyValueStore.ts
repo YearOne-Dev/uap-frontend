@@ -6,6 +6,7 @@ import LSP6Schema from '@erc725/erc725.js/schemas/LSP6KeyManager.json';
 import ERC725, { ERC725JSONSchema } from "@erc725/erc725.js";
 import { getChecksumAddress } from "./fieldValidations";
 import { DEFAULT_UP_CONTROLLER_PERMISSIONS, DEFAULT_UP_URD_PERMISSIONS, UAP_CONTROLLER_PERMISSIONS } from "@/constants/constants";
+import { ERC725__factory } from "@/types";
 
 export function customEncodeAddresses(addresses: string[]): string {
   if (addresses.length > 65535) {
@@ -71,7 +72,7 @@ export const toggleUniveralAssistantsSubscribe = async (
       : [assistantsURD, '0x', '0x'];
   
     // 2. Prepare keys and values for granting the forwarder the necessary permissions on the UP
-    const UP = new ethers.Contract(upAccount, UniversalProfile.abi, provider);
+    const UP = ERC725__factory.connect(upAccount, provider);
     const upPermissions = new ERC725(
       LSP6Schema as ERC725JSONSchema[],
       upAccount,
@@ -140,7 +141,7 @@ export const updateBECPermissions = async (
       console.log('exiting updateBECPermissions');
       return;
     }
-    const UP = new ethers.Contract(account, UniversalProfile.abi, provider);
+    const UP = ERC725__factory.connect(account, provider);
   
     const erc725 = new ERC725(
       LSP6Schema as ERC725JSONSchema[],

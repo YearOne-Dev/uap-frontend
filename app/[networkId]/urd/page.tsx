@@ -15,7 +15,7 @@ import {
   FormLabel,
   Select,
 } from '@chakra-ui/react';
-import { ethers, BrowserProvider, Eip1193Provider, recoverAddress, verifyMessage } from 'ethers';
+import { ethers, BrowserProvider, Eip1193Provider, verifyMessage } from 'ethers';
 import UniversalProfile from '@lukso/lsp-smart-contracts/artifacts/UniversalProfile.json';
 import ERC725 from '@erc725/erc725.js';
 import { useWeb3ModalAccount, useWeb3ModalProvider } from '@web3modal/ethers/react';
@@ -29,6 +29,7 @@ import { SiweMessage } from 'siwe';
 import { typeIdOptionsMap, typeIdOrder } from '@/constants/assistantTypes';
 import { customEncodeAddresses, generateMappingKey, toggleUniveralAssistantsSubscribe, updateBECPermissions } from '@/utils/configDataKeyValueStore';
 import { supportedNetworks } from '@/constants/supportedNetworks';
+import { ERC725__factory } from "@/types";
 
 type UAPConfigPageProps = {
   params: {
@@ -232,7 +233,7 @@ const UAPConfigPage: React.FC<UAPConfigPageProps> = ({ params }) => {
 
       console.log('Encoded data:', encodedKeysData);
 
-      const UP = new ethers.Contract(upAddress, UniversalProfile.abi, signer);
+      const UP = ERC725__factory.connect(upAddress, signer);
       const tx = await UP.connect(signer).setData(encodedKeysData.keys[0], encodedValues);
 
       await tx.wait();

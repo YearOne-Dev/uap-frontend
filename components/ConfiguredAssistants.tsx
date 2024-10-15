@@ -4,6 +4,7 @@ import { ethers, BrowserProvider, Eip1193Provider } from 'ethers';
 import UniversalProfile from '@lukso/lsp-smart-contracts/artifacts/UniversalProfile.json';
 import { typeIdOptionsMap, typeIdOrder } from '@/constants/assistantTypes';
 import { customDecodeAddresses, generateMappingKey } from '@/utils/configDataKeyValueStore';
+import { ERC725__factory } from "@/types";
 
 type UPTypeConfigDisplayProps = {
   upAddress: string;
@@ -28,7 +29,7 @@ const ConfiguredAssistants: React.FC<UPTypeConfigDisplayProps> = ({ upAddress, n
           const mappingKey = generateMappingKey('UAPTypeConfig', typeIdValue);
 
           // fetch data
-          const UP = new ethers.Contract(upAddress, UniversalProfile.abi, signer);
+          const UP = ERC725__factory.connect(upAddress, signer);
           const encodedResult = await UP.getData(mappingKey);
           const assistantAddresses = customDecodeAddresses(encodedResult);
 
