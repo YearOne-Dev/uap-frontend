@@ -219,7 +219,6 @@ const UAPConfigPage = () => {
       console.log('signer:', signer);
       console.log('upAddress:', upAddress);
       console.log('mainController:', signerAddress);
-      const currentNetwork = getNetwork(walletNetworkId);
       const mappingKey = generateMappingKey('UAPTypeConfig', typeId);
 
       // Define the schema with the dynamic key
@@ -234,7 +233,7 @@ const UAPConfigPage = () => {
 
       // Create an instance of ERC725 with the schema
       const erc725 = new ERC725(schema as any, upAddress, provider, {
-        ipfsGateway: currentNetwork.ipfsGateway,
+        ipfsGateway: network.ipfsGateway,
       });
 
       // Encode the data
