@@ -20,3 +20,5 @@ jobs:
 
       - name: Build
         run: npm run build
+        env:
+          NEXT_PUBLIC_DEFAULT_NETWORK: ${{ vars.NEXT_PUBLIC_DEFAULT_NETWORK }}
