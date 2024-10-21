@@ -45,7 +45,7 @@ const NavBar = () => {
             fontWeight={500}
             backgroundColor={'hashlists.yellow'}
             as={Link}
-            href="/4201/urd"
+            href="/urd"
           >
             Configure
           </Button>

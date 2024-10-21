@@ -1,6 +1,5 @@
 'use client';
 import React, { useEffect, useState, ChangeEvent } from 'react';
-import { useRouter } from 'next/navigation';
 import {
   Box,
   Breadcrumb,
@@ -15,10 +14,17 @@ import {
   FormLabel,
   Select,
 } from '@chakra-ui/react';
-import { ethers, BrowserProvider, Eip1193Provider, verifyMessage } from 'ethers';
-import UniversalProfile from '@lukso/lsp-smart-contracts/artifacts/UniversalProfile.json';
+import {
+  ethers,
+  BrowserProvider,
+  Eip1193Provider,
+  verifyMessage,
+} from 'ethers';
 import ERC725 from '@erc725/erc725.js';
-import { useWeb3ModalAccount, useWeb3ModalProvider } from '@web3modal/ethers/react';
+import {
+  useWeb3ModalAccount,
+  useWeb3ModalProvider,
+} from '@web3modal/ethers/react';
 import { getNetwork } from '@/utils/utils';
 import WalletNetworkSelectorButton from '@/components/AppNetworkSelectorDropdown';
 import SignInBox from '@/components/SignInBox';
@@ -27,25 +33,29 @@ import { SiweMessage } from 'siwe';
 
 // Import the Type ID options map and order
 import { typeIdOptionsMap, typeIdOrder } from '@/constants/assistantTypes';
-import { customEncodeAddresses, generateMappingKey, toggleUniveralAssistantsSubscribe, updateBECPermissions } from '@/utils/configDataKeyValueStore';
-import { supportedNetworks } from '@/constants/supportedNetworks';
-import { ERC725__factory } from "@/types";
+import {
+  customEncodeAddresses,
+  generateMappingKey,
+  toggleUniveralAssistantsSubscribe,
+  updateBECPermissions,
+} from '@/utils/configDataKeyValueStore';
+import { ERC725__factory } from '@/types';
+import { useNetwork } from '@/contexts/NetworkContext';
 
-type UAPConfigPageProps = {
-  params: {
-    networkId: string;
-  };
-};
-
-const UAPConfigPage: React.FC<UAPConfigPageProps> = ({ params }) => {
+const UAPConfigPage: React.FC<> = () => {
   const toast = useToast({ position: 'bottom-left' });
-  const { address, chainId: walletNetworkId, isConnected } = useWeb3ModalAccount();
+  const {
+    address,
+    chainId: walletNetworkId,
+    isConnected,
+  } = useWeb3ModalAccount();
   const { walletProvider } = useWeb3ModalProvider();
   const [isUserConnected, setIsUserConnected] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
   const [typeId, setTypeId] = useState<string>('');
   const [assistantAddresses, setAssistantAddresses] = useState<string[]>(['']);
-  const router = useRouter();
+
+  const { network } = useNetwork();
 
   useEffect(() => {
     if (address) {
@@ -70,7 +80,9 @@ const UAPConfigPage: React.FC<UAPConfigPageProps> = ({ params }) => {
     const newAddresses = assistantAddresses.filter((_, i) => i !== index);
     setAssistantAddresses(newAddresses);
   };
-  const handleToggleAssistant = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleToggleAssistant = async (
+    event: React.FormEvent<HTMLFormElement>
+  ) => {
     event.preventDefault();
     if (!isConnected) {
       toast({
@@ -91,15 +103,16 @@ const UAPConfigPage: React.FC<UAPConfigPageProps> = ({ params }) => {
       const upAddress = address as string;
       const signer = await provider.getSigner(upAddress);
       console.log('Signer:', signer);
-       // Assuming the user is interacting with their own UP// Prepare a message with the SIWE-specific format
+      // Assuming the user is interacting with their own UP// Prepare a message with the SIWE-specific format
       const siweMessage = new SiweMessage({
-          domain: window.location.host,   // Domain requesting the signing
-          uri: window.location.origin,
-          address: upAddress,           // Address performing the signing
-          statement: 'Signing this message will enable the Universal Assistants Catalog to allow your UP Browser Extension to manage Assistant configurations.', // Human-readable assertion the user signs  // URI from the resource that is the subject of the signature
-          version: '1',                   // Current version of the SIWE Message
-          chainId: parseInt(params.networkId),               // Chain ID to which the session is bound to
-          resources: [`${window.location.origin}/terms`], // Authentication resource as part of authentication by the relying party
+        domain: window.location.host, // Domain requesting the signing
+        uri: window.location.origin,
+        address: upAddress, // Address performing the signing
+        statement:
+          'Signing this message will enable the Universal Assistants Catalog to allow your UP Browser Extension to manage Assistant configurations.', // Human-readable assertion the user signs  // URI from the resource that is the subject of the signature
+        version: '1', // Current version of the SIWE Message
+        chainId: network.chainId, // Chain ID to which the session is bound to
+        resources: [`${window.location.origin}/terms`], // Authentication resource as part of authentication by the relying party
       }).prepareMessage();
       // Request the extension to sign the message
       const signature = await signer.signMessage(siweMessage);
@@ -113,8 +126,8 @@ const UAPConfigPage: React.FC<UAPConfigPageProps> = ({ params }) => {
       await toggleUniveralAssistantsSubscribe(
         provider,
         upAddress,
-        supportedNetworks[parseInt(params.networkId)].protocolAddress,
-        supportedNetworks[parseInt(params.networkId)].defaultURDUP,
+        network.protocolAddress,
+        network.defaultURDUP,
         false
       );
 
@@ -138,7 +151,9 @@ const UAPConfigPage: React.FC<UAPConfigPageProps> = ({ params }) => {
     }
   };
 
-  const handleSubmitConfig = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmitConfig = async (
+    event: React.FormEvent<HTMLFormElement>
+  ) => {
     event.preventDefault();
     if (!isConnected) {
       toast({
@@ -184,15 +199,16 @@ const UAPConfigPage: React.FC<UAPConfigPageProps> = ({ params }) => {
       const upAddress = address as string;
       const signer = await provider.getSigner(upAddress);
       console.log('Signer:', signer);
-       // Assuming the user is interacting with their own UP// Prepare a message with the SIWE-specific format
+      // Assuming the user is interacting with their own UP// Prepare a message with the SIWE-specific format
       const siweMessage = new SiweMessage({
-          domain: window.location.host,   // Domain requesting the signing
-          uri: window.location.origin,
-          address: upAddress,           // Address performing the signing
-          statement: 'Signing this message will enable the Universal Assistants Catalog to allow your UP Browser Extension to manage Assistant configurations.', // Human-readable assertion the user signs  // URI from the resource that is the subject of the signature
-          version: '1',                   // Current version of the SIWE Message
-          chainId: parseInt(params.networkId),               // Chain ID to which the session is bound to
-          resources: [`${window.location.origin}/terms`], // Authentication resource as part of authentication by the relying party
+        domain: window.location.host, // Domain requesting the signing
+        uri: window.location.origin,
+        address: upAddress, // Address performing the signing
+        statement:
+          'Signing this message will enable the Universal Assistants Catalog to allow your UP Browser Extension to manage Assistant configurations.', // Human-readable assertion the user signs  // URI from the resource that is the subject of the signature
+        version: '1', // Current version of the SIWE Message
+        chainId: network.chainId, // Chain ID to which the session is bound to
+        resources: [`${window.location.origin}/terms`], // Authentication resource as part of authentication by the relying party
       }).prepareMessage();
       // Request the extension to sign the message
       const signature = await signer.signMessage(siweMessage);
@@ -210,10 +226,8 @@ const UAPConfigPage: React.FC<UAPConfigPageProps> = ({ params }) => {
         keyType: 'Mapping',
         valueType: 'address[]',
         valueContent: 'Address',
-      }
-      const schema = [
-        typeSchema
-      ];
+      };
+      const schema = [typeSchema];
 
       // Create an instance of ERC725 with the schema
       const erc725 = new ERC725(schema as any, upAddress, provider, {
@@ -221,20 +235,23 @@ const UAPConfigPage: React.FC<UAPConfigPageProps> = ({ params }) => {
       });
 
       // Encode the data
-      const encodedKeysData = erc725.encodeData([{
-        keyName: typeSchema.name,
-        dynamicKeyParts: [typeId],
-        value: assistantAddresses,
-      }]);
+      const encodedKeysData = erc725.encodeData([
+        {
+          keyName: typeSchema.name,
+          dynamicKeyParts: [typeId],
+          value: assistantAddresses,
+        },
+      ]);
       // use custom function to encode the data
       const encodedValues = customEncodeAddresses(assistantAddresses);
-
-
 
       console.log('Encoded data:', encodedKeysData);
 
       const UP = ERC725__factory.connect(upAddress, signer);
-      const tx = await UP.connect(signer).setData(encodedKeysData.keys[0], encodedValues);
+      const tx = await UP.connect(signer).setData(
+        encodedKeysData.keys[0],
+        encodedValues
+      );
 
       await tx.wait();
 
@@ -273,7 +290,7 @@ const UAPConfigPage: React.FC<UAPConfigPageProps> = ({ params }) => {
           <BreadcrumbLink href="/">#</BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbItem>
-          <BreadcrumbLink href={`/profile/${params.networkId}/${address}`}>
+          <BreadcrumbLink href={`/profile/${address}`}>
             {'Profile'}
           </BreadcrumbLink>
         </BreadcrumbItem>
@@ -281,10 +298,6 @@ const UAPConfigPage: React.FC<UAPConfigPageProps> = ({ params }) => {
           <BreadcrumbLink href="" mr={2}>
             Configure Assistant Per Transaction Type
           </BreadcrumbLink>
-          <WalletNetworkSelectorButton
-            currentNetwork={parseInt(params.networkId)}
-            urlTemplate={(networkId) => `/uap-config/${networkId}`}
-          />
         </BreadcrumbItem>
       </Breadcrumb>
       <Flex
@@ -296,23 +309,23 @@ const UAPConfigPage: React.FC<UAPConfigPageProps> = ({ params }) => {
         mt={4}
       >
         <Box flex="1" w={'100%'} maxWidth="800px">
-        <ConfiguredAssistants
-          upAddress={address as string}
-          networkId={walletNetworkId as number}
-          walletProvider={walletProvider as Eip1193Provider}
-        />
+          <ConfiguredAssistants
+            upAddress={address as string}
+            networkId={walletNetworkId as number}
+            walletProvider={walletProvider as Eip1193Provider}
+          />
           <form onSubmit={handleSubmitConfig}>
             <Text fontSize="lg" fontWeight="bold" mb={4}>
-             Assistant Configuration
+              Assistant Configuration
             </Text>
             <FormControl isRequired mb={4}>
               <FormLabel>Transaction Event Type</FormLabel>
               <Select
                 placeholder="Select Type ID"
                 value={typeId}
-                onChange={(e) => setTypeId(e.target.value)}
+                onChange={e => setTypeId(e.target.value)}
               >
-                {typeIdOrder.map((typeIdValue) => {
+                {typeIdOrder.map(typeIdValue => {
                   const option = typeIdOptionsMap[typeIdValue];
                   return (
                     <option value={option.value} key={option.value}>
@@ -329,10 +342,13 @@ const UAPConfigPage: React.FC<UAPConfigPageProps> = ({ params }) => {
                   <Input
                     placeholder="0x..."
                     value={addr}
-                    onChange={(e) => handleAssistantAddressChange(index, e)}
+                    onChange={e => handleAssistantAddressChange(index, e)}
                   />
                   {assistantAddresses.length > 1 && (
-                    <Button ml={2} onClick={() => handleRemoveAssistantAddress(index)}>
+                    <Button
+                      ml={2}
+                      onClick={() => handleRemoveAssistantAddress(index)}
+                    >
                       Remove
                     </Button>
                   )}
@@ -354,13 +370,13 @@ const UAPConfigPage: React.FC<UAPConfigPageProps> = ({ params }) => {
         </Box>
 
         <form onSubmit={handleToggleAssistant}>
-            <Text fontSize="lg" fontWeight="bold" mb={4}>
-             Enable Assistant
-            </Text>
-            <Button colorScheme="teal" type="submit">
-              Enable Universal Assistants
-            </Button>
-          </form>
+          <Text fontSize="lg" fontWeight="bold" mb={4}>
+            Enable Assistant
+          </Text>
+          <Button colorScheme="teal" type="submit">
+            Enable Universal Assistants
+          </Button>
+        </form>
       </Flex>
     </>
   ) : (
@@ -375,22 +391,19 @@ const UAPConfigPage: React.FC<UAPConfigPageProps> = ({ params }) => {
         <BreadcrumbItem>
           <BreadcrumbLink href="/">#</BreadcrumbLink>
         </BreadcrumbItem>
-        <BreadcrumbItem>
-          <BreadcrumbLink href={`/profile/${params.networkId}/${address}`}>
-            {'Profile'}
-          </BreadcrumbLink>
-        </BreadcrumbItem>
         <BreadcrumbItem isCurrentPage>
           <BreadcrumbLink href="" mr={2}>
-            Set UAPTypeConfig
+            Sign In
           </BreadcrumbLink>
-          <WalletNetworkSelectorButton
-            currentNetwork={parseInt(params.networkId)}
-            urlTemplate={(networkId) => `/uap-config/${networkId}`}
-          />
         </BreadcrumbItem>
       </Breadcrumb>
-      <Flex height="100%" w="100%" alignContent="center" justifyContent="center" pt={4}>
+      <Flex
+        height="100%"
+        w="100%"
+        alignContent="center"
+        justifyContent="center"
+        pt={4}
+      >
         <SignInBox boxText={'Sign in to set UAPTypeConfig'} />
       </Flex>
     </>
@@ -398,4 +411,3 @@ const UAPConfigPage: React.FC<UAPConfigPageProps> = ({ params }) => {
 };
 
 export default UAPConfigPage;
-

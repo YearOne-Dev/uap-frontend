@@ -1,11 +1,11 @@
-import { supportedNetworks } from '@/constants/supportedNetworks';
+import { getNetwork } from '@/utils/utils';
 
 export async function getImageFromIPFS(
   ipfsUrl: string,
   chainId: number
 ): Promise<string> {
   // Replace the 'ipfs://' prefix with the IPFS gateway URL
-  const currentNetwork = supportedNetworks[chainId];
+  const currentNetwork = getNetwork(chainId);
   const gatewayUrl = ipfsUrl.replace(
     'ipfs://',
     currentNetwork ? `${currentNetwork.ipfsGateway}/` : 'https://ipfs.io/ipfs/'

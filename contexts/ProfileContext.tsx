@@ -140,7 +140,7 @@ export function ProfileProvider({
       // Get the current network properties from the list of supported networks
       const currentNetwork = supportedNetworks[chainId];
 
-      if (!currentNetwork || currentNetwork.hasUPSupport === false) {
+      if (!currentNetwork || !currentNetwork.hasUPSupport) {
         setProfile(null);
         return;
       }

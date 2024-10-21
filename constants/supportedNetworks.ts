@@ -1,6 +1,6 @@
 interface ChainInfo {
   name: string;
-  chainId: string;
+  chainId: number;
   rpcUrl: string;
   ipfsGateway: string;
   explorer: string;
@@ -14,7 +14,7 @@ interface ChainInfo {
 export const supportedNetworks: { [key: string]: ChainInfo } = {
   '42': {
     name: 'LUKSO',
-    chainId: '42',
+    chainId: 42,
     rpcUrl: 'https://42.rpc.thirdweb.com',
     ipfsGateway: 'https://api.universalprofile.cloud/ipfs',
     explorer: 'https://explorer.execution.mainnet.lukso.network/',
@@ -26,7 +26,7 @@ export const supportedNetworks: { [key: string]: ChainInfo } = {
   },
   '4201': {
     name: 'LUKSO Testnet',
-    chainId: '4201',
+    chainId: 4201,
     rpcUrl: 'https://4201.rpc.thirdweb.com',
     ipfsGateway: 'https://api.universalprofile.cloud/ipfs',
     explorer: 'https://explorer.execution.testnet.lukso.network/',
