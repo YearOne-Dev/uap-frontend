@@ -1,2 +1,1 @@
 # Universal Assistant Protocol
-
