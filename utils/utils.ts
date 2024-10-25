@@ -1,10 +1,6 @@
 import { supportedNetworks } from '@/constants/supportedNetworks';
 
-export const validNetworkIds = Object.keys(supportedNetworks).map(networkId =>
-  parseInt(networkId)
-);
-
-export const getNetwork = (chainId: number) => {
+export const getNetwork = (chainId: number | string) => {
   const network = supportedNetworks[chainId];
   if (!network) {
     throw new Error('Network not supported');

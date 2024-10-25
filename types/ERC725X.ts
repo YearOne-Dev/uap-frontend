@@ -13,7 +13,7 @@ import type {
   ContractRunner,
   ContractMethod,
   Listener,
-} from "ethers";
+} from 'ethers';
 import type {
   TypedContractEvent,
   TypedDeferredTopicFilter,
@@ -21,64 +21,64 @@ import type {
   TypedLogDescription,
   TypedListener,
   TypedContractMethod,
-} from "./common";
+} from './common';
 
 export interface ERC725XInterface extends Interface {
   getFunction(
     nameOrSignature:
-      | "execute"
-      | "executeBatch"
-      | "owner"
-      | "renounceOwnership"
-      | "supportsInterface"
-      | "transferOwnership"
+      | 'execute'
+      | 'executeBatch'
+      | 'owner'
+      | 'renounceOwnership'
+      | 'supportsInterface'
+      | 'transferOwnership'
   ): FunctionFragment;
 
   getEvent(
     nameOrSignatureOrTopic:
-      | "ContractCreated"
-      | "Executed"
-      | "OwnershipTransferred"
+      | 'ContractCreated'
+      | 'Executed'
+      | 'OwnershipTransferred'
   ): EventFragment;
 
   encodeFunctionData(
-    functionFragment: "execute",
+    functionFragment: 'execute',
     values: [BigNumberish, AddressLike, BigNumberish, BytesLike]
   ): string;
   encodeFunctionData(
-    functionFragment: "executeBatch",
+    functionFragment: 'executeBatch',
     values: [BigNumberish[], AddressLike[], BigNumberish[], BytesLike[]]
   ): string;
-  encodeFunctionData(functionFragment: "owner", values?: undefined): string;
+  encodeFunctionData(functionFragment: 'owner', values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "renounceOwnership",
+    functionFragment: 'renounceOwnership',
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "supportsInterface",
+    functionFragment: 'supportsInterface',
     values: [BytesLike]
   ): string;
   encodeFunctionData(
-    functionFragment: "transferOwnership",
+    functionFragment: 'transferOwnership',
     values: [AddressLike]
   ): string;
 
-  decodeFunctionResult(functionFragment: "execute", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'execute', data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "executeBatch",
+    functionFragment: 'executeBatch',
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'owner', data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "renounceOwnership",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "supportsInterface",
+    functionFragment: 'renounceOwnership',
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "transferOwnership",
+    functionFragment: 'supportsInterface',
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: 'transferOwnership',
     data: BytesLike
   ): Result;
 }
@@ -88,13 +88,13 @@ export namespace ContractCreatedEvent {
     operationType: BigNumberish,
     contractAddress: AddressLike,
     value: BigNumberish,
-    salt: BytesLike
+    salt: BytesLike,
   ];
   export type OutputTuple = [
     operationType: bigint,
     contractAddress: string,
     value: bigint,
-    salt: string
+    salt: string,
   ];
   export interface OutputObject {
     operationType: bigint;
@@ -113,13 +113,13 @@ export namespace ExecutedEvent {
     operationType: BigNumberish,
     target: AddressLike,
     value: BigNumberish,
-    selector: BytesLike
+    selector: BytesLike,
   ];
   export type OutputTuple = [
     operationType: bigint,
     target: string,
     value: bigint,
-    selector: string
+    selector: string,
   ];
   export interface OutputObject {
     operationType: bigint;
@@ -194,10 +194,10 @@ export interface ERC725X extends BaseContract {
       operationType: BigNumberish,
       target: AddressLike,
       value: BigNumberish,
-      data: BytesLike
+      data: BytesLike,
     ],
     [string],
-    "payable"
+    'payable'
   >;
 
   executeBatch: TypedContractMethod<
@@ -205,26 +205,26 @@ export interface ERC725X extends BaseContract {
       operationsType: BigNumberish[],
       targets: AddressLike[],
       values: BigNumberish[],
-      datas: BytesLike[]
+      datas: BytesLike[],
     ],
     [string[]],
-    "payable"
+    'payable'
   >;
 
-  owner: TypedContractMethod<[], [string], "view">;
+  owner: TypedContractMethod<[], [string], 'view'>;
 
-  renounceOwnership: TypedContractMethod<[], [void], "nonpayable">;
+  renounceOwnership: TypedContractMethod<[], [void], 'nonpayable'>;
 
   supportsInterface: TypedContractMethod<
     [interfaceId: BytesLike],
     [boolean],
-    "view"
+    'view'
   >;
 
   transferOwnership: TypedContractMethod<
     [newOwner: AddressLike],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
   getFunction<T extends ContractMethod = ContractMethod>(
@@ -232,58 +232,58 @@ export interface ERC725X extends BaseContract {
   ): T;
 
   getFunction(
-    nameOrSignature: "execute"
+    nameOrSignature: 'execute'
   ): TypedContractMethod<
     [
       operationType: BigNumberish,
       target: AddressLike,
       value: BigNumberish,
-      data: BytesLike
+      data: BytesLike,
     ],
     [string],
-    "payable"
+    'payable'
   >;
   getFunction(
-    nameOrSignature: "executeBatch"
+    nameOrSignature: 'executeBatch'
   ): TypedContractMethod<
     [
       operationsType: BigNumberish[],
       targets: AddressLike[],
       values: BigNumberish[],
-      datas: BytesLike[]
+      datas: BytesLike[],
     ],
     [string[]],
-    "payable"
+    'payable'
   >;
   getFunction(
-    nameOrSignature: "owner"
-  ): TypedContractMethod<[], [string], "view">;
+    nameOrSignature: 'owner'
+  ): TypedContractMethod<[], [string], 'view'>;
   getFunction(
-    nameOrSignature: "renounceOwnership"
-  ): TypedContractMethod<[], [void], "nonpayable">;
+    nameOrSignature: 'renounceOwnership'
+  ): TypedContractMethod<[], [void], 'nonpayable'>;
   getFunction(
-    nameOrSignature: "supportsInterface"
-  ): TypedContractMethod<[interfaceId: BytesLike], [boolean], "view">;
+    nameOrSignature: 'supportsInterface'
+  ): TypedContractMethod<[interfaceId: BytesLike], [boolean], 'view'>;
   getFunction(
-    nameOrSignature: "transferOwnership"
-  ): TypedContractMethod<[newOwner: AddressLike], [void], "nonpayable">;
+    nameOrSignature: 'transferOwnership'
+  ): TypedContractMethod<[newOwner: AddressLike], [void], 'nonpayable'>;
 
   getEvent(
-    key: "ContractCreated"
+    key: 'ContractCreated'
   ): TypedContractEvent<
     ContractCreatedEvent.InputTuple,
     ContractCreatedEvent.OutputTuple,
     ContractCreatedEvent.OutputObject
   >;
   getEvent(
-    key: "Executed"
+    key: 'Executed'
   ): TypedContractEvent<
     ExecutedEvent.InputTuple,
     ExecutedEvent.OutputTuple,
     ExecutedEvent.OutputObject
   >;
   getEvent(
-    key: "OwnershipTransferred"
+    key: 'OwnershipTransferred'
   ): TypedContractEvent<
     OwnershipTransferredEvent.InputTuple,
     OwnershipTransferredEvent.OutputTuple,
@@ -291,7 +291,7 @@ export interface ERC725X extends BaseContract {
   >;
 
   filters: {
-    "ContractCreated(uint256,address,uint256,bytes32)": TypedContractEvent<
+    'ContractCreated(uint256,address,uint256,bytes32)': TypedContractEvent<
       ContractCreatedEvent.InputTuple,
       ContractCreatedEvent.OutputTuple,
       ContractCreatedEvent.OutputObject
@@ -302,7 +302,7 @@ export interface ERC725X extends BaseContract {
       ContractCreatedEvent.OutputObject
     >;
 
-    "Executed(uint256,address,uint256,bytes4)": TypedContractEvent<
+    'Executed(uint256,address,uint256,bytes4)': TypedContractEvent<
       ExecutedEvent.InputTuple,
       ExecutedEvent.OutputTuple,
       ExecutedEvent.OutputObject
@@ -313,7 +313,7 @@ export interface ERC725X extends BaseContract {
       ExecutedEvent.OutputObject
     >;
 
-    "OwnershipTransferred(address,address)": TypedContractEvent<
+    'OwnershipTransferred(address,address)': TypedContractEvent<
       OwnershipTransferredEvent.InputTuple,
       OwnershipTransferredEvent.OutputTuple,
       OwnershipTransferredEvent.OutputObject

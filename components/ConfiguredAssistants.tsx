@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Text } from '@chakra-ui/react';
-import { ethers, BrowserProvider, Eip1193Provider } from 'ethers';
-import UniversalProfile from '@lukso/lsp-smart-contracts/artifacts/UniversalProfile.json';
+import { BrowserProvider, Eip1193Provider } from 'ethers';
 import { typeIdOptionsMap, typeIdOrder } from '@/constants/assistantTypes';
-import { customDecodeAddresses, generateMappingKey } from '@/utils/configDataKeyValueStore';
-import { ERC725__factory } from "@/types";
+import {
+  customDecodeAddresses,
+  generateMappingKey,
+} from '@/utils/configDataKeyValueStore';
+import { ERC725__factory } from '@/types';
 
 type UPTypeConfigDisplayProps = {
   upAddress: string;
@@ -12,8 +14,14 @@ type UPTypeConfigDisplayProps = {
   walletProvider: Eip1193Provider;
 };
 
-const ConfiguredAssistants: React.FC<UPTypeConfigDisplayProps> = ({ upAddress, networkId, walletProvider }) => {
-  const [typeConfigs, setTypeConfigs] = useState<{ [typeId: string]: string[] }>({});
+const ConfiguredAssistants: React.FC<UPTypeConfigDisplayProps> = ({
+  upAddress,
+  networkId,
+  walletProvider,
+}) => {
+  const [typeConfigs, setTypeConfigs] = useState<{
+    [typeId: string]: string[];
+  }>({});
   const [error, setError] = useState<string>('');
 
   useEffect(() => {
@@ -33,7 +41,11 @@ const ConfiguredAssistants: React.FC<UPTypeConfigDisplayProps> = ({ upAddress, n
           const encodedResult = await UP.getData(mappingKey);
           const assistantAddresses = customDecodeAddresses(encodedResult);
 
-          if (assistantAddresses && Array.isArray(assistantAddresses) && assistantAddresses.length > 0) {
+          if (
+            assistantAddresses &&
+            Array.isArray(assistantAddresses) &&
+            assistantAddresses.length > 0
+          ) {
             newTypeConfigs[typeIdValue] = assistantAddresses;
           }
         }
@@ -61,7 +73,7 @@ const ConfiguredAssistants: React.FC<UPTypeConfigDisplayProps> = ({ upAddress, n
       <Text fontSize="lg" fontWeight="bold" mb={4}>
         Current Assistant Configurations
       </Text>
-      {typeIdOrder.map((typeIdValue) => {
+      {typeIdOrder.map(typeIdValue => {
         if (typeConfigs[typeIdValue]) {
           const option = typeIdOptionsMap[typeIdValue];
           return (

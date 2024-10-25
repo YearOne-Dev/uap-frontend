@@ -12,12 +12,11 @@ const LandingBox = () => {
       w={'100%'}
     >
       <VStack textAlign="center" spacing={0}>
-
-      <Image
-                src="/logo-uap.png"
-                alt="Hashlists logo"
-                height={{ base: '150px', md: '285px' }}
-              />
+        <Image
+          src="/logo-uap.png"
+          alt="Hashlists logo"
+          height={{ base: '150px', md: '285px' }}
+        />
         <Text
           as="h1"
           fontFamily={'Tomorrow'}
@@ -53,7 +52,7 @@ const LandingBox = () => {
           Engage your personal digital assistant
         </Text>
         <Flex gap={4} mt="30px">
-          <Link href={'/4201/urd'}>
+          <Link href={'/urd'}>
             <Button
               color={'hashlists.grey'}
               borderRadius="10px"

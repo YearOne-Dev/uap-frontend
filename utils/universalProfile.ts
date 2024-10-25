@@ -2,6 +2,7 @@ import { ERC725, ERC725JSONSchema } from '@erc725/erc725.js';
 import lsp3ProfileSchema from '@erc725/erc725.js/schemas/LSP3ProfileMetadata.json';
 import { LSP3ProfileMetadata } from '@lukso/lsp3-contracts';
 import { supportedNetworks } from '@/constants/supportedNetworks';
+import { getNetwork } from '@/utils/utils';
 
 export interface IProfileBasicInfo {
   upName: string | null;
@@ -15,7 +16,7 @@ export const getProfileBasicInfo = async (
   let upName = null,
     avatar = null;
   try {
-    const networkConfig = supportedNetworks[chainId];
+    const networkConfig = getNetwork(chainId);
     const ipfsGateway = networkConfig.ipfsGateway;
     const profileData = await getProfileData(
       contributor,

@@ -30,29 +30,29 @@ and 🔑  AddressPermissions:Permissions:<address> for the URD of new UP! extens
 */
 
 export const DEFAULT_UP_CONTROLLER_PERMISSIONS = {
-    SUPER_SETDATA: true,
-    SETDATA: true,
-    SIGN: true,
-    ENCRYPT: true,
-    DECRYPT: true,
-    SUPER_CALL: true,
-    CALL: true,
-    SUPER_STATICCALL: true,
-    STATICCALL: true,
-    SUPER_TRANSFERVALUE: true,
-    TRANSFERVALUE: true,
-    DEPLOY: true,
-    EXECUTE_RELAY_CALL: true,
-    EDITPERMISSIONS: true,
-    ADDCONTROLLER: true,
-  };
-  
-  export const UAP_CONTROLLER_PERMISSIONS = {
-    ADDUNIVERSALRECEIVERDELEGATE: true,
-    CHANGEUNIVERSALRECEIVERDELEGATE: true,
-  };
-  
-  /*
+  SUPER_SETDATA: true,
+  SETDATA: true,
+  SIGN: true,
+  ENCRYPT: true,
+  DECRYPT: true,
+  SUPER_CALL: true,
+  CALL: true,
+  SUPER_STATICCALL: true,
+  STATICCALL: true,
+  SUPER_TRANSFERVALUE: true,
+  TRANSFERVALUE: true,
+  DEPLOY: true,
+  EXECUTE_RELAY_CALL: true,
+  EDITPERMISSIONS: true,
+  ADDCONTROLLER: true,
+};
+
+export const UAP_CONTROLLER_PERMISSIONS = {
+  ADDUNIVERSALRECEIVERDELEGATE: true,
+  CHANGEUNIVERSALRECEIVERDELEGATE: true,
+};
+
+/*
     UP! Extension Default UP URD Permissions
     extacted using https://erc725-inspect.lukso.tech/data-fetcher
     and 🔑  AddressPermissions:Permissions:<address> for the main controller of new UP! extension profile
@@ -82,9 +82,9 @@ export const DEFAULT_UP_CONTROLLER_PERMISSIONS = {
     "EXECUTE_RELAY_CALL": false
   }
   */
-  
-  export const DEFAULT_UP_URD_PERMISSIONS = {
-    REENTRANCY: true,
-    SUPER_SETDATA: true,
-    SETDATA: true,
-  };
+
+export const DEFAULT_UP_URD_PERMISSIONS = {
+  REENTRANCY: true,
+  SUPER_SETDATA: true,
+  SETDATA: true,
+};

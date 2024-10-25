@@ -18,7 +18,7 @@ import {
   useWeb3Modal,
   useWeb3ModalAccount,
 } from '@web3modal/ethers/react';
-import { formatAddress } from '@/utils/utils';
+import { formatAddress, getNetwork } from '@/utils/utils';
 import { useProfile } from '@/contexts/ProfileContext';
 import Link from 'next/link';
 import { supportedNetworks } from '@/constants/supportedNetworks';
@@ -27,7 +27,14 @@ export default function WalletConnectButton() {
   const { open } = useWeb3Modal();
   const { disconnect } = useDisconnect();
   const { address, isConnected, chainId } = useWeb3ModalAccount();
-  console.log('address', address, 'isConnected', isConnected, 'chainId', chainId);
+  console.log(
+    'address',
+    address,
+    'isConnected',
+    isConnected,
+    'chainId',
+    chainId
+  );
   const { profile } = useProfile();
   const [networkIcon, setNetworkIcon] = useState<string>();
   const [networkName, setNetworkName] = useState<string>();
@@ -41,9 +48,9 @@ export default function WalletConnectButton() {
   useEffect(() => {
     setButtonMessage(
       isConnected
-        ? !profile
-          ? formatAddress(address as string)
-          : profile.name
+        ? profile?.name
+          ? profile.name
+          : formatAddress(address as string)
         : 'Sign In'
     );
   }, [profile, isConnected, address]);
@@ -75,13 +82,11 @@ export default function WalletConnectButton() {
   }, [isConnected]);
 
   useEffect(() => {
-    const currentNetwork = supportedNetworks[chainId!];
-    currentNetwork && currentNetwork.icon
-      ? setNetworkIcon(currentNetwork.icon)
-      : setNetworkIcon('');
-    currentNetwork && currentNetwork.name
-      ? setNetworkName(currentNetwork.name)
-      : setNetworkName('');
+    if (chainId) {
+      const currentNetwork = getNetwork(chainId!);
+      setNetworkIcon(currentNetwork.icon);
+      setNetworkName(currentNetwork.name);
+    }
   }, [chainId]);
 
   return userConnected ? (
@@ -103,14 +108,7 @@ export default function WalletConnectButton() {
         </Flex>
       </MenuButton>
       <MenuList>
-        <MenuItem
-          display={{ base: 'flex', md: 'none' }}
-          as={Link}
-          href={'/curated-lists/create'}
-        >
-          Curate
-        </MenuItem>
-        <MenuItem as={Link} href={`/curators/${address}/curated-lists`}>
+        <MenuItem as={Link} href={`/profile/${address}`}>
           View profile
         </MenuItem>
         <MenuDivider />

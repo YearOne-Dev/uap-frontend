@@ -18,7 +18,7 @@ const ethersConfig = defaultConfig({
 
 // Wallet Connect: Chain Data
 const chains = Object.values(supportedNetworks).map(network => ({
-  chainId: parseInt(network.chainId, 10),
+  chainId: network.chainId,
   name: network.name,
   currency: network.token,
   explorerUrl: network.explorer,
@@ -28,7 +28,7 @@ const chains = Object.values(supportedNetworks).map(network => ({
 // Wallet Connect: Chain Images
 const walletConnectChainImages: Record<number, string> = {};
 Object.values(supportedNetworks).forEach(network => {
-  walletConnectChainImages[parseInt(network.chainId)] = network.icon;
+  walletConnectChainImages[network.chainId] = network.icon;
 });
 
 // WalletConnect: Web3 Modal Instance

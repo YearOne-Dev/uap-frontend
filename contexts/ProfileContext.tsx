@@ -15,6 +15,7 @@ import { ERC725, ERC725JSONSchema } from '@erc725/erc725.js';
 
 import { getImageFromIPFS } from '@/utils/ipfs';
 import { supportedNetworks } from '@/constants/supportedNetworks';
+import { getNetwork } from '@/utils/utils';
 
 interface Profile {
   name: string;
@@ -138,9 +139,9 @@ export function ProfileProvider({
       }
 
       // Get the current network properties from the list of supported networks
-      const currentNetwork = supportedNetworks[chainId];
+      const currentNetwork = getNetwork(chainId);
 
-      if (!currentNetwork || currentNetwork.hasUPSupport === false) {
+      if (!currentNetwork || !currentNetwork.hasUPSupport) {
         setProfile(null);
         return;
       }
