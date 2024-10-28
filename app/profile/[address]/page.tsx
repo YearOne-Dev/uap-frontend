@@ -1,23 +1,18 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import {
   Box,
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
-  Button,
   Flex,
-  Text,
-  VStack,
 } from '@chakra-ui/react';
 import { Eip1193Provider } from 'ethers';
 import {
-  useWeb3Modal,
   useWeb3ModalAccount,
   useWeb3ModalProvider,
 } from '@web3modal/ethers/react';
-import { formatAddress, getNetwork } from '@/utils/utils';
-import SignInBox from '@/components/SignInBox';
+import { formatAddress } from '@/utils/utils';
 import ConfiguredAssistants from '@/components/ConfiguredAssistants';
 import { useNetwork } from '@/contexts/NetworkContext';
 import WalletNetworkSelectorButton from '@/components/AppNetworkSelectorDropdown';
@@ -25,15 +20,7 @@ import WalletNetworkSelectorButton from '@/components/AppNetworkSelectorDropdown
 const ProfilePage = () => {
   const { address, chainId: walletNetworkId } = useWeb3ModalAccount();
   const { walletProvider } = useWeb3ModalProvider();
-  const { open } = useWeb3Modal();
-  const [isUserConnected, setIsUserConnected] = useState<boolean>(false);
   const { network } = useNetwork();
-
-  useEffect(() => {
-    if (address) {
-      setIsUserConnected(true);
-    }
-  }, [address]);
 
   const formatAddressForBreadcrumbs = (address: string | undefined) => {
     const truncatedAddress = formatAddress(address ? address : '');
@@ -69,54 +56,6 @@ const ProfilePage = () => {
       </Breadcrumb>
     </>
   );
-
-  if (!walletNetworkId || !isUserConnected) {
-    return (
-      <>
-        {breadCrumbs}
-        <Flex
-          height="100%"
-          w="100%"
-          alignContent="center"
-          justifyContent="center"
-          pt={4}
-        >
-          <SignInBox boxText={'Sign in to set UAPTypeConfig'} />
-        </Flex>
-      </>
-    );
-  }
-
-  if (walletNetworkId !== network.chainId) {
-    return (
-      <>
-        {breadCrumbs}
-        <Flex
-          height="100%"
-          w="100%"
-          alignContent="center"
-          justifyContent="center"
-          pt={4}
-        >
-          <VStack>
-            <Text>
-              You're on the {network.name} site but your connected wallet is on{' '}
-              {getNetwork(walletNetworkId).name}
-            </Text>
-            <Text>Please change network</Text>
-            <Button onClick={() => open({ view: 'Networks' })}>
-              Change network
-            </Button>
-            <Text>Or visit the {getNetwork(walletNetworkId).name} site</Text>
-            <WalletNetworkSelectorButton
-              currentNetwork={network.chainId}
-              urlTemplate={() => '/urd'}
-            />
-          </VStack>
-        </Flex>
-      </>
-    );
-  }
 
   return (
     <>
