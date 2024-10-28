@@ -1,7 +1,6 @@
 // Function to encode an array of addresses
 import { ERC725YDataKeys, LSP1_TYPE_IDS } from "@lukso/lsp-smart-contracts";
 import { BrowserProvider, ethers } from "ethers";
-import UniversalProfile from '@lukso/lsp-smart-contracts/artifacts/UniversalProfile.json';
 import LSP6Schema from '@erc725/erc725.js/schemas/LSP6KeyManager.json';
 import ERC725, { ERC725JSONSchema } from "@erc725/erc725.js";
 import { getChecksumAddress } from "./fieldValidations";
@@ -46,6 +45,13 @@ export const generateMappingKey = (keyName: string, typeId: string): string => {
   const hashedKey = ethers.keccak256(ethers.toUtf8Bytes(keyName));
   const first10Bytes = hashedKey.slice(2, 22);
   const last20Bytes = typeId.slice(2, 42);
+  return '0x' + first10Bytes + '0000' + last20Bytes;
+};
+
+export const generateMappingKeyFromAddress = (keyName: string, address: string): string => {
+  const hashedKey = ethers.keccak256(ethers.toUtf8Bytes(keyName));
+  const first10Bytes = hashedKey.slice(2, 22);
+  const last20Bytes = address.toLowerCase().slice(2, 42).padStart(40, '0');
   return '0x' + first10Bytes + '0000' + last20Bytes;
 };
 

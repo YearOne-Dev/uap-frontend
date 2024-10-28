@@ -31,7 +31,7 @@ export const supportedNetworks: { [key: string]: ChainInfo } = {
     ipfsGateway: 'https://api.universalprofile.cloud/ipfs',
     explorer: 'https://explorer.execution.testnet.lukso.network/',
     token: 'LYXt',
-    protocolAddress: '0x6162560B3ABe3E9eF485F56e95A00C892cdFe684',
+    protocolAddress: '0xcfF7C2dDE444E0d97B5b1FA686B986A6700dC95a',
     defaultURDUP: '0x7870C5B8BC9572A8001C3f96f7ff59961B23500D',
     hasUPSupport: true,
     icon: '/lyx_icon_testnet.svg',

@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Text } from '@chakra-ui/react';
-import { ethers, BrowserProvider, Eip1193Provider } from 'ethers';
-import UniversalProfile from '@lukso/lsp-smart-contracts/artifacts/UniversalProfile.json';
+import { BrowserProvider, Eip1193Provider } from 'ethers';
 import { typeIdOptionsMap, typeIdOrder } from '@/constants/assistantTypes';
 import { customDecodeAddresses, generateMappingKey } from '@/utils/configDataKeyValueStore';
 import { ERC725__factory } from "@/types";
