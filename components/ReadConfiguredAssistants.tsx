@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Text } from '@chakra-ui/react';
-import { BrowserProvider, Eip1193Provider } from 'ethers';
 import { typeIdOptionsMap, typeIdOrder } from '@/constants/assistantTypes';
 import {
   customDecodeAddresses,
@@ -8,17 +7,16 @@ import {
 } from '@/utils/configDataKeyValueStore';
 import { ERC725__factory } from '@/types';
 import { ethers } from 'ethers';
+import { supportedNetworks } from '@/constants/supportedNetworks';
 
 type UPTypeConfigDisplayProps = {
   upAddress: string;
   networkId: number;
-  walletProvider: Eip1193Provider;
 };
 
 const ReadConfiguredAssistants: React.FC<UPTypeConfigDisplayProps> = ({
   upAddress,
   networkId,
-  walletProvider,
 }) => {
   const [typeConfigs, setTypeConfigs] = useState<{
     [typeId: string]: string[];
@@ -28,21 +26,14 @@ const ReadConfiguredAssistants: React.FC<UPTypeConfigDisplayProps> = ({
   useEffect(() => {
     const fetchTypeConfigs = async () => {
       try {
-
-        console.log('yooo')
-        console.log('upAddress', upAddress)
-        console.log('networkId', networkId)
-        // const provider = new BrowserProvider(walletProvider);
-   
+        const { rpcUrl, name} = supportedNetworks[networkId];
         const provider = new ethers.JsonRpcProvider(
-          'https://42.rpc.thirdweb.com',
+          rpcUrl,
           {
-            name: 'lukso',
-            chainId: 42,
+            name: name,
+            chainId: networkId,
           }
         );
-        // const signer = await provider.getSigner();
-
         const newTypeConfigs: { [typeId: string]: string[] } = {};
 
         for (const typeIdValue of typeIdOrder) {
@@ -73,7 +64,7 @@ const ReadConfiguredAssistants: React.FC<UPTypeConfigDisplayProps> = ({
 
       fetchTypeConfigs();
     }
-  }, [upAddress, networkId, walletProvider]);
+  }, [upAddress, networkId]);
 
   if (error) {
     return <Text color="red">{error}</Text>;

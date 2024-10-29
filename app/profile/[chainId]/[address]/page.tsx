@@ -68,7 +68,6 @@ export default function ProfilePage({ params }: { params: { address: string, cha
           <ReadConfiguredAssistants
             upAddress={address as string}
             networkId={chainId}
-            walletProvider={walletProvider as Eip1193Provider}
           />
         </Box>
       </Flex>

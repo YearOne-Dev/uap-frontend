@@ -21,7 +21,6 @@ import {
 import { formatAddress, getNetwork } from '@/utils/utils';
 import { useProfile } from '@/contexts/ProfileContext';
 import Link from 'next/link';
-import { supportedNetworks } from '@/constants/supportedNetworks';
 
 export default function WalletConnectButton() {
   const { open } = useWeb3Modal();
@@ -108,7 +107,7 @@ export default function WalletConnectButton() {
         </Flex>
       </MenuButton>
       <MenuList>
-        <MenuItem as={Link} href={`/profile/${address}`}>
+        <MenuItem as={Link} href={`/profile/${chainId}/${address}`}>
           View profile
         </MenuItem>
         <MenuDivider />
