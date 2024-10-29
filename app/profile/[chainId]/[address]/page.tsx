@@ -8,17 +8,15 @@ import {
   Flex,
   Image,
 } from '@chakra-ui/react';
-import { Eip1193Provider } from 'ethers';
-import {
-  useWeb3ModalProvider,
-} from '@web3modal/ethers/react';
 import { formatAddress } from '@/utils/utils';
 import ReadConfiguredAssistants from '@/components/ReadConfiguredAssistants';
 import { supportedNetworks } from '@/constants/supportedNetworks';
-export default function ProfilePage({ params }: { params: { address: string, chainId: number } }) {
+export default function ProfilePage({
+  params,
+}: {
+  params: { address: string; chainId: number };
+}) {
   const { address, chainId } = params;
-  const { walletProvider } = useWeb3ModalProvider();
-
   const { icon, name } = supportedNetworks[chainId];
 
   const formatAddressForBreadcrumbs = (address: string | undefined) => {
@@ -42,15 +40,14 @@ export default function ProfilePage({ params }: { params: { address: string, cha
           <BreadcrumbLink href="/">#</BreadcrumbLink>
         </BreadcrumbItem>
         <Image src={icon} alt={icon} height={'30px'} />
-        <Box ml={2}>
-        {name} /</Box>
+        <Box ml={2}>{name} /</Box>
         <BreadcrumbItem isCurrentPage>
           <BreadcrumbLink href="" ml={2} mr={2}>
             Profile {formatAddressForBreadcrumbs(address)}
           </BreadcrumbLink>
         </BreadcrumbItem>
       </Breadcrumb>
-    </> 
+    </>
   );
 
   return (
@@ -67,10 +64,10 @@ export default function ProfilePage({ params }: { params: { address: string, cha
         <Box flex="1" w={'100%'} maxWidth="800px">
           <ReadConfiguredAssistants
             upAddress={address as string}
-            networkId={chainId}
+            networkId={Number(chainId)}
           />
         </Box>
       </Flex>
     </>
   );
-};
+}

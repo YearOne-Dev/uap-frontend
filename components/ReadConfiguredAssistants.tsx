@@ -26,14 +26,14 @@ const ReadConfiguredAssistants: React.FC<UPTypeConfigDisplayProps> = ({
   useEffect(() => {
     const fetchTypeConfigs = async () => {
       try {
-        const { rpcUrl, name} = supportedNetworks[networkId];
-        const provider = new ethers.JsonRpcProvider(
-          rpcUrl,
-          {
-            name: name,
-            chainId: networkId,
-          }
-        );
+        const { rpcUrl, name } = supportedNetworks[networkId];
+        console.log('rpcUrl', rpcUrl);
+        console.log('networkId', networkId);
+        const provider = new ethers.JsonRpcProvider(rpcUrl, {
+          name: name,
+          chainId: networkId,
+        });
+        console.log('provider', provider);
         const newTypeConfigs: { [typeId: string]: string[] } = {};
 
         for (const typeIdValue of typeIdOrder) {
@@ -61,7 +61,6 @@ const ReadConfiguredAssistants: React.FC<UPTypeConfigDisplayProps> = ({
       }
     };
     if (upAddress && networkId) {
-
       fetchTypeConfigs();
     }
   }, [upAddress, networkId]);
