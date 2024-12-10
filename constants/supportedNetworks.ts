@@ -1,5 +1,6 @@
 interface ChainInfo {
   name: string;
+  displayName: string;
   chainId: number;
   url: string;
   rpcUrl: string;
@@ -15,6 +16,7 @@ interface ChainInfo {
 export const supportedNetworks: { [key: string]: ChainInfo } = {
   '42': {
     name: 'LUKSO',
+    displayName: 'Lukso Mainnet',
     chainId: 42,
     url: 'https://universalassitant.app',
     rpcUrl: 'https://42.rpc.thirdweb.com',
@@ -28,6 +30,7 @@ export const supportedNetworks: { [key: string]: ChainInfo } = {
   },
   '4201': {
     name: 'LUKSO Testnet',
+    displayName: 'Lukso Testnet',
     chainId: 4201,
     url: 'https://testnet.universalassitant.app',
     rpcUrl: 'https://4201.rpc.thirdweb.com',
