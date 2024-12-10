@@ -13,10 +13,17 @@ import {
 } from '@chakra-ui/react';
 import { supportedNetworks } from '@/constants/supportedNetworks';
 import { FaExternalLinkAlt } from 'react-icons/fa';
-import { useNetwork } from '@/contexts/NetworkContext';
 
-export default function Contracts() {
-  const { network } = useNetwork();
+export default function Contracts({ params }: { params: { network: string } }) {
+  console.log('params', params);
+
+  const networkId = params.network; // Extract the network ID from params
+  const network = supportedNetworks[networkId]; // Get the network details
+
+  if (!network) {
+    return <Heading>Invalid network</Heading>; // Fallback if the network is invalid
+  }
+
   return (
     <>
       <Flex w={'100%'} justifyContent={'flex-start'}>
@@ -62,6 +69,7 @@ export default function Contracts() {
             View Universal Assistant protocol contract deployments
           </Heading>
           {Object.keys(supportedNetworks).map((networkId: string) => {
+            const network = supportedNetworks[networkId];
             return (
               <ChakraLink
                 isExternal
