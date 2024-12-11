@@ -10,19 +10,19 @@ const WalletNetworkSelectorButton = ({
   currentNetwork: number;
   urlTemplate: string;
 }) => {
-  const {icon, name} = supportedNetworks[currentNetwork];
+  const { icon, name } = supportedNetworks[currentNetwork];
   return (
     <Flex gap={2} flexDirection={'row'} alignItems={'center'}>
       <Image src={icon} alt={icon} height={'30px'} />
       <Select
         border={'1px solid var(--chakra-colors-hashlists-orange)'}
         variant="outline"
-        defaultValue={name}
+        value={currentNetwork}
         fontWeight={600}
         onChange={event => {
           const chainId = parseInt(event.target.value);
           const url = `/` + chainId + urlTemplate;
-          window.location.href = url
+          window.location.href = url;
         }}
       >
         {Object.keys(supportedNetworks).map((networkId: string) => {

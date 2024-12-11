@@ -90,5 +90,6 @@ export default function Contracts() {
           })}
         </Flex>
       </Flex>
-    </>  );
+    </>
+  );
 }

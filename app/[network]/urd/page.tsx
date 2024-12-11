@@ -43,10 +43,9 @@ import {
 import { ERC725__factory } from '@/types';
 import { useNetwork } from '@/contexts/NetworkContext';
 import WalletNetworkSelectorButton from '@/components/AppNetworkSelectorDropdown';
-import { supportedNetworks } from '@/constants/supportedNetworks';
 
 const UAPConfigPage = ({ params }: { params: { network: string } }) => {
-  const networkUrlId = params.network;
+  const networkUrlId = Number(params.network);
 
   const toast = useToast({ position: 'bottom-left' });
   const {
@@ -295,7 +294,7 @@ const UAPConfigPage = ({ params }: { params: { network: string } }) => {
         </BreadcrumbItem>
         <BreadcrumbItem>
           <WalletNetworkSelectorButton
-            currentNetwork={Number(networkUrlId)}
+            currentNetwork={networkUrlId}
             urlTemplate={`/urd`}
           />
         </BreadcrumbItem>
@@ -325,7 +324,7 @@ const UAPConfigPage = ({ params }: { params: { network: string } }) => {
     );
   }
 
-  if (walletNetworkId !== Number(networkUrlId)) {
+  if (walletNetworkId !== networkUrlId) {
     return (
       <>
         {breadCrumbs}
@@ -347,7 +346,7 @@ const UAPConfigPage = ({ params }: { params: { network: string } }) => {
             </Button>
             <Text>Or visit the {getNetwork(walletNetworkId).name} section</Text>
             <WalletNetworkSelectorButton
-            currentNetwork={Number(networkUrlId)}
+              currentNetwork={networkUrlId}
               urlTemplate={`/urd`}
             />
           </VStack>
