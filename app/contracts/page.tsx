@@ -22,7 +22,7 @@ export default function Contracts() {
       <Flex w={'100%'} justifyContent={'flex-start'}>
         <Breadcrumb
           separator="/"
-          color={'hashlists.orange'}
+          color={'uap.orange'}
           fontFamily={'Tomorrow'}
           fontWeight={600}
         >

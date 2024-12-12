@@ -20,7 +20,7 @@ const LandingBox = () => {
       <VStack textAlign="center" spacing={0}>
         <Image
           src="/logo-uap.png"
-          alt="Hashlists logo"
+          alt="UAP logo"
           height={{ base: '150px', md: '285px' }}
         />
         <Text
@@ -28,7 +28,7 @@ const LandingBox = () => {
           fontFamily={'Tomorrow'}
           fontSize="5xl"
           fontWeight="500"
-          color="hashlists.grey"
+          color="uap.grey"
         >
           <Flex align="center" justify="center">
             <Text
@@ -50,7 +50,7 @@ const LandingBox = () => {
             sm: 'xl',
             md: '2xl',
           }}
-          color="hashlists.grey"
+          color="uap.grey"
           fontFamily="Montserrat"
           fontWeight={500}
           align="center"
@@ -60,12 +60,12 @@ const LandingBox = () => {
         <Flex gap={4} mt="30px">
           <Link href={`/${urlName}/urd`}>
             <Button
-              color={'hashlists.grey'}
+              color={'uap.grey'}
               borderRadius="10px"
-              border="1px solid var(--chakra-colors-hashlists-grey)"
+              border="1px solid var(--chakra-colors-uap-grey)"
               fontFamily={'Montserrat'}
               fontWeight={500}
-              backgroundColor={'hashlists.yellow'}
+              backgroundColor={'uap.yellow'}
             >
               Configure
             </Button>

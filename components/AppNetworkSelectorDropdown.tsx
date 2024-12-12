@@ -15,7 +15,7 @@ const WalletNetworkSelectorButton = ({
     <Flex gap={2} flexDirection={'row'} alignItems={'center'}>
       <Image src={icon} alt={icon} height={'30px'} />
       <Select
-        border={'1px solid var(--chakra-colors-hashlists-orange)'}
+        border={'1px solid var(--chakra-colors-uap-orange)'}
         variant="outline"
         value={currentNetwork}
         fontWeight={600}

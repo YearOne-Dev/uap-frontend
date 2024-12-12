@@ -33,7 +33,7 @@ export default function ProfileConfigurePage({
     <>
       <Breadcrumb
         separator="/"
-        color={'hashlists.orange'}
+        color={'uap.orange'}
         fontFamily={'Tomorrow'}
         fontWeight={600}
       >

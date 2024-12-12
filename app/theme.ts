@@ -7,7 +7,7 @@ const foundations = {
     lukso: {
       pink: '#FE005B',
     },
-    hashlists: {
+    uap: {
       grey: '#053241',
       orange: '#DB7C3D',
       yellow: '#FFF8DD',

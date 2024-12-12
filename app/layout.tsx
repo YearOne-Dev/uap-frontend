@@ -56,7 +56,7 @@ export default function RootLayout({
               minH="calc(100vh - 230px)"
               alignItems={'flex-start'}
               justifyContent={'flex-start'}
-              className="hashlists-layout"
+              className="uap-layout"
             >
               {children}
             </Flex>

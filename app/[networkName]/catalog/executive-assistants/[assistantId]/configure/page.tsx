@@ -22,7 +22,7 @@ export default function ExecutiveAssistantConfigurePage({
     <>
       <Breadcrumb
         separator="/"
-        color={'hashlists.orange'}
+        color={'uap.orange'}
         fontFamily={'Tomorrow'}
         fontWeight={600}
       >
@@ -42,7 +42,7 @@ export default function ExecutiveAssistantConfigurePage({
         </BreadcrumbItem>
         <BreadcrumbItem>
           <BreadcrumbLink
-            href={`/${networkName}/catalog//executive-assistants`}
+            href={`/${networkName}/catalog/executive-assistants`}
             ml={2}
             mr={2}
           >
@@ -51,7 +51,7 @@ export default function ExecutiveAssistantConfigurePage({
         </BreadcrumbItem>
         <BreadcrumbItem>
           <BreadcrumbLink
-            href={`/${networkName}/catalog//executive-assistants/${
+            href={`/${networkName}/catalog/executive-assistants/${
               params.assistantId
             }`}
             ml={2}

@@ -15,14 +15,14 @@ const NavBar = () => {
   const urlName = getUrlNameByChainId(networkId);
 
   return (
-    <nav className="hashlists-topbar">
+    <nav className="uap-topbar">
       <Flex
         justify="space-between"
         alignItems="center"
         py="20px"
         px={{ base: '20px', md: '50px' }}
         borderBottom={`2px solid`}
-        borderColor={'hashlists.grey'}
+        borderColor={'uap.grey'}
         height={'85px'}
       >
         <Box>
@@ -44,12 +44,12 @@ const NavBar = () => {
               base: 'none',
               md: 'inline-flex',
             }}
-            color={'hashlists.grey'}
+            color={'uap.grey'}
             borderRadius="10px"
-            border="1px solid var(--chakra-colors-hashlists-grey)"
+            border="1px solid var(--chakra-colors-uap-grey)"
             fontFamily={'Montserrat'}
             fontWeight={500}
-            backgroundColor={'hashlists.yellow'}
+            backgroundColor={'uap.yellow'}
             as={Link}
             href={`/${urlName}/urd`}
           >

@@ -22,7 +22,7 @@ export default function ScreenerPage({
     <>
       <Breadcrumb
         separator="/"
-        color={'hashlists.orange'}
+        color={'uap.orange'}
         fontFamily={'Tomorrow'}
         fontWeight={600}
       >
