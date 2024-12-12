@@ -70,7 +70,7 @@ const ExecutiveAssistantPage: React.FC<{
   const { networkName } = params;
 
   const breadCrumbs = (
-    <Breadcrumb separator="/" color="hashlists.orange" fontWeight="600">
+    <Breadcrumb separator="/" color="uap.orange" fontWeight="600">
       <BreadcrumbItem>
         <BreadcrumbLink href="/">#</BreadcrumbLink>
       </BreadcrumbItem>
