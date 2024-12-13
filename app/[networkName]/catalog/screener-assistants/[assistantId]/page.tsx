@@ -33,7 +33,7 @@ export default function AssistantPage({
         </BreadcrumbItem>
         <BreadcrumbItem>
           <BreadcrumbLink
-            href={`/${networkName}/catalog/screener`}
+            href={`/${networkName}/catalog/screener-assistants`}
             ml={2}
             mr={2}
           >

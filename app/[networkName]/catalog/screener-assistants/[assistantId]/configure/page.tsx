@@ -33,7 +33,7 @@ export default function ConfigureAssistantPage({
         </BreadcrumbItem>
         <BreadcrumbItem>
           <BreadcrumbLink
-            href={`/${networkName}/catalog/screener`}
+            href={`/${networkName}/catalog/screener-assistants`}
             ml={2}
             mr={2}
           >
@@ -42,7 +42,7 @@ export default function ConfigureAssistantPage({
         </BreadcrumbItem>
         <BreadcrumbItem>
           <BreadcrumbLink
-            href={`/${networkName}/catalog/screener/${params.assistantId}`}
+            href={`/${networkName}/catalog/screener-assistants/${params.assistantId}`}
             ml={2}
             mr={2}
           >
