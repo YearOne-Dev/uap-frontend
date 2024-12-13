@@ -1,19 +1,32 @@
 import { Flex, Image, Text, VStack } from '@chakra-ui/react';
 import React from 'react';
+import { LSP1_TYPE_IDS } from '@lukso/lsp-smart-contracts';
 
 export const transactionTypeMap: {
   [key: string]: {
     label: string;
     typeName: string;
+    id: string;
     icon?: string;
     iconPath?: string;
   };
 } = {
-  LSP7Tokens: { label: 'Receiving', typeName: 'LSP7s', icon: '🪙' },
-  LSP8Tokens: { label: 'Receiving', typeName: 'LSP8s', icon: '🖼️' },
+  LSP7Tokens: {
+    label: 'Receiving',
+    typeName: 'LSP7s',
+    id: LSP1_TYPE_IDS.LSP7Tokens_RecipientNotification,
+    icon: '🪙',
+  },
+  LSP8Tokens: {
+    label: 'Receiving',
+    typeName: 'LSP8s',
+    id: LSP1_TYPE_IDS.LSP8Tokens_RecipientNotification,
+    icon: '🖼️',
+  },
   LYX: {
     label: 'Receiving',
     typeName: 'LYX',
+    id: LSP1_TYPE_IDS.LSP0ValueReceived,
     iconPath: '/lyx_icon_mainnet.svg',
   },
 };

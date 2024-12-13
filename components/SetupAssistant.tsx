@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
 import {
   Box,
-  VStack,
-  Text,
-  Flex,
-  CheckboxGroup,
-  Checkbox,
-  Input,
   Button,
+  Checkbox,
+  CheckboxGroup,
+  Flex,
   Grid,
   GridItem,
+  Input,
+  Text,
+  VStack,
 } from '@chakra-ui/react';
 import TransactionTypeBlock, {
   transactionTypeMap,

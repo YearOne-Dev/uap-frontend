@@ -1,5 +1,5 @@
 import React from 'react';
-import { Flex, Text, VStack, HStack, Image } from '@chakra-ui/react';
+import { Flex, HStack, Image, Text, VStack } from '@chakra-ui/react';
 
 type ExecutiveAssistant = {
   address: string;
