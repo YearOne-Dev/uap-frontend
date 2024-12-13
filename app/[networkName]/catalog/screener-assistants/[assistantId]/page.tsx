@@ -7,16 +7,13 @@ import {
   BreadcrumbLink,
   Flex,
 } from '@chakra-ui/react';
-import WalletNetworkSelectorButton from '@/components/AppNetworkSelectorDropdown';
-import { getChainIdByUrlName } from '@/utils/universalProfile';
 
-export default function ScreenerPage({
+export default function AssistantPage({
   params,
 }: {
-  params: { networkName: string };
+  params: { assistantId: string; networkName: string };
 }) {
   const { networkName } = params;
-  const network = getChainIdByUrlName(networkName);
 
   const breadCrumbs = (
     <>
@@ -30,19 +27,22 @@ export default function ScreenerPage({
           <BreadcrumbLink href="/">#</BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbItem>
-          <WalletNetworkSelectorButton
-            currentNetwork={network}
-            urlTemplate={`/catalog/screener`}
-          />
-        </BreadcrumbItem>
-        <BreadcrumbItem>
           <BreadcrumbLink href={`/${networkName}/catalog`} ml={2} mr={2}>
             Catalog
           </BreadcrumbLink>
         </BreadcrumbItem>
+        <BreadcrumbItem>
+          <BreadcrumbLink
+            href={`/${networkName}/catalog/screener-assistants`}
+            ml={2}
+            mr={2}
+          >
+            Screener
+          </BreadcrumbLink>
+        </BreadcrumbItem>
         <BreadcrumbItem isCurrentPage>
           <BreadcrumbLink href="" ml={2} mr={2}>
-            Catalog Screener
+            Assistant {params.assistantId}
           </BreadcrumbLink>
         </BreadcrumbItem>
       </Breadcrumb>
@@ -61,7 +61,7 @@ export default function ScreenerPage({
         mt={4}
       >
         <Box flex="1" w={'100%'} maxWidth="800px">
-          CATALOG SCREENER PAGE
+          CATALOG SCREENER ASSISTANT PAGE
         </Box>
       </Flex>
     </>

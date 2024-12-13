@@ -51,9 +51,9 @@ const NavBar = () => {
             fontWeight={500}
             backgroundColor={'uap.yellow'}
             as={Link}
-            href={`/${urlName}/urd`}
+            href={`/${urlName}/catalog`}
           >
-            Configure
+            Browse Assistants
           </Button>
           <WalletConnectButton />
         </Flex>

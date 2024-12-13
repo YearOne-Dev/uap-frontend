@@ -2,9 +2,9 @@
 import React, {
   createContext,
   useContext,
-  useState,
   useEffect,
   useMemo,
+  useState,
 } from 'react';
 import {
   useWeb3ModalAccount,

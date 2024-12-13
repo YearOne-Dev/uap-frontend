@@ -12,6 +12,7 @@ const foundations = {
       orange: '#DB7C3D',
       yellow: '#FFF8DD',
       white: '#FFFFFF',
+      font: '#2C5765',
     },
   },
   fontSizes: {
@@ -60,6 +61,17 @@ const theme = extendTheme({
         lg: { borderWidth: '4px' },
         md: { borderWidth: '2px' },
         sm: { borderWidth: '1px' },
+      },
+    },
+  },
+  styles: {
+    global: {
+      body: {
+        color: 'uap.font', // Default font color
+        bg: 'white', // Set a default background color (optional)
+      },
+      html: {
+        color: 'uap.font', // Ensure this also applies to the root HTML element
       },
     },
   },

@@ -25,7 +25,10 @@ export const getProfileBasicInfo = async (
     );
     if (profileData) {
       if (profileData.profileImage && profileData.profileImage.length > 0) {
-        avatar = `${ipfsGateway}/${profileData.profileImage[0].url.replace('ipfs://', '')}`;
+        avatar = `${ipfsGateway}/${profileData.profileImage[0].url.replace(
+          'ipfs://',
+          ''
+        )}`;
       }
       upName = profileData.name;
     }

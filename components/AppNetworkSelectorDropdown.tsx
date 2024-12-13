@@ -1,6 +1,6 @@
 import React from 'react';
 import { supportedNetworks } from '@/constants/supportedNetworks';
-import { Flex, Select, Image } from '@chakra-ui/react';
+import { Flex, Image, Select } from '@chakra-ui/react';
 import { getNetwork } from '@/utils/utils';
 
 const WalletNetworkSelectorButton = ({

@@ -16,7 +16,6 @@ export default function ExecutiveAssistantsPage({
   params: { networkName: string };
 }) {
   const { networkName } = params;
-  const network = getChainIdByUrlName(networkName);
 
   const breadCrumbs = (
     <>
@@ -28,12 +27,6 @@ export default function ExecutiveAssistantsPage({
       >
         <BreadcrumbItem>
           <BreadcrumbLink href="/">#</BreadcrumbLink>
-        </BreadcrumbItem>
-        <BreadcrumbItem>
-          <WalletNetworkSelectorButton
-            currentNetwork={network}
-            urlTemplate={`/catalog/executive-assistants`}
-          />
         </BreadcrumbItem>
         <BreadcrumbItem>
           <BreadcrumbLink href={`/${networkName}/catalog`} ml={2} mr={2}>

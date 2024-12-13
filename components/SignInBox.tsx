@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, useColorModeValue, VStack, Flex } from '@chakra-ui/react';
+import { Flex, Text, useColorModeValue, VStack } from '@chakra-ui/react';
 import WalletConnectButton from '@/components/WalletConnectButton';
 
 interface SignInBoxProps {

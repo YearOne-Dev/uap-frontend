@@ -9,7 +9,6 @@ import {
 } from '@chakra-ui/react';
 import { formatAddress } from '@/utils/utils';
 import ReadConfiguredAssistants from '@/components/ReadConfiguredAssistants';
-import WalletNetworkSelectorButton from '@/components/AppNetworkSelectorDropdown';
 import { getChainIdByUrlName } from '@/utils/universalProfile';
 export default function ProfilePage({
   params,
@@ -38,12 +37,6 @@ export default function ProfilePage({
       >
         <BreadcrumbItem>
           <BreadcrumbLink href="/">#</BreadcrumbLink>
-        </BreadcrumbItem>
-        <BreadcrumbItem>
-          <WalletNetworkSelectorButton
-            currentNetwork={network}
-            urlTemplate={`/profile/${address}`}
-          />
         </BreadcrumbItem>
         <BreadcrumbItem isCurrentPage>
           <BreadcrumbLink href="" ml={2} mr={2}>

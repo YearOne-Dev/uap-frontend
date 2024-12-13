@@ -1,24 +1,24 @@
 'use client';
-import React, { useEffect, useState, ChangeEvent } from 'react';
+import React, { ChangeEvent, useEffect, useState } from 'react';
 import {
   Box,
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
-  Flex,
-  Text,
-  useToast,
   Button,
-  Input,
+  Flex,
   FormControl,
   FormLabel,
+  Input,
   Select,
+  Text,
+  useToast,
   VStack,
 } from '@chakra-ui/react';
 import {
-  ethers,
   BrowserProvider,
   Eip1193Provider,
+  ethers,
   verifyMessage,
 } from 'ethers';
 import ERC725 from '@erc725/erc725.js';
@@ -292,12 +292,6 @@ const UAPConfigPage = ({ params }: { params: { networkName: string } }) => {
       >
         <BreadcrumbItem>
           <BreadcrumbLink href="/">#</BreadcrumbLink>
-        </BreadcrumbItem>
-        <BreadcrumbItem>
-          <WalletNetworkSelectorButton
-            currentNetwork={networkUrlId}
-            urlTemplate={`/urd`}
-          />
         </BreadcrumbItem>
         <BreadcrumbItem isCurrentPage>
           <BreadcrumbLink href="" mr={2}>

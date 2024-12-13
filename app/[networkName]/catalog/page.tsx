@@ -7,17 +7,12 @@ import {
   BreadcrumbLink,
   Flex,
 } from '@chakra-ui/react';
-import WalletNetworkSelectorButton from '@/components/AppNetworkSelectorDropdown';
-import { getChainIdByUrlName } from '@/utils/universalProfile';
 
 export default function CatalogPage({
   params,
 }: {
   params: { networkName: string };
 }) {
-  const { networkName } = params;
-  const network = getChainIdByUrlName(networkName);
-
   const breadCrumbs = (
     <>
       <Breadcrumb
@@ -28,12 +23,6 @@ export default function CatalogPage({
       >
         <BreadcrumbItem>
           <BreadcrumbLink href="/">#</BreadcrumbLink>
-        </BreadcrumbItem>
-        <BreadcrumbItem>
-          <WalletNetworkSelectorButton
-            currentNetwork={network}
-            urlTemplate={`/catalog`}
-          />
         </BreadcrumbItem>
         <BreadcrumbItem isCurrentPage>
           <BreadcrumbLink href="" ml={2} mr={2}>

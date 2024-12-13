@@ -2,16 +2,16 @@
 import React, { useEffect, useState } from 'react';
 import {
   Avatar,
+  Box,
   Button,
-  Menu,
-  MenuButton,
-  MenuList,
-  MenuItem,
   Flex,
   Image,
-  MenuGroup,
-  Box,
+  Menu,
+  MenuButton,
   MenuDivider,
+  MenuGroup,
+  MenuItem,
+  MenuList,
 } from '@chakra-ui/react';
 import {
   useDisconnect,

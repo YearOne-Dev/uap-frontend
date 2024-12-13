@@ -7,8 +7,6 @@ import {
   BreadcrumbLink,
   Flex,
 } from '@chakra-ui/react';
-import WalletNetworkSelectorButton from '@/components/AppNetworkSelectorDropdown';
-import { getChainIdByUrlName } from '@/utils/universalProfile';
 
 export default function ConfigureAssistantPage({
   params,
@@ -16,7 +14,6 @@ export default function ConfigureAssistantPage({
   params: { assistantId: string; networkName: string };
 }) {
   const { networkName } = params;
-  const network = getChainIdByUrlName(networkName);
 
   const breadCrumbs = (
     <>
@@ -30,19 +27,13 @@ export default function ConfigureAssistantPage({
           <BreadcrumbLink href="/">#</BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbItem>
-          <WalletNetworkSelectorButton
-            currentNetwork={network}
-            urlTemplate={`/catalog/screener/${params.assistantId}/configure`}
-          />
-        </BreadcrumbItem>
-        <BreadcrumbItem>
           <BreadcrumbLink href={`/${networkName}/catalog`} ml={2} mr={2}>
             Catalog
           </BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbItem>
           <BreadcrumbLink
-            href={`/${networkName}/catalog/screener`}
+            href={`/${networkName}/catalog/screener-assistants`}
             ml={2}
             mr={2}
           >
@@ -51,7 +42,7 @@ export default function ConfigureAssistantPage({
         </BreadcrumbItem>
         <BreadcrumbItem>
           <BreadcrumbLink
-            href={`/${networkName}/catalog/screener/${params.assistantId}`}
+            href={`/${networkName}/catalog/screener-assistants/${params.assistantId}`}
             ml={2}
             mr={2}
           >

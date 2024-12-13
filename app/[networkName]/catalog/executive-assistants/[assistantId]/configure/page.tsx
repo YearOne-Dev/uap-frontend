@@ -7,8 +7,6 @@ import {
   BreadcrumbLink,
   Flex,
 } from '@chakra-ui/react';
-import WalletNetworkSelectorButton from '@/components/AppNetworkSelectorDropdown';
-import { getChainIdByUrlName } from '@/utils/universalProfile';
 
 export default function ExecutiveAssistantConfigurePage({
   params,
@@ -16,7 +14,6 @@ export default function ExecutiveAssistantConfigurePage({
   params: { networkName: string; assistantId: string };
 }) {
   const { networkName } = params;
-  const network = getChainIdByUrlName(networkName);
 
   const breadCrumbs = (
     <>
@@ -28,12 +25,6 @@ export default function ExecutiveAssistantConfigurePage({
       >
         <BreadcrumbItem>
           <BreadcrumbLink href="/">#</BreadcrumbLink>
-        </BreadcrumbItem>
-        <BreadcrumbItem>
-          <WalletNetworkSelectorButton
-            currentNetwork={network}
-            urlTemplate={`/catalog/executive-assistants/${params.assistantId}/configure`}
-          />
         </BreadcrumbItem>
         <BreadcrumbItem>
           <BreadcrumbLink href={`${networkName}/catalog`} ml={2} mr={2}>
@@ -51,9 +42,7 @@ export default function ExecutiveAssistantConfigurePage({
         </BreadcrumbItem>
         <BreadcrumbItem>
           <BreadcrumbLink
-            href={`/${networkName}/catalog/executive-assistants/${
-              params.assistantId
-            }`}
+            href={`/${networkName}/catalog/executive-assistants/${params.assistantId}`}
             ml={2}
             mr={2}
           >

@@ -1,6 +1,6 @@
 import React from 'react';
-import { Box, Flex, Text, Link } from '@chakra-ui/react';
-import { FaSquareGithub, FaBookMedical, FaDatabase } from 'react-icons/fa6';
+import { Box, Flex, Link, Text } from '@chakra-ui/react';
+import { FaBookMedical, FaDatabase, FaSquareGithub } from 'react-icons/fa6';
 
 export default function Footer() {
   return (
