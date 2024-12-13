@@ -9,7 +9,7 @@ const SignInBox = ({ boxText }: SignInBoxProps) => {
   const bgColor = useColorModeValue('light.green.brand', 'dark.purple.200'); // Adjusts color based on the theme
 
   return (
-    <Flex justifyContent="center" alignItems="center" height="100%" mt="15vh">
+    <Flex justifyContent="center" alignItems="center" height="100%">
       <VStack
         p={5}
         backgroundColor={bgColor}
