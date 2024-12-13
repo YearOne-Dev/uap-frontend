@@ -46,12 +46,13 @@ const ScreeningOptionCard: React.FC<{ screener: ScreenerAssistant }> = ({
           </a>
         </Text>
         <Badge
-          colorScheme="blue"
           fontSize="0.8em"
           borderRadius="md"
-          px={2}
-          py={1}
-          mb={2}
+          border="1px solid"
+          borderColor="uap.font"
+          color="uap.font"
+          bg="transparent"
+          textTransform="none"
         >
           {screener.assistantType} Assistant
         </Badge>

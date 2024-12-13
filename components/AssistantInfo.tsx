@@ -40,7 +40,16 @@ const AssistantInfo: React.FC<{ assistant: ExecutiveAssistant }> = ({
           <Text fontSize="lg" fontWeight="bold" mb={1}>
             {assistant.name}
           </Text>
-          <Badge colorScheme="orange" fontSize="0.8em" borderRadius="md">
+          <Badge
+            ml={4}
+            fontSize="0.8em"
+            borderRadius="md"
+            border="1px solid"
+            borderColor="uap.orange"
+            color="uap.orange"
+            bg="transparent"
+            textTransform="none"
+          >
             {assistant.assistantType} Assistant
           </Badge>
         </Flex>

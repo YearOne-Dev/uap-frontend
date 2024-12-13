@@ -98,7 +98,6 @@ const ExecutiveAssistantPage: React.FC<{
           <AssistantInfo assistant={forwarderAssistant} />
           <SupportedTransactions assistant={forwarderAssistant} />
         </Flex>
-        {/* // add a grey line here */}
         <Box border="1px" borderColor="gray.200" w="100%" />
         <Flex
           flexDirection="row"
@@ -108,14 +107,15 @@ const ExecutiveAssistantPage: React.FC<{
           alignItems="center"
           w="100%"
         >
-          <Text
-            fontWeight="bold"
-            fontSize="md"
-            color="gray.600"
-            textAlign="center"
-          >
-            Screening Options
-          </Text>
+          <Flex flexDirection="column" alignItems="center">
+            <Text fontWeight="bold" fontSize="md">
+              Screening
+            </Text>
+            <Text fontWeight="bold" fontSize="md">
+              Options
+            </Text>
+          </Flex>
+
           <ScreeningOptionCard screener={curationCheckerAssistant} />
         </Flex>
         <Box border="1px" borderColor="gray.200" />
