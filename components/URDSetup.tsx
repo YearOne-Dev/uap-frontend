@@ -1,7 +1,10 @@
 import React from 'react';
 import { Box, Button, HStack, Text, useToast, VStack } from '@chakra-ui/react';
 import { BrowserProvider, Eip1193Provider, verifyMessage } from 'ethers';
-import { updateBECPermissions } from '@/utils/configDataKeyValueStore';
+import {
+  toggleUniveralAssistantsSubscribe,
+  updateBECPermissions,
+} from '@/utils/configDataKeyValueStore';
 import { SiweMessage } from 'siwe';
 import {
   useWeb3ModalAccount,
@@ -20,7 +23,6 @@ const URDSetup: React.FC = () => {
     try {
       const upAddress = address as string;
       const signer = await provider.getSigner(upAddress);
-      console.log('Signer:', signer);
       // Assuming the user is interacting with their own UP// Prepare a message with the SIWE-specific format
       const siweMessage = new SiweMessage({
         domain: window.location.host, // Domain requesting the signing
@@ -35,10 +37,6 @@ const URDSetup: React.FC = () => {
       // Request the extension to sign the message
       const signature = await signer.signMessage(siweMessage);
       const mainUPController = verifyMessage(siweMessage, signature);
-      console.log('signer:', signer);
-      console.log('upAddress:', upAddress);
-      console.log('mainController:', mainUPController);
-      console.log('step 0');
       await updateBECPermissions(provider, upAddress, mainUPController!);
       toast({
         title: 'Success',
@@ -57,6 +55,24 @@ const URDSetup: React.FC = () => {
         isClosable: true,
       });
     }
+  };
+
+  const handleInstallUAP = async () => {
+    const upAddress = address as string;
+    await toggleUniveralAssistantsSubscribe(
+      provider,
+      upAddress,
+      network.protocolAddress,
+      network.defaultURDUP,
+      false
+    );
+    toast({
+      title: 'Success',
+      description: 'Universal Assistant Protocol installed.',
+      status: 'success',
+      duration: 5000,
+      isClosable: true,
+    });
   };
 
   return (
@@ -98,6 +114,7 @@ const URDSetup: React.FC = () => {
             color="white"
             _hover={{ bg: 'orange.600' }}
             _active={{ bg: 'orange.700' }}
+            onClick={handleInstallUAP}
           >
             Give Permissions
           </Button>
