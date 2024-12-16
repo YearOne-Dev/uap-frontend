@@ -11,7 +11,7 @@ import {
 export default function ConfigureAssistantPage({
   params,
 }: {
-  params: { assistantId: string; networkName: string };
+  params: { assistantAddress: string; networkName: string };
 }) {
   const { networkName } = params;
 
@@ -42,11 +42,11 @@ export default function ConfigureAssistantPage({
         </BreadcrumbItem>
         <BreadcrumbItem>
           <BreadcrumbLink
-            href={`/${networkName}/catalog/screener-assistants/${params.assistantId}`}
+            href={`/${networkName}/catalog/screener-assistants/${params.assistantAddress}`}
             ml={2}
             mr={2}
           >
-            Assistant {params.assistantId}
+            Assistant {params.assistantAddress}
           </BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbItem isCurrentPage>

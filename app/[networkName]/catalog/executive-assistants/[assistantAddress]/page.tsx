@@ -16,7 +16,7 @@ import {
 } from '@/constants/dummyData';
 
 const ExecutiveAssistantPage: React.FC<{
-  params: { networkName: string; assistantId: string };
+  params: { networkName: string; assistantAddress: string };
 }> = ({ params }) => {
   const { networkName } = params;
 
@@ -36,7 +36,9 @@ const ExecutiveAssistantPage: React.FC<{
         </BreadcrumbLink>
       </BreadcrumbItem>
       <BreadcrumbItem isCurrentPage>
-        <BreadcrumbLink href="">Assistant {params.assistantId}</BreadcrumbLink>
+        <BreadcrumbLink href="">
+          Assistant {params.assistantAddress}
+        </BreadcrumbLink>
       </BreadcrumbItem>
     </Breadcrumb>
   );

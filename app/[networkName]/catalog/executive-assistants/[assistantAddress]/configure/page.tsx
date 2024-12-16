@@ -19,11 +19,12 @@ import { getNetwork } from '@/utils/utils';
 import { getChainIdByUrlName } from '@/utils/universalProfile';
 import { useNetwork } from '@/contexts/NetworkContext';
 import { doesControllerHaveMissingPermissions } from '@/utils/configDataKeyValueStore';
+import TransactionSelector from '@/components/SetupAssistant';
 
 export default function ExecutiveAssistantConfigurePage({
   params,
 }: {
-  params: { networkName: string; assistantId: string };
+  params: { networkName: string; assistantAddress: string };
 }) {
   const { networkName } = params;
   const networkUrlId = getChainIdByUrlName(params.networkName);
@@ -76,11 +77,11 @@ export default function ExecutiveAssistantConfigurePage({
         </BreadcrumbItem>
         <BreadcrumbItem>
           <BreadcrumbLink
-            href={`/${networkName}/catalog/executive-assistants/${params.assistantId}`}
+            href={`/${networkName}/catalog/executive-assistants/${params.assistantAddress}`}
             ml={2}
             mr={2}
           >
-            Assistant {params.assistantId}
+            Assistant {params.assistantAddress}
           </BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbItem isCurrentPage>
@@ -118,12 +119,15 @@ export default function ExecutiveAssistantConfigurePage({
     }
 
     // todo if URD is set, show URDSetup
+    return (
+      <TransactionSelector
+        assintantAddress={params.assistantAddress as string}
+      />
+    );
+
     // if(missing permissions or !urd) {
-    // return <TransactionSelector />;
-
-    // }
-
     return <URDSetup />;
+    // }
   };
 
   return (

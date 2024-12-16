@@ -11,7 +11,7 @@ import {
 export default function AssistantPage({
   params,
 }: {
-  params: { assistantId: string; networkName: string };
+  params: { assistantAddress: string; networkName: string };
 }) {
   const { networkName } = params;
 
@@ -42,7 +42,7 @@ export default function AssistantPage({
         </BreadcrumbItem>
         <BreadcrumbItem isCurrentPage>
           <BreadcrumbLink href="" ml={2} mr={2}>
-            Assistant {params.assistantId}
+            Assistant {params.assistantAddress}
           </BreadcrumbLink>
         </BreadcrumbItem>
       </Breadcrumb>
