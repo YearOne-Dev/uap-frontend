@@ -116,7 +116,7 @@ const URDSetup: React.FC = () => {
             _active={{ bg: 'orange.700' }}
             onClick={handleInstallUAP}
           >
-            Give Permissions
+            Install Protocol
           </Button>
         </HStack>
       </VStack>
