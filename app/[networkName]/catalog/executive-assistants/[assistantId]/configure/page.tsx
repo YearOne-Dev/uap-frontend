@@ -1,5 +1,5 @@
 'use client';
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   Box,
   Breadcrumb,
@@ -18,7 +18,7 @@ import SignInBox from '@/components/SignInBox';
 import { getNetwork } from '@/utils/utils';
 import { getChainIdByUrlName } from '@/utils/universalProfile';
 import { useNetwork } from '@/contexts/NetworkContext';
-import TransactionSelector from '@/components/SetupAssistant';
+import { doesControllerHaveMissingPermissions } from '@/utils/configDataKeyValueStore';
 
 export default function ExecutiveAssistantConfigurePage({
   params,
@@ -27,11 +27,27 @@ export default function ExecutiveAssistantConfigurePage({
 }) {
   const { networkName } = params;
   const networkUrlId = getChainIdByUrlName(params.networkName);
-  const { network } = useNetwork();
   const { open } = useWeb3Modal();
 
   const { address, chainId: walletNetworkId } = useWeb3ModalAccount();
   // todo validate that id from url is a valid assistant id
+
+  useEffect(() => {
+    if (!address) {
+      return;
+    }
+    // todo:
+    // check if there are missing permissions for urd even if installed, on page load
+    // const hasMissingPermissions = async () => {
+    // const missingPermissions = await doesControllerHaveMissingPermissions(
+    //     mainUPController, // TODO: where to get this from?
+    //     address
+    //   );
+    //   return missingPermissions.length > 0;
+    // }
+
+    // check if URD is installed on page load
+  }, []);
 
   const breadCrumbs = (
     <>
@@ -102,7 +118,7 @@ export default function ExecutiveAssistantConfigurePage({
     }
 
     // todo if URD is set, show URDSetup
-    // if(!urd) {
+    // if(missing permissions or !urd) {
     // return <TransactionSelector />;
 
     // }

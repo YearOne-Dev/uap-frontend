@@ -1,7 +1,80 @@
 import React from 'react';
-import { Box, Button, HStack, Text, VStack } from '@chakra-ui/react';
+import { Box, Button, HStack, Text, useToast, VStack } from '@chakra-ui/react';
+import { BrowserProvider, Eip1193Provider, verifyMessage } from 'ethers';
+import {
+  toggleUniveralAssistantsSubscribe,
+  updateBECPermissions,
+} from '@/utils/configDataKeyValueStore';
+import { SiweMessage } from 'siwe';
+import {
+  useWeb3ModalAccount,
+  useWeb3ModalProvider,
+} from '@web3modal/ethers/react';
+import { useNetwork } from '@/contexts/NetworkContext';
 
 const URDSetup: React.FC = () => {
+  const toast = useToast({ position: 'bottom-left' });
+  const { walletProvider } = useWeb3ModalProvider();
+  const provider = new BrowserProvider(walletProvider as Eip1193Provider);
+  const { address } = useWeb3ModalAccount();
+  const { network } = useNetwork();
+
+  const handleUpdateBECPermissions = async () => {
+    try {
+      const upAddress = address as string;
+      const signer = await provider.getSigner(upAddress);
+      // Assuming the user is interacting with their own UP// Prepare a message with the SIWE-specific format
+      const siweMessage = new SiweMessage({
+        domain: window.location.host, // Domain requesting the signing
+        uri: window.location.origin,
+        address: upAddress, // Address performing the signing
+        statement:
+          'Signing this message will enable the Universal Assistants Catalog to allow your UP Browser Extension to manage Assistant configurations.', // Human-readable assertion the user signs  // URI from the resource that is the subject of the signature
+        version: '1', // Current version of the SIWE Message
+        chainId: network.chainId, // Chain ID to which the session is bound to
+        resources: [`${window.location.origin}/terms`], // Authentication resource as part of authentication by the relying party
+      }).prepareMessage();
+      // Request the extension to sign the message
+      const signature = await signer.signMessage(siweMessage);
+      const mainUPController = verifyMessage(siweMessage, signature);
+      await updateBECPermissions(provider, upAddress, mainUPController!);
+      toast({
+        title: 'Success',
+        description: 'Permissions granted.',
+        status: 'success',
+        duration: 5000,
+        isClosable: true,
+      });
+    } catch (error: any) {
+      console.error('Error updating permissions', error);
+      toast({
+        title: 'Error',
+        description: `Error setting UAPTypeConfig: ${error.message}`,
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+  };
+
+  const handleInstallUAP = async () => {
+    const upAddress = address as string;
+    await toggleUniveralAssistantsSubscribe(
+      provider,
+      upAddress,
+      network.protocolAddress,
+      network.defaultURDUP,
+      false
+    );
+    toast({
+      title: 'Success',
+      description: 'Universal Assistant Protocol installed.',
+      status: 'success',
+      duration: 5000,
+      isClosable: true,
+    });
+  };
+
   return (
     <Box textAlign="center" maxWidth="600px" mx="auto" mt={8}>
       <Text fontSize="lg" fontWeight="semibold" mb={4}>
@@ -23,6 +96,7 @@ const URDSetup: React.FC = () => {
             color="white"
             _hover={{ bg: 'orange.600' }}
             _active={{ bg: 'orange.700' }}
+            onClick={handleUpdateBECPermissions}
           >
             Give Permissions
           </Button>
@@ -40,8 +114,9 @@ const URDSetup: React.FC = () => {
             color="white"
             _hover={{ bg: 'orange.600' }}
             _active={{ bg: 'orange.700' }}
+            onClick={handleInstallUAP}
           >
-            Give Permissions
+            Install Protocol
           </Button>
         </HStack>
       </VStack>
