@@ -16,7 +16,6 @@ import TransactionTypeBlock, {
   transactionTypeMap,
 } from './TransactionTypeBlock';
 import { BrowserProvider, Eip1193Provider } from 'ethers';
-import ERC725 from '@erc725/erc725.js';
 import {
   customEncodeAddresses,
   generateMappingKey,
@@ -26,14 +25,11 @@ import {
   useWeb3ModalAccount,
   useWeb3ModalProvider,
 } from '@web3modal/ethers/react';
-import { LSP1_TYPE_IDS } from '@lukso/lsp-smart-contracts';
-import { useNetwork } from '@/contexts/NetworkContext';
 
 const TransactionSelector = (props: { assistantAddress: string }) => {
   const [selectedTransactions, setSelectedTransactions] = useState<string[]>(
     []
   );
-  const { network } = useNetwork();
   const [destinationAddress, setDestinationAddress] = useState<string>('');
   const [isValidAddress, setIsValidAddress] = useState<boolean>(true);
   const toast = useToast({ position: 'bottom-left' });
