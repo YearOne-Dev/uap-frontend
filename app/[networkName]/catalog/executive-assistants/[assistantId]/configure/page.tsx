@@ -18,7 +18,6 @@ import SignInBox from '@/components/SignInBox';
 import { getNetwork } from '@/utils/utils';
 import { getChainIdByUrlName } from '@/utils/universalProfile';
 import { useNetwork } from '@/contexts/NetworkContext';
-import TransactionSelector from '@/components/SetupAssistant';
 
 export default function ExecutiveAssistantConfigurePage({
   params,
@@ -27,7 +26,6 @@ export default function ExecutiveAssistantConfigurePage({
 }) {
   const { networkName } = params;
   const networkUrlId = getChainIdByUrlName(params.networkName);
-  const { network } = useNetwork();
   const { open } = useWeb3Modal();
 
   const { address, chainId: walletNetworkId } = useWeb3ModalAccount();
