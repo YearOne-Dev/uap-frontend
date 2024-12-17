@@ -44,10 +44,11 @@ import { ERC725__factory } from '@/types';
 import { useNetwork } from '@/contexts/NetworkContext';
 import WalletNetworkSelectorButton from '@/components/AppNetworkSelectorDropdown';
 import { getChainIdByUrlName } from '@/utils/universalProfile';
+import { useProfile } from '@/contexts/ProfileContext';
 
 const UAPConfigPage = ({ params }: { params: { networkName: string } }) => {
   const networkUrlId = getChainIdByUrlName(params.networkName);
-
+  const { setMainUPController } = useProfile();
   const toast = useToast({ position: 'bottom-left' });
   const {
     address,
@@ -123,6 +124,7 @@ const UAPConfigPage = ({ params }: { params: { networkName: string } }) => {
       // Request the extension to sign the message
       const signature = await signer.signMessage(siweMessage);
       const mainUPController = verifyMessage(siweMessage, signature);
+      setMainUPController(mainUPController);
       console.log('signer:', signer);
       console.log('upAddress:', upAddress);
       console.log('mainController:', mainUPController);
