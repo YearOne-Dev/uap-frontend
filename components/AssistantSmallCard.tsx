@@ -3,9 +3,9 @@ import { Badge, Box, Flex, Image, Text } from '@chakra-ui/react';
 import { ExecutiveAssistant, ScreenerAssistant } from '@/constants/CustomTypes';
 
 // todo: link: hidratation issue
-const AssistantSmallCard: React.FC<{ screener: ExecutiveAssistant | ScreenerAssistant  }> = ({
-  screener,
-}) => {
+const AssistantSmallCard: React.FC<{
+  screener: ExecutiveAssistant | ScreenerAssistant;
+}> = ({ screener }) => {
   return (
     <Flex
       border="1px solid #2C5765"

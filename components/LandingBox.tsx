@@ -2,7 +2,10 @@
 import React from 'react';
 import { Flex, Image, Text, VStack } from '@chakra-ui/react';
 import { useWeb3ModalAccount } from '@web3modal/ethers/react';
-import { curationCheckerAssistant, forwarderAssistant } from '@/constants/dummyData';
+import {
+  curationCheckerAssistant,
+  forwarderAssistant,
+} from '@/constants/dummyData';
 import AssistantSmallCard from './AssistantSmallCard';
 
 const LandingBox = () => {
@@ -58,7 +61,7 @@ const LandingBox = () => {
           Engage your personal digital assistant
         </Text>
       </VStack>
-      <Flex mt='20px' gap='5'>
+      <Flex mt="20px" gap="5">
         <AssistantSmallCard screener={curationCheckerAssistant} />
         <AssistantSmallCard screener={forwarderAssistant} />
       </Flex>

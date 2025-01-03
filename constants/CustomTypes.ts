@@ -9,7 +9,7 @@ export type AbstractAssistant = {
   iconPath: string;
   links: Link[];
   creatorAddress: string;
-}
+};
 
 export type ExecutiveAssistant = AbstractAssistant & {
   assistantType: 'Executive';
