@@ -3,17 +3,28 @@ import React from 'react';
 import { Box, Flex } from '@chakra-ui/react';
 import Breadcrumbs from '@/components/Breadcrumbs';
 
-export default function CatalogPage({
+export default function AssistantPage({
   params,
 }: {
-  params: { networkName: string };
+  params: { assistantAddress: string; networkName: string };
 }) {
+  const { networkName } = params;
+
   const breadCrumbs = Breadcrumbs({
     items: [
       { name: 'UPAC', href: '/' },
-      { name: 'Catalog', href: `/${params.networkName}/catalog` },
+      { name: 'Catalog', href: `/${networkName}/catalog` },
+      {
+        name: 'Screeners',
+        href: `/${networkName}/catalog/screener-assistants`,
+      },
+      {
+        name: `Screener ${params.assistantAddress}`,
+        href: `/${networkName}/catalog/screener-assistants/${params.assistantAddress}`,
+      },
     ],
   });
+
   return (
     <>
       {breadCrumbs}
@@ -26,7 +37,7 @@ export default function CatalogPage({
         mt={4}
       >
         <Box flex="1" w={'100%'} maxWidth="800px">
-          CATALOG PAGE
+          CATALOG SCREENER ASSISTANT PAGE
         </Box>
       </Flex>
     </>

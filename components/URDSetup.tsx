@@ -11,6 +11,7 @@ import {
   useWeb3ModalProvider,
 } from '@web3modal/ethers/react';
 import { useNetwork } from '@/contexts/NetworkContext';
+import { useProfile } from '@/contexts/ProfileContext';
 
 const URDSetup: React.FC = () => {
   const toast = useToast({ position: 'bottom-left' });
@@ -18,6 +19,7 @@ const URDSetup: React.FC = () => {
   const provider = new BrowserProvider(walletProvider as Eip1193Provider);
   const { address } = useWeb3ModalAccount();
   const { network } = useNetwork();
+  const { setMainUPController } = useProfile();
 
   const handleUpdateBECPermissions = async () => {
     try {
@@ -37,6 +39,7 @@ const URDSetup: React.FC = () => {
       // Request the extension to sign the message
       const signature = await signer.signMessage(siweMessage);
       const mainUPController = verifyMessage(siweMessage, signature);
+      setMainUPController(mainUPController);
       await updateBECPermissions(provider, upAddress, mainUPController!);
       toast({
         title: 'Success',

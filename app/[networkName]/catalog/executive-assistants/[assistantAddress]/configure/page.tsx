@@ -1,15 +1,6 @@
 'use client';
 import React, { useEffect } from 'react';
-import {
-  Box,
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  Button,
-  Flex,
-  Text,
-  VStack,
-} from '@chakra-ui/react';
+import { Box, Button, Flex, Text, VStack } from '@chakra-ui/react';
 import AssistantInfo from '@/components/AssistantInfo';
 import { forwarderAssistant } from '@/constants/dummyData';
 import URDSetup from '@/components/URDSetup';
@@ -18,8 +9,13 @@ import SignInBox from '@/components/SignInBox';
 import { getNetwork } from '@/utils/utils';
 import { getChainIdByUrlName } from '@/utils/universalProfile';
 import { useNetwork } from '@/contexts/NetworkContext';
-import { doesControllerHaveMissingPermissions } from '@/utils/configDataKeyValueStore';
-import TransactionSelector from '@/components/SetupAssistant';
+import {
+  doesControllerHaveMissingPermissions,
+  isDelegateAlreadySet,
+} from '@/utils/configDataKeyValueStore';
+import { useProfile } from '@/contexts/ProfileContext';
+import SetupAssistant from '@/components/SetupAssistant';
+import Breadcrumbs from '@/components/Breadcrumbs';
 
 export default function ExecutiveAssistantConfigurePage({
   params,
@@ -29,70 +25,74 @@ export default function ExecutiveAssistantConfigurePage({
   const { networkName } = params;
   const networkUrlId = getChainIdByUrlName(params.networkName);
   const { open } = useWeb3Modal();
+  const { mainUPController } = useProfile();
+  const [isMissingPermissions, setIsMissingPermissions] = React.useState(false);
+  const [isURDInstalled, setIsURDInstalled] = React.useState(false);
+  const { network } = useNetwork();
 
   const { address, chainId: walletNetworkId } = useWeb3ModalAccount();
   // todo validate that id from url is a valid assistant id
 
   useEffect(() => {
-    if (!address) {
+    console.log('mainUPController', mainUPController);
+
+    if (!address || !mainUPController) {
       return;
     }
-    // todo:
-    // check if there are missing permissions for urd even if installed, on page load
-    // const hasMissingPermissions = async () => {
-    // const missingPermissions = await doesControllerHaveMissingPermissions(
-    //     mainUPController, // TODO: where to get this from?
-    //     address
-    //   );
-    //   return missingPermissions.length > 0;
-    // }
 
-    // check if URD is installed on page load
-  }, []);
+    const getMissingPermissions = async () => {
+      try {
+        const missingPermissions = await doesControllerHaveMissingPermissions(
+          mainUPController,
+          address
+        );
+        setIsMissingPermissions(missingPermissions.length > 0);
+      } catch (error) {
+        console.error('Error checking permissions', error);
+      }
+    };
 
-  const breadCrumbs = (
-    <>
-      <Breadcrumb
-        separator="/"
-        color={'uap.orange'}
-        fontFamily={'Tomorrow'}
-        fontWeight={600}
-      >
-        <BreadcrumbItem>
-          <BreadcrumbLink href="/">#</BreadcrumbLink>
-        </BreadcrumbItem>
-        <BreadcrumbItem>
-          <BreadcrumbLink href={`${networkName}/catalog`} ml={2} mr={2}>
-            Catalog
-          </BreadcrumbLink>
-        </BreadcrumbItem>
-        <BreadcrumbItem>
-          <BreadcrumbLink
-            href={`/${networkName}/catalog/executive-assistants`}
-            ml={2}
-            mr={2}
-          >
-            Executive Assistants
-          </BreadcrumbLink>
-        </BreadcrumbItem>
-        <BreadcrumbItem>
-          <BreadcrumbLink
-            href={`/${networkName}/catalog/executive-assistants/${params.assistantAddress}`}
-            ml={2}
-            mr={2}
-          >
-            Assistant {params.assistantAddress}
-          </BreadcrumbLink>
-        </BreadcrumbItem>
-        <BreadcrumbItem isCurrentPage>
-          <BreadcrumbLink href="" ml={2} mr={2}>
-            Configure
-          </BreadcrumbLink>
-        </BreadcrumbItem>
-      </Breadcrumb>
-    </>
-  );
+    const checkURDInstalled = async () => {
+      console.log('checkURDInstalled called');
+      try {
+        const urdInstalled = await isDelegateAlreadySet(
+          address,
+          network.protocolAddress
+        );
+        console.log('urdInstalled', urdInstalled);
+        setIsURDInstalled(urdInstalled);
+      } catch (error) {
+        console.error('Error checking assistant installation', error);
+      }
+    };
 
+    checkURDInstalled();
+    getMissingPermissions();
+  }, [
+    address,
+    mainUPController,
+    network.protocolAddress,
+    setIsMissingPermissions,
+  ]);
+
+  const breadCrumbs = Breadcrumbs({
+    items: [
+      { name: 'UPAC', href: '/' },
+      { name: 'Catalog', href: `/${networkName}/catalog` },
+      {
+        name: 'Executives',
+        href: `/${networkName}/catalog/executive-assistants`,
+      },
+      {
+        name: `Assistant ${params.assistantAddress}`,
+        href: `/${networkName}/catalog/executive-assistants/${params.assistantAddress}`,
+      },
+      {
+        name: 'Configure',
+        href: `/${networkName}/catalog/executive-assistants/${params.assistantAddress}/configure`,
+      },
+    ],
+  });
   const renderConfigureBody = () => {
     if (!walletNetworkId || !address) {
       return <SignInBox boxText={'Sign in to set UAPTypeConfig'} />;
@@ -117,17 +117,18 @@ export default function ExecutiveAssistantConfigurePage({
         </Flex>
       );
     }
+    console.log('renderConfigureBody');
+    console.log('isMissingPermissions', isMissingPermissions);
+    console.log('mainUPController', mainUPController);
+    console.log('isURDInstalled', isURDInstalled);
+    if (!mainUPController || isMissingPermissions || !isURDInstalled) {
+      // todo pass isMissingPermissions to URDSetup
+      return <URDSetup />;
+    }
 
-    // todo if URD is set, show URDSetup
     return (
-      <TransactionSelector
-        assistantAddress={params.assistantAddress as string}
-      />
+      <SetupAssistant assistantAddress={params.assistantAddress as string} />
     );
-
-    // if(missing permissions or !urd) {
-    // return <URDSetup />;
-    // }
   };
 
   return (

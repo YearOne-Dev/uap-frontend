@@ -2,9 +2,6 @@
 import React, { ChangeEvent, useEffect, useState } from 'react';
 import {
   Box,
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
   Button,
   Flex,
   FormControl,
@@ -44,10 +41,11 @@ import { ERC725__factory } from '@/types';
 import { useNetwork } from '@/contexts/NetworkContext';
 import WalletNetworkSelectorButton from '@/components/AppNetworkSelectorDropdown';
 import { getChainIdByUrlName } from '@/utils/universalProfile';
+import { useProfile } from '@/contexts/ProfileContext';
+import Breadcrumbs from '@/components/Breadcrumbs';
 
 const UAPConfigPage = ({ params }: { params: { networkName: string } }) => {
   const networkUrlId = getChainIdByUrlName(params.networkName);
-
   const toast = useToast({ position: 'bottom-left' });
   const {
     address,
@@ -123,12 +121,7 @@ const UAPConfigPage = ({ params }: { params: { networkName: string } }) => {
       // Request the extension to sign the message
       const signature = await signer.signMessage(siweMessage);
       const mainUPController = verifyMessage(siweMessage, signature);
-      console.log('signer:', signer);
-      console.log('upAddress:', upAddress);
-      console.log('mainController:', mainUPController);
-      console.log('step 0');
       await updateBECPermissions(provider, upAddress, mainUPController!);
-      console.log('step 1');
       await toggleUniveralAssistantsSubscribe(
         provider,
         upAddress,
@@ -282,25 +275,12 @@ const UAPConfigPage = ({ params }: { params: { networkName: string } }) => {
     }
   };
 
-  const breadCrumbs = (
-    <>
-      <Breadcrumb
-        separator="/"
-        color={'uap.orange'}
-        fontFamily={'Tomorrow'}
-        fontWeight={600}
-      >
-        <BreadcrumbItem>
-          <BreadcrumbLink href="/">#</BreadcrumbLink>
-        </BreadcrumbItem>
-        <BreadcrumbItem isCurrentPage>
-          <BreadcrumbLink href="" mr={2}>
-            Configure Assistant
-          </BreadcrumbLink>
-        </BreadcrumbItem>
-      </Breadcrumb>
-    </>
-  );
+  const breadCrumbs = Breadcrumbs({
+    items: [
+      { name: 'UPAC', href: '/' },
+      { name: 'Configure Assistant', href: '/urd' },
+    ],
+  });
 
   if (!walletNetworkId || !isUserConnected) {
     return (

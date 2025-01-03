@@ -3,10 +3,10 @@ import React from 'react';
 import { Box, Flex } from '@chakra-ui/react';
 import Breadcrumbs from '@/components/Breadcrumbs';
 
-export default function ScreenerPage({
+export default function ConfigureAssistantPage({
   params,
 }: {
-  params: { networkName: string };
+  params: { assistantAddress: string; networkName: string };
 }) {
   const { networkName } = params;
 
@@ -16,7 +16,15 @@ export default function ScreenerPage({
       { name: 'Catalog', href: `/${networkName}/catalog` },
       {
         name: 'Screeners',
-        href: `/${networkName}/catalog/screerner-assistants`,
+        href: `/${networkName}/catalog/screener-assistants`,
+      },
+      {
+        name: `Screener ${params.assistantAddress}`,
+        href: `/${networkName}/catalog/screener-assistants/${params.assistantAddress}`,
+      },
+      {
+        name: 'Configure',
+        href: `/${networkName}/catalog/screener-assistants/${params.assistantAddress}/configure`,
       },
     ],
   });
@@ -33,7 +41,7 @@ export default function ScreenerPage({
         mt={4}
       >
         <Box flex="1" w={'100%'} maxWidth="800px">
-          CATALOG SCREENER PAGE
+          CATALOG SCREENER ASSISTANT CONFIGURE PAGE
         </Box>
       </Flex>
     </>

@@ -58,7 +58,7 @@ export const toggleUniveralAssistantsSubscribe = async (
   upAccount: string,
   assistantsURD: string,
   defaultURDUP: string,
-  isUsingAssistants: boolean
+  isUsingDefaultURD: boolean
 ) => {
   const signer = await provider.getSigner();
   // 1. Prepare keys and values for setting the Forwarder as the delegate for LSP7 and LSP8
@@ -70,7 +70,7 @@ export const toggleUniveralAssistantsSubscribe = async (
     ERC725YDataKeys.LSP1.LSP1UniversalReceiverDelegatePrefix +
     LSP1_TYPE_IDS.LSP8Tokens_RecipientNotification.slice(2).slice(0, 40);
   const lspDelegateKeys = [URDdataKey, LSP7URDdataKey, LSP8URDdataKey];
-  const lspDelegateValues = isUsingAssistants
+  const lspDelegateValues = isUsingDefaultURD
     ? [defaultURDUP, '0x', '0x']
     : [assistantsURD, '0x', '0x'];
 
@@ -87,7 +87,7 @@ export const toggleUniveralAssistantsSubscribe = async (
   const currentPermissionsData = await upPermissions.getData();
   const currentControllers = currentPermissionsData[0].value as string[];
   let newControllers = [] as string[];
-  const assistantsURDPermissions = !isUsingAssistants
+  const assistantsURDPermissions = !isUsingDefaultURD
     ? upPermissions.encodePermissions({
         SUPER_CALL: true,
         ...DEFAULT_UP_URD_PERMISSIONS,
@@ -99,7 +99,7 @@ export const toggleUniveralAssistantsSubscribe = async (
   newControllers = currentControllers.filter((controller: any) => {
     return getChecksumAddress(controller) !== checkSumAssistantsURDAddress;
   });
-  !isUsingAssistants && newControllers.push(checkSumAssistantsURDAddress);
+  !isUsingDefaultURD && newControllers.push(checkSumAssistantsURDAddress);
 
   const assistantsURDPermissionsData = upPermissions.encodeData([
     // the permission of the beneficiary address
@@ -220,4 +220,38 @@ export const getMissingPermissions = (
     }
   }
   return missingPermissions;
+};
+
+export const isDelegateAlreadySet = async (
+  provider: any,
+  upAddress: string
+): Promise<any> => {
+  const urdData = {
+    lsp7Urd: null as string | null,
+    lsp8Urd: null as string | null,
+  };
+  try {
+    // const UP = new ethers.Contract(
+    //   upAddress as string,
+    //   UniversalProfile.abi,
+    //   provider
+    // );
+    // todo not working
+    const UP = ERC725__factory.connect(upAddress, provider);
+
+    const UPData = await UP.connect(provider.getSigner()).getDataBatch([
+      ERC725YDataKeys.LSP1.LSP1UniversalReceiverDelegatePrefix +
+        LSP1_TYPE_IDS.LSP7Tokens_RecipientNotification.slice(2).slice(0, 40),
+      ERC725YDataKeys.LSP1.LSP1UniversalReceiverDelegatePrefix +
+        LSP1_TYPE_IDS.LSP8Tokens_RecipientNotification.slice(2).slice(0, 40),
+    ]);
+    if (UPData) {
+      urdData.lsp7Urd = getChecksumAddress(UPData[0]);
+      urdData.lsp8Urd = getChecksumAddress(UPData[1]);
+    }
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
+  return urdData && urdData.lsp7Urd && urdData.lsp8Urd;
 };

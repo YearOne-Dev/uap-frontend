@@ -1,15 +1,10 @@
 'use client';
 import React from 'react';
-import {
-  Box,
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  Flex,
-} from '@chakra-ui/react';
+import { Box, Flex } from '@chakra-ui/react';
 import { formatAddress } from '@/utils/utils';
 import ReadConfiguredAssistants from '@/components/ReadConfiguredAssistants';
 import { getChainIdByUrlName } from '@/utils/universalProfile';
+import Breadcrumbs from '@/components/Breadcrumbs';
 
 export default function ProfileConfigurePage({
   params,
@@ -28,30 +23,16 @@ export default function ProfileConfigurePage({
     }
   };
 
-  const breadCrumbs = (
-    <>
-      <Breadcrumb
-        separator="/"
-        color={'uap.orange'}
-        fontFamily={'Tomorrow'}
-        fontWeight={600}
-      >
-        <BreadcrumbItem>
-          <BreadcrumbLink href="/">#</BreadcrumbLink>
-        </BreadcrumbItem>
-        <BreadcrumbItem>
-          <BreadcrumbLink href={`/${network}/profile/${address}`} ml={2} mr={2}>
-            Profile {formatAddressForBreadcrumbs(address)}
-          </BreadcrumbLink>
-        </BreadcrumbItem>
-        <BreadcrumbItem isCurrentPage>
-          <BreadcrumbLink href="" ml={2} mr={2}>
-            Configure
-          </BreadcrumbLink>
-        </BreadcrumbItem>
-      </Breadcrumb>
-    </>
-  );
+  const breadCrumbs = Breadcrumbs({
+    items: [
+      { name: 'UPAC', href: '/' },
+      { name: 'Profile', href: `/${networkName}/profile/${address}` },
+      {
+        name: 'Configure',
+        href: `/${networkName}/profile/${address}/configure`,
+      },
+    ],
+  });
 
   return (
     <>

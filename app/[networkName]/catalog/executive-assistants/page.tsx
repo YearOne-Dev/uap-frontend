@@ -1,14 +1,7 @@
 'use client';
 import React from 'react';
-import {
-  Box,
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  Flex,
-} from '@chakra-ui/react';
-import WalletNetworkSelectorButton from '@/components/AppNetworkSelectorDropdown';
-import { getChainIdByUrlName } from '@/utils/universalProfile';
+import { Box, Flex } from '@chakra-ui/react';
+import Breadcrumbs from '@/components/Breadcrumbs';
 
 export default function ExecutiveAssistantsPage({
   params,
@@ -16,31 +9,16 @@ export default function ExecutiveAssistantsPage({
   params: { networkName: string };
 }) {
   const { networkName } = params;
-
-  const breadCrumbs = (
-    <>
-      <Breadcrumb
-        separator="/"
-        color={'uap.orange'}
-        fontFamily={'Tomorrow'}
-        fontWeight={600}
-      >
-        <BreadcrumbItem>
-          <BreadcrumbLink href="/">#</BreadcrumbLink>
-        </BreadcrumbItem>
-        <BreadcrumbItem>
-          <BreadcrumbLink href={`/${networkName}/catalog`} ml={2} mr={2}>
-            Catalog
-          </BreadcrumbLink>
-        </BreadcrumbItem>
-        <BreadcrumbItem isCurrentPage>
-          <BreadcrumbLink href="" ml={2} mr={2}>
-            Executive Assistants
-          </BreadcrumbLink>
-        </BreadcrumbItem>
-      </Breadcrumb>
-    </>
-  );
+  const breadCrumbs = Breadcrumbs({
+    items: [
+      { name: 'UPAC', href: '/' },
+      { name: 'Catalog', href: `/${networkName}/catalog` },
+      {
+        name: 'Executives',
+        href: `/${networkName}/catalog/executive-assistants`,
+      },
+    ],
+  });
 
   return (
     <>

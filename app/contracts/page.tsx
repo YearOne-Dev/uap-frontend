@@ -2,9 +2,6 @@
 import React from 'react';
 import {
   Box,
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
   Button,
   Flex,
   Heading,
@@ -14,27 +11,21 @@ import {
 import { supportedNetworks } from '@/constants/supportedNetworks';
 import { FaExternalLinkAlt } from 'react-icons/fa';
 import { useNetwork } from '@/contexts/NetworkContext';
+import Breadcrumbs from '@/components/Breadcrumbs';
 
 export default function Contracts() {
   const { network } = useNetwork();
+  const breadCrumbs = Breadcrumbs({
+    items: [
+      { name: 'UPAC', href: '/' },
+      { name: 'Contracts', href: '/contracts' },
+    ],
+  });
+
   return (
     <>
       <Flex w={'100%'} justifyContent={'flex-start'}>
-        <Breadcrumb
-          separator="/"
-          color={'uap.orange'}
-          fontFamily={'Tomorrow'}
-          fontWeight={600}
-        >
-          <BreadcrumbItem>
-            <BreadcrumbLink href="/">#</BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbItem isCurrentPage>
-            <BreadcrumbLink href="" mr={2}>
-              Contracts
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-        </Breadcrumb>
+        {breadCrumbs}
       </Flex>
       <Flex
         display="flex"

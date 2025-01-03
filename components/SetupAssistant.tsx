@@ -19,14 +19,16 @@ import { BrowserProvider, Eip1193Provider } from 'ethers';
 import {
   customEncodeAddresses,
   generateMappingKey,
+  toggleUniveralAssistantsSubscribe,
 } from '@/utils/configDataKeyValueStore';
 import { ERC725__factory } from '@/types';
 import {
   useWeb3ModalAccount,
   useWeb3ModalProvider,
 } from '@web3modal/ethers/react';
+import { useNetwork } from '@/contexts/NetworkContext';
 
-const TransactionSelector = (props: { assistantAddress: string }) => {
+const SetupAssistant = (props: { assistantAddress: string }) => {
   const [selectedTransactions, setSelectedTransactions] = useState<string[]>(
     []
   );
@@ -35,6 +37,8 @@ const TransactionSelector = (props: { assistantAddress: string }) => {
   const toast = useToast({ position: 'bottom-left' });
   const { walletProvider } = useWeb3ModalProvider();
   const { address } = useWeb3ModalAccount();
+  const { network } = useNetwork();
+  const provider = new BrowserProvider(walletProvider as Eip1193Provider);
 
   const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -78,6 +82,36 @@ const TransactionSelector = (props: { assistantAddress: string }) => {
       toast({
         title: 'Error',
         description: `Error setting UAPTypeConfig: ${error.message}`,
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+  };
+
+  const handleUnsubscribe = async () => {
+    // todo find a better place for this
+    try {
+      const upAddress = address as string;
+      await toggleUniveralAssistantsSubscribe(
+        provider,
+        upAddress,
+        network.protocolAddress,
+        network.defaultURDUP,
+        true
+      );
+      toast({
+        title: 'Success',
+        description: 'Universal Assistant Protocol uninstalled.',
+        status: 'success',
+        duration: 5000,
+        isClosable: true,
+      });
+    } catch (error: any) {
+      console.error('Error uninstalling UAP', error);
+      toast({
+        title: 'Error',
+        description: `Error uninstalling UAP: ${error.message}`,
         status: 'error',
         duration: 5000,
         isClosable: true,
@@ -147,9 +181,19 @@ const TransactionSelector = (props: { assistantAddress: string }) => {
         >
           Save
         </Button>
+        <Button
+          size="sm"
+          bg="orange.500"
+          color="white"
+          _hover={{ bg: 'orange.600' }}
+          _active={{ bg: 'orange.700' }}
+          onClick={handleUnsubscribe}
+        >
+          Unsubscribe URD
+        </Button>
       </Grid>
     </Box>
   );
 };
 
-export default TransactionSelector;
+export default SetupAssistant;

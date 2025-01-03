@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-  Box,
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  Flex,
-  Text,
-} from '@chakra-ui/react';
+import { Box, Flex, Text } from '@chakra-ui/react';
 import ScreeningOptionCard from '@/components/ScreeningOptionCard';
 import AssistantInfo from '@/components/AssistantInfo';
 import SupportedTransactions from '@/components/SupportedTransactions';
@@ -14,34 +7,26 @@ import {
   curationCheckerAssistant,
   forwarderAssistant,
 } from '@/constants/dummyData';
+import Breadcrumbs from '@/components/Breadcrumbs';
 
 const ExecutiveAssistantPage: React.FC<{
   params: { networkName: string; assistantAddress: string };
 }> = ({ params }) => {
   const { networkName } = params;
-
-  const breadCrumbs = (
-    <Breadcrumb separator="/" color="uap.orange" fontWeight="600">
-      <BreadcrumbItem>
-        <BreadcrumbLink href="/">#</BreadcrumbLink>
-      </BreadcrumbItem>
-      <BreadcrumbItem>
-        <BreadcrumbLink href={`/${networkName}/catalog`}>
-          Catalog
-        </BreadcrumbLink>
-      </BreadcrumbItem>
-      <BreadcrumbItem>
-        <BreadcrumbLink href={`/${networkName}/catalog/executive-assistants`}>
-          Executive Assistants
-        </BreadcrumbLink>
-      </BreadcrumbItem>
-      <BreadcrumbItem isCurrentPage>
-        <BreadcrumbLink href="">
-          Assistant {params.assistantAddress}
-        </BreadcrumbLink>
-      </BreadcrumbItem>
-    </Breadcrumb>
-  );
+  const breadCrumbs = Breadcrumbs({
+    items: [
+      { name: 'UPAC', href: '/' },
+      { name: 'Catalog', href: `/${networkName}/catalog` },
+      {
+        name: 'Executives',
+        href: `/${networkName}/catalog/executive-assistants`,
+      },
+      {
+        name: `Assistant ${params.assistantAddress}`,
+        href: `/${networkName}/catalog/executive-assistants/${params.assistantAddress}`,
+      },
+    ],
+  });
 
   return (
     <Box p={4} w="100%">
