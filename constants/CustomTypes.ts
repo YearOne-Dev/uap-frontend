@@ -2,26 +2,22 @@ export type Link = {
   name: string;
   url: string;
 };
-
-export type ExecutiveAssistant = {
+export type AbstractAssistant = {
   address: string;
   name: string;
   description: string;
   iconPath: string;
   links: Link[];
-  assistantType: 'Executive';
   creatorAddress: string;
+}
+
+export type ExecutiveAssistant = AbstractAssistant & {
+  assistantType: 'Executive';
   supportedTransactionTypes: string[];
   configParams: { destinationAddress: string };
 };
 
-export type ScreenerAssistant = {
-  address: string;
-  name: string;
-  description: string;
-  iconPath: string;
-  links: Link[];
+export type ScreenerAssistant = AbstractAssistant & {
   assistantType: 'Screener';
-  creatorAddress: string;
   configParams: { curatedListAddress: string };
 };

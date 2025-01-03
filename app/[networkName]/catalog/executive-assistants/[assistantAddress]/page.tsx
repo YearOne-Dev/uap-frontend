@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Flex, Text } from '@chakra-ui/react';
-import ScreeningOptionCard from '@/components/ScreeningOptionCard';
+import AssistantSmallCard from '@/components/AssistantSmallCard';
 import AssistantInfo from '@/components/AssistantInfo';
 import SupportedTransactions from '@/components/SupportedTransactions';
 import {
@@ -54,7 +54,7 @@ const ExecutiveAssistantPage: React.FC<{
             </Text>
           </Flex>
 
-          <ScreeningOptionCard screener={curationCheckerAssistant} />
+          <AsisstantSmallCard screener={curationCheckerAssistant} />
         </Flex>
         <Box border="1px" borderColor="gray.200" />
       </Flex>

@@ -1,18 +1,9 @@
 import React from 'react';
 import { Badge, Box, Flex, Image, Text } from '@chakra-ui/react';
+import { ExecutiveAssistant, ScreenerAssistant } from '@/constants/CustomTypes';
 
-type ScreenerAssistant = {
-  address: string;
-  name: string;
-  description: string;
-  iconPath: string;
-  links: { name: string; url: string }[];
-  assistantType: 'Screener';
-  creatorAddress: string;
-  configParams: { curatedListAddress: string };
-};
-
-const ScreeningOptionCard: React.FC<{ screener: ScreenerAssistant }> = ({
+// todo: link: hidratation issue
+const AssistantSmallCard: React.FC<{ screener: ExecutiveAssistant | ScreenerAssistant  }> = ({
   screener,
 }) => {
   return (
@@ -64,4 +55,4 @@ const ScreeningOptionCard: React.FC<{ screener: ScreenerAssistant }> = ({
   );
 };
 
-export default ScreeningOptionCard;
+export default AssistantSmallCard;

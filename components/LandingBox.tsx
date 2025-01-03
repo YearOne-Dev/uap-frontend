@@ -1,20 +1,20 @@
 'use client';
 import React from 'react';
-import { Button, Flex, Image, Text, VStack } from '@chakra-ui/react';
-import Link from 'next/link';
+import { Flex, Image, Text, VStack } from '@chakra-ui/react';
 import { useWeb3ModalAccount } from '@web3modal/ethers/react';
-import { getUrlNameByChainId } from '@/utils/universalProfile';
+import { curationCheckerAssistant, forwarderAssistant } from '@/constants/dummyData';
+import AssistantSmallCard from './AssistantSmallCard';
 
 const LandingBox = () => {
   const { isConnected, chainId } = useWeb3ModalAccount();
   const networkId = isConnected && chainId ? chainId : 42;
-  const urlName = getUrlNameByChainId(networkId);
 
   return (
     <Flex
       minHeight={'inherit'}
       alignItems={'center'}
       justifyContent={'center'}
+      flexDirection={'column'}
       w={'100%'}
     >
       <VStack textAlign="center" spacing={0}>
@@ -57,21 +57,11 @@ const LandingBox = () => {
         >
           Engage your personal digital assistant
         </Text>
-        <Flex gap={4} mt="30px">
-          <Link href={`/${urlName}/urd`}>
-            <Button
-              color={'uap.grey'}
-              borderRadius="10px"
-              border="1px solid var(--chakra-colors-uap-grey)"
-              fontFamily={'Montserrat'}
-              fontWeight={500}
-              backgroundColor={'uap.yellow'}
-            >
-              Configure
-            </Button>
-          </Link>
-        </Flex>
       </VStack>
+      <Flex mt='20px' gap='5'>
+        <AssistantSmallCard screener={curationCheckerAssistant} />
+        <AssistantSmallCard screener={forwarderAssistant} />
+      </Flex>
     </Flex>
   );
 };

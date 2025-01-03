@@ -2,6 +2,8 @@
 import React from 'react';
 import { Box, Flex } from '@chakra-ui/react';
 import Breadcrumbs from '@/components/Breadcrumbs';
+import AssistantInfo from '@/components/AssistantInfo';
+import { forwarderAssistant } from '@/constants/dummyData';
 
 export default function CatalogPage({
   params,
@@ -26,7 +28,10 @@ export default function CatalogPage({
         mt={4}
       >
         <Box flex="1" w={'100%'} maxWidth="800px">
-          CATALOG PAGE
+          <Box>Executive Assistants</Box>
+          <AssistantInfo assistant={forwarderAssistant} />
+
+          <Box>Screener Assistants</Box>
         </Box>
       </Flex>
     </>
