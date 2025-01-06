@@ -27,7 +27,6 @@ export default function CatalogPage({
         w="100%"
         flexDirection="column"
         flexWrap="wrap"
-        // px={[4, 8, 16]} // Responsive padding for small, medium, and large screens
       >
         <Flex
           gap={[4, 8, 20]} // Adjust gap based on screen size
