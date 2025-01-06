@@ -12,6 +12,7 @@ export const forwarderAssistant: ExecutiveAssistant = {
   creatorAddress: '0x...',
   supportedTransactionTypes: ['LSP7Tokens', 'LSP8Tokens', 'LYX'],
   configParams: { destinationAddress: '0x...' },
+  chainId: 4201,
 };
 
 export const curationCheckerAssistant: ScreenerAssistant = {
@@ -25,4 +26,5 @@ export const curationCheckerAssistant: ScreenerAssistant = {
   supportedTransactionTypes: ['LSP7Tokens', 'LSP8Tokens', 'LYX'],
   creatorAddress: '0x...',
   configParams: { curatedListAddress: '0x...' },
+  chainId: 4201,
 };

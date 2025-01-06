@@ -10,6 +10,7 @@ export type AbstractAssistant = {
   links: Link[];
   creatorAddress: string;
   supportedTransactionTypes: string[];
+  chainId: number;
 };
 
 export type ExecutiveAssistant = AbstractAssistant & {

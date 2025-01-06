@@ -1,10 +1,28 @@
 import React from 'react';
 import { Badge, Box, Button, Flex, Image, Text } from '@chakra-ui/react';
 import { ExecutiveAssistant, ScreenerAssistant } from '@/constants/CustomTypes';
+import { getNetwork } from '@/utils/utils';
 
-const AssistantInfo: React.FC<{
+interface AssistantInfoProps {
   assistant: ExecutiveAssistant | ScreenerAssistant;
-}> = ({ assistant }) => {
+  includeLink?: boolean;
+}
+
+const AssistantInfo = ({
+  assistant,
+  includeLink = false,
+}: AssistantInfoProps) => {
+  let link = '';
+  if (includeLink) {
+    const network = getNetwork(assistant.chainId);
+    link += '/' + network.urlName;
+    link += '/catalog';
+    link +=
+      assistant.assistantType === 'Screener'
+        ? '/screener-assistants'
+        : '/executive-assistants';
+    link += `/${assistant.address}`;
+  }
   return (
     <Flex
       p={4}
@@ -50,16 +68,17 @@ const AssistantInfo: React.FC<{
             Year One
           </a>
         </Text>
-        {/* Orange Button at the End */}
+        {includeLink && (
           <Button
             as="a"
-            href='/catalog'
+            href={link}
             colorScheme="orange"
             variant="solid"
             size="sm"
           >
             View Details
           </Button>
+        )}
       </Box>
     </Flex>
   );

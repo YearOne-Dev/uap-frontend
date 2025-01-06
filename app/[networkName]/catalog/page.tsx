@@ -52,7 +52,7 @@ export default function CatalogPage({
               borderRadius={10}
               p={4}
             >
-              <AssistantInfo assistant={forwarderAssistant} />
+              <AssistantInfo assistant={forwarderAssistant} includeLink />
             </Box>
           </Box>
           <Box flex="1">
@@ -71,7 +71,7 @@ export default function CatalogPage({
               borderRadius={10}
               p={4}
             >
-              <AssistantInfo assistant={curationCheckerAssistant} />
+              <AssistantInfo assistant={curationCheckerAssistant} includeLink />
             </Box>
           </Box>
         </Flex>
