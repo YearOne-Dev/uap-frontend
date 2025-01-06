@@ -20,8 +20,8 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items }) => (
     fontWeight={600}
   >
     {items.map((item, index) => (
-      <BreadcrumbItem key={index} isCurrentPage={index === items.length - 1}>
-        <BreadcrumbLink href={item.href} ml={2} mr={2}>
+      <BreadcrumbItem key={index} isCurrentPage={index === items.length - 1} >
+        <BreadcrumbLink href={item.href}>
           {item.name}
         </BreadcrumbLink>
       </BreadcrumbItem>
