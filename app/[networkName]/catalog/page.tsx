@@ -3,7 +3,10 @@ import React from 'react';
 import { Box, Flex } from '@chakra-ui/react';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import AssistantInfo from '@/components/AssistantInfo';
-import { forwarderAssistant } from '@/constants/dummyData';
+import {
+  curationCheckerAssistant,
+  forwarderAssistant,
+} from '@/constants/dummyData';
 
 export default function CatalogPage({
   params,
@@ -21,18 +24,56 @@ export default function CatalogPage({
       {breadCrumbs}
       <Flex
         display="flex"
-        w={'100%'}
-        flexDirection={'column'}
-        flexWrap={'wrap'}
-        gap={4}
-        mt={4}
+        w="100%"
+        flexDirection="column"
+        flexWrap="wrap"
       >
-        <Box flex="1" w={'100%'} maxWidth="800px">
-          <Box>Executive Assistants</Box>
-          <AssistantInfo assistant={forwarderAssistant} />
-
-          <Box>Screener Assistants</Box>
-        </Box>
+        <Flex
+          gap={[4, 8, 20]} // Adjust gap based on screen size
+          flex="1"
+          w="100%"
+          flexDirection={['column', 'column', 'row']} // Stack on smaller screens
+          maxWidth="1400px"
+        >
+          <Box flex="1">
+            <Box
+              color="uap.font"
+              fontFamily="Montserrat"
+              fontSize={['lg', 'xl', '2xl']} // Responsive font size
+              fontWeight={700}
+              mb={4}
+            >
+              Executive Assistants
+            </Box>
+            <Box
+              border="1px solid"
+              borderColor="uap.font"
+              borderRadius={10}
+              p={4}
+            >
+              <AssistantInfo assistant={forwarderAssistant} includeLink />
+            </Box>
+          </Box>
+          <Box flex="1">
+            <Box
+              color="uap.font"
+              fontFamily="Montserrat"
+              fontSize={['lg', 'xl', '2xl']} // Responsive font size
+              fontWeight={700}
+              mb={4}
+            >
+              Screener Assistants
+            </Box>
+            <Box
+              border="1px solid"
+              borderColor="uap.font"
+              borderRadius={10}
+              p={4}
+            >
+              <AssistantInfo assistant={curationCheckerAssistant} includeLink />
+            </Box>
+          </Box>
+        </Flex>
       </Flex>
     </>
   );

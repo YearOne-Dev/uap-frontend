@@ -1,7 +1,6 @@
 'use client';
 import React from 'react';
-import { Flex, Image, Text, VStack } from '@chakra-ui/react';
-import { useWeb3ModalAccount } from '@web3modal/ethers/react';
+import { Flex, Image, Text, VStack, Wrap, WrapItem } from '@chakra-ui/react';
 import {
   curationCheckerAssistant,
   forwarderAssistant,
@@ -9,18 +8,16 @@ import {
 import AssistantSmallCard from './AssistantSmallCard';
 
 const LandingBox = () => {
-  const { isConnected, chainId } = useWeb3ModalAccount();
-  const networkId = isConnected && chainId ? chainId : 42;
-
   return (
     <Flex
-      minHeight={'inherit'}
-      alignItems={'center'}
-      justifyContent={'center'}
-      flexDirection={'column'}
-      w={'100%'}
+      minHeight="inherit"
+      alignItems="center"
+      justifyContent="center"
+      flexDirection="column"
+      w="100%"
+      p={[4, 6, 8]} // Add padding for small to larger screens
     >
-      <VStack textAlign="center" spacing={0}>
+      <VStack textAlign="center" spacing={4}>
         <Image
           src="/logo-uap.png"
           alt="UAP logo"
@@ -28,8 +25,12 @@ const LandingBox = () => {
         />
         <Text
           as="h1"
-          fontFamily={'Tomorrow'}
-          fontSize="5xl"
+          fontFamily="Tomorrow"
+          fontSize={{
+            base: '3xl',
+            sm: '4xl',
+            md: '5xl',
+          }}
           fontWeight="500"
           color="uap.grey"
         >
@@ -49,9 +50,9 @@ const LandingBox = () => {
         <Text
           lineHeight="34px"
           fontSize={{
-            base: 'lg',
-            sm: 'xl',
-            md: '2xl',
+            base: 'md',
+            sm: 'lg',
+            md: 'xl',
           }}
           color="uap.grey"
           fontFamily="Montserrat"
@@ -61,10 +62,23 @@ const LandingBox = () => {
           Engage your personal digital assistant
         </Text>
       </VStack>
-      <Flex mt="20px" gap="5">
-        <AssistantSmallCard assistant={curationCheckerAssistant} />
-        <AssistantSmallCard assistant={forwarderAssistant} />
-      </Flex>
+      {/* Adjust Assistant Cards */}
+      <Wrap
+        mt="20px"
+        spacing={5}
+        justify="center"
+        w="100%" // Full width for cards
+      >
+        <WrapItem>
+          <AssistantSmallCard
+            assistant={curationCheckerAssistant}
+            includeLink
+          />
+        </WrapItem>
+        <WrapItem>
+          <AssistantSmallCard assistant={forwarderAssistant} includeLink />
+        </WrapItem>
+      </Wrap>
     </Flex>
   );
 };

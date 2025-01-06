@@ -12,6 +12,7 @@ export const forwarderAssistant: ExecutiveAssistant = {
   creatorAddress: '0x...',
   supportedTransactionTypes: ['LSP7Tokens', 'LSP8Tokens', 'LYX'],
   configParams: { destinationAddress: '0x...' },
+  chainId: 4201,
 };
 
 export const curationCheckerAssistant: ScreenerAssistant = {
@@ -22,6 +23,8 @@ export const curationCheckerAssistant: ScreenerAssistant = {
   iconPath: 'assets/assistants/curation-checker.svg',
   links: [{ name: 'X', url: 'https://x.com/yearone_io' }],
   assistantType: 'Screener',
+  supportedTransactionTypes: ['LSP7Tokens', 'LSP8Tokens', 'LYX'],
   creatorAddress: '0x...',
   configParams: { curatedListAddress: '0x...' },
+  chainId: 4201,
 };

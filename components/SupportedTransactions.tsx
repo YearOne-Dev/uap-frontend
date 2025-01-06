@@ -1,19 +1,8 @@
 import React from 'react';
 import { Flex, HStack, Image, Text, VStack } from '@chakra-ui/react';
+import { ExecutiveAssistant, ScreenerAssistant } from '@/constants/CustomTypes';
 
-type ExecutiveAssistant = {
-  address: string;
-  name: string;
-  description: string;
-  iconPath: string;
-  links: { name: string; url: string }[];
-  assistantType: 'Executive';
-  creatorAddress: string;
-  supportedTransactionTypes: string[];
-  configParams: { destinationAddress: string };
-};
-
-const transactionTypeMap: {
+export const transactionTypeMap: {
   [key: string]: {
     label: string;
     typeName: string;
@@ -52,9 +41,9 @@ const TransactionBlock: React.FC<{
   </VStack>
 );
 
-const SupportedTransactions: React.FC<{ assistant: ExecutiveAssistant }> = ({
-  assistant,
-}) => {
+const SupportedTransactions: React.FC<{
+  assistant: ExecutiveAssistant | ScreenerAssistant;
+}> = ({ assistant }) => {
   return (
     <Flex p={4} flexDirection="row" alignItems="center" w="100%" gap="4">
       <Flex flexDirection="column" alignItems="center">

@@ -16,7 +16,7 @@ export default function AssistantPage({
       { name: 'Catalog', href: `/${networkName}/catalog` },
       {
         name: 'Screeners',
-        href: `/${networkName}/catalog/screener-assistants`,
+        href: `/${networkName}/catalog`,
       },
       {
         name: `Screener ${params.assistantAddress}`,

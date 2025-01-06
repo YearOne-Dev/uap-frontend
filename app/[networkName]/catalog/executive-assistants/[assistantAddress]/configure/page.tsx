@@ -81,7 +81,7 @@ export default function ExecutiveAssistantConfigurePage({
       { name: 'Catalog', href: `/${networkName}/catalog` },
       {
         name: 'Executives',
-        href: `/${networkName}/catalog/executive-assistants`,
+        href: `/${networkName}/catalog`,
       },
       {
         name: `Assistant ${params.assistantAddress}`,
