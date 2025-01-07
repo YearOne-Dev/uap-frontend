@@ -6,10 +6,7 @@ import {
   updateBECPermissions,
 } from '@/utils/configDataKeyValueStore';
 import { SiweMessage } from 'siwe';
-import {
-  useAppKitAccount,
-  useAppKitProvider,
-} from '@reown/appkit/react';
+import { useAppKitAccount, useAppKitProvider } from '@reown/appkit/react';
 import { useNetwork } from '@/contexts/NetworkContext';
 import { useProfile } from '@/contexts/ProfileContext';
 

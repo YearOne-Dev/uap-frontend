@@ -1,6 +1,6 @@
-import { createAppKit } from '@reown/appkit/react'
-import { EthersAdapter } from '@reown/appkit-adapter-ethers'
-import { defineChain } from '@reown/appkit/networks'
+import { createAppKit } from '@reown/appkit/react';
+import { EthersAdapter } from '@reown/appkit-adapter-ethers';
+import { defineChain } from '@reown/appkit/networks';
 import { config } from '@/constants/config';
 import { supportedNetworks } from '@/constants/supportedNetworks';
 
@@ -13,11 +13,15 @@ const metadata = {
   icons: [config.metadata.icon],
 };
 
-const getDefinedChain = (chainId: number) => { 
+const getDefinedChain = (chainId: number) => {
   return defineChain({
     id: chainId,
     name: supportedNetworks[chainId].displayName,
-    nativeCurrency: { name: supportedNetworks[chainId].token, symbol: supportedNetworks[chainId].token, decimals: 18 },
+    nativeCurrency: {
+      name: supportedNetworks[chainId].token,
+      symbol: supportedNetworks[chainId].token,
+      decimals: 18,
+    },
     rpcUrls: {
       default: {
         http: [supportedNetworks[chainId].rpcUrl],
@@ -31,7 +35,7 @@ const getDefinedChain = (chainId: number) => {
       },
     },
     contracts: {
-      multicall3: { ...supportedNetworks[chainId].multicall3},
+      multicall3: { ...supportedNetworks[chainId].multicall3 },
     },
     custom: {
       wrapped: supportedNetworks[chainId].wrapped,
@@ -40,7 +44,7 @@ const getDefinedChain = (chainId: number) => {
     chainNamespace: 'eip155',
     caipNetworkId: `eip155:${chainId}`,
   });
-}
+};
 
 // Create the AppKit instance
 createAppKit({
@@ -49,9 +53,9 @@ createAppKit({
   networks: [getDefinedChain(42), getDefinedChain(4201)],
   projectId,
   features: {
-    analytics: false // Optional - defaults to your Cloud configuration
-  }
-})
+    analytics: false, // Optional - defaults to your Cloud configuration
+  },
+});
 
 export function AppKit({ children }: any) {
   return children;

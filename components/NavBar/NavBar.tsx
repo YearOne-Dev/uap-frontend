@@ -56,9 +56,7 @@ const NavBar = () => {
           >
             Browse Assistants
           </Button>
-          <w3m-connect-button
-            size={"sm"}
-          />
+          <WalletConnectButton />
         </Flex>
       </Flex>
     </nav>

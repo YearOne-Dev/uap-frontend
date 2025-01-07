@@ -22,10 +22,7 @@ import {
   toggleUniveralAssistantsSubscribe,
 } from '@/utils/configDataKeyValueStore';
 import { ERC725__factory } from '@/types';
-import {
-  useAppKitAccount,
-  useAppKitProvider,
-} from '@reown/appkit/react';
+import { useAppKitAccount, useAppKitProvider } from '@reown/appkit/react';
 import { useNetwork } from '@/contexts/NetworkContext';
 
 const SetupAssistant = (props: { assistantAddress: string }) => {

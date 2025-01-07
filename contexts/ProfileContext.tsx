@@ -6,16 +6,7 @@ import React, {
   useMemo,
   useState,
 } from 'react';
-import {
-  useAppKitAccount,
-  useAppKitProvider,
-} from '@reown/appkit/react';
-import lsp3ProfileSchema from '@erc725/erc725.js/schemas/LSP3ProfileMetadata.json' assert { type: 'json' };
-import { ERC725, ERC725JSONSchema } from '@erc725/erc725.js';
-
-import { getImageFromIPFS } from '@/utils/ipfs';
-import { supportedNetworks } from '@/constants/supportedNetworks';
-import { getNetwork } from '@/utils/utils';
+import { useAppKitAccount } from '@reown/appkit/react';
 
 interface Profile {
   name: string;

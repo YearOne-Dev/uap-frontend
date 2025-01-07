@@ -47,11 +47,7 @@ import Breadcrumbs from '@/components/Breadcrumbs';
 const UAPConfigPage = ({ params }: { params: { networkName: string } }) => {
   const networkUrlId = getChainIdByUrlName(params.networkName);
   const toast = useToast({ position: 'bottom-left' });
-  const {
-    address,
-    caipAddress,
-    isConnected,
-  } = useAppKitAccount();
+  const { address, caipAddress, isConnected } = useAppKitAccount();
   const walletNetworkId = caipAddress?.split(':')[1];
   const { walletProvider } = useAppKitProvider('eip155');
   const { open } = useAppKit();

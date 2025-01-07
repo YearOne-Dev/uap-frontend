@@ -8,9 +8,30 @@ interface SignInBoxProps {
 const SignInBox = ({ boxText }: SignInBoxProps) => {
   const bgColor = useColorModeValue('light.green.brand', 'dark.purple.200'); // Adjusts color based on the theme
 
-  return (<w3m-connect-button
-  size={"sm"}
-/>
+  return (
+    <Flex justifyContent="center" alignItems="center" height="100%">
+      <VStack
+        p={5}
+        backgroundColor={bgColor}
+        border="1px solid"
+        borderRadius="lg"
+        width="350px"
+        textAlign="center"
+        padding="20px"
+      >
+        <Text
+          fontSize="lg"
+          fontWeight="bold"
+          fontFamily="Montserrat"
+          size="18px"
+          lineHeight="24px"
+          color="dark.purple.500"
+        >
+          {boxText}
+        </Text>
+        <WalletConnectButton />
+      </VStack>
+    </Flex>
   );
 };
 

@@ -10,11 +10,6 @@ import {
 import AssistantSmallCard from './AssistantSmallCard';
 
 const LandingBox = () => {
-  const { isConnected, caipAddress } = useAppKitAccount();
-  const chainId = Number(caipAddress?.split(':')[1]);
-  const networkId = isConnected && chainId ? chainId : 42;
-  const urlName = getUrlNameByChainId(networkId);
-
   return (
     <Flex
       minHeight="inherit"
