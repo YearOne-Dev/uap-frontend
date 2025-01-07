@@ -3,16 +3,17 @@ import React from 'react';
 import Link from 'next/link';
 import { Box, Button, Flex, Image, Text } from '@chakra-ui/react';
 import WalletConnectButton from '@/components/WalletConnectButton';
-import { useWeb3ModalAccount } from '@web3modal/ethers/react';
+import { useAppKitAccount } from '@reown/appkit/react';
 import { getUrlNameByChainId } from '@/utils/universalProfile';
 
 /**
  * Provides a top navigation bar including links to all pages.
  */
 const NavBar = () => {
-  const { isConnected, chainId } = useWeb3ModalAccount();
+  const { isConnected, caipAddress } = useAppKitAccount();
+  const chainId = caipAddress?.split(':')[1];
   const networkId = isConnected && chainId ? chainId : 42;
-  const urlName = getUrlNameByChainId(networkId);
+  const urlName = getUrlNameByChainId(Number(networkId));
 
   return (
     <nav className="uap-topbar">

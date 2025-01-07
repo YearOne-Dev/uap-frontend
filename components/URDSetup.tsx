@@ -6,18 +6,15 @@ import {
   updateBECPermissions,
 } from '@/utils/configDataKeyValueStore';
 import { SiweMessage } from 'siwe';
-import {
-  useWeb3ModalAccount,
-  useWeb3ModalProvider,
-} from '@web3modal/ethers/react';
+import { useAppKitAccount, useAppKitProvider } from '@reown/appkit/react';
 import { useNetwork } from '@/contexts/NetworkContext';
 import { useProfile } from '@/contexts/ProfileContext';
 
 const URDSetup: React.FC = () => {
   const toast = useToast({ position: 'bottom-left' });
-  const { walletProvider } = useWeb3ModalProvider();
+  const { walletProvider } = useAppKitProvider('eip155');
   const provider = new BrowserProvider(walletProvider as Eip1193Provider);
-  const { address } = useWeb3ModalAccount();
+  const { address } = useAppKitAccount();
   const { network } = useNetwork();
   const { setMainUPController } = useProfile();
 
