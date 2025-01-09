@@ -1,7 +1,5 @@
 'use client';
 import React from 'react';
-import { useAppKitAccount } from '@reown/appkit/react';
-import { getUrlNameByChainId } from '@/utils/universalProfile';
 import { Flex, Image, Text, VStack, Wrap, WrapItem } from '@chakra-ui/react';
 import {
   curationCheckerAssistant,

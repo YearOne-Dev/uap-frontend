@@ -22,7 +22,10 @@ import {
   toggleUniveralAssistantsSubscribe,
 } from '@/utils/configDataKeyValueStore';
 import { ERC725__factory } from '@/types';
-import { useAppKitAccount, useAppKitProvider } from '@reown/appkit/react';
+import {
+  useWeb3ModalAccount,
+  useWeb3ModalProvider,
+} from '@web3modal/ethers/react';
 import { useNetwork } from '@/contexts/NetworkContext';
 
 const SetupAssistant = (props: { assistantAddress: string }) => {
@@ -32,8 +35,8 @@ const SetupAssistant = (props: { assistantAddress: string }) => {
   const [destinationAddress, setDestinationAddress] = useState<string>('');
   const [isValidAddress, setIsValidAddress] = useState<boolean>(true);
   const toast = useToast({ position: 'bottom-left' });
-  const { walletProvider } = useAppKitProvider('eip155');
-  const { address } = useAppKitAccount();
+  const { walletProvider } = useWeb3ModalProvider();
+  const { address } = useWeb3ModalAccount();
   const { network } = useNetwork();
   const provider = new BrowserProvider(walletProvider as Eip1193Provider);
 

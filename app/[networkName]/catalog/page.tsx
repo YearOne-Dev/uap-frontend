@@ -22,7 +22,12 @@ export default function CatalogPage({
   return (
     <>
       {breadCrumbs}
-      <Flex display="flex" w="100%" flexDirection="column" flexWrap="wrap">
+      <Flex
+        display="flex"
+        w="100%"
+        flexDirection="column"
+        flexWrap="wrap"
+      >
         <Flex
           gap={[4, 8, 20]} // Adjust gap based on screen size
           flex="1"

@@ -4,7 +4,7 @@ import { Box, Button, Flex, Text, VStack } from '@chakra-ui/react';
 import AssistantInfo from '@/components/AssistantInfo';
 import { forwarderAssistant } from '@/constants/dummyData';
 import URDSetup from '@/components/URDSetup';
-import { useAppKit, useAppKitAccount } from '@reown/appkit/react';
+import { useWeb3Modal, useWeb3ModalAccount } from '@web3modal/ethers/react';
 import SignInBox from '@/components/SignInBox';
 import { getNetwork } from '@/utils/utils';
 import { getChainIdByUrlName } from '@/utils/universalProfile';
@@ -24,14 +24,14 @@ export default function ExecutiveAssistantConfigurePage({
 }) {
   const { networkName } = params;
   const networkUrlId = getChainIdByUrlName(params.networkName);
-  const { open } = useAppKit();
+  const { open } = useWeb3Modal();
   const { mainUPController } = useProfile();
   const [isMissingPermissions, setIsMissingPermissions] = React.useState(false);
   const [isURDInstalled, setIsURDInstalled] = React.useState(false);
   const { network } = useNetwork();
 
-  const { address, caipAddress } = useAppKitAccount();
-  const walletNetworkId = caipAddress?.split(':')[1];
+  const { address, chainId: walletNetworkId } = useWeb3ModalAccount();
+  // todo validate that id from url is a valid assistant id
 
   useEffect(() => {
     console.log('mainUPController', mainUPController);
@@ -98,7 +98,7 @@ export default function ExecutiveAssistantConfigurePage({
       return <SignInBox boxText={'Sign in to set UAPTypeConfig'} />;
     }
 
-    if (Number(walletNetworkId) !== networkUrlId) {
+    if (walletNetworkId !== networkUrlId) {
       return (
         <Flex
           height="100%"

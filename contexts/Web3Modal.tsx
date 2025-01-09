@@ -1,11 +1,9 @@
-import { createAppKit } from '@reown/appkit/react';
-import { EthersAdapter } from '@reown/appkit-adapter-ethers';
-import { defineChain } from '@reown/appkit/networks';
+'use client';
+import { createWeb3Modal, defaultConfig } from '@web3modal/ethers/react';
 import { config } from '@/constants/config';
 import { supportedNetworks } from '@/constants/supportedNetworks';
 
-const projectId = config.walletTools.walletConnectProjectID as string;
-// Metadata for the our App as seen through the wallet connection UI
+// Wallet Connect: Metadata Setup
 const metadata = {
   name: config.metadata.title,
   description: config.metadata.description,
@@ -13,48 +11,34 @@ const metadata = {
   icons: [config.metadata.icon],
 };
 
-const getDefinedChain = (chainId: number) => {
-  return defineChain({
-    id: chainId,
-    name: supportedNetworks[chainId].displayName,
-    nativeCurrency: {
-      name: supportedNetworks[chainId].token,
-      symbol: supportedNetworks[chainId].token,
-      decimals: 18,
-    },
-    rpcUrls: {
-      default: {
-        http: [supportedNetworks[chainId].rpcUrl],
-      },
-    },
-    blockExplorers: {
-      default: {
-        name: `${supportedNetworks[chainId].displayName} Explorer`,
-        url: supportedNetworks[chainId].explorer,
-        apiUrl: supportedNetworks[chainId].explorerApi,
-      },
-    },
-    contracts: {
-      multicall3: { ...supportedNetworks[chainId].multicall3 },
-    },
-    custom: {
-      wrapped: supportedNetworks[chainId].wrapped,
-    },
-    testnet: supportedNetworks[chainId].testnet,
-    chainNamespace: 'eip155',
-    caipNetworkId: `eip155:${chainId}`,
-  });
-};
-
-// Create the AppKit instance
-createAppKit({
-  adapters: [new EthersAdapter()],
+// Wallet Connect: Configuration Element
+const ethersConfig = defaultConfig({
   metadata,
-  networks: [getDefinedChain(42), getDefinedChain(4201)],
-  projectId,
-  features: {
-    analytics: false, // Optional - defaults to your Cloud configuration
-  },
+});
+
+// Wallet Connect: Chain Data
+const chains = Object.values(supportedNetworks).map(network => ({
+  chainId: network.chainId,
+  name: network.name,
+  currency: network.token,
+  explorerUrl: network.explorer,
+  rpcUrl: network.rpcUrl,
+}));
+
+// Wallet Connect: Chain Images
+const walletConnectChainImages: Record<number, string> = {};
+Object.values(supportedNetworks).forEach(network => {
+  walletConnectChainImages[network.chainId] = network.icon;
+});
+
+// WalletConnect: Web3 Modal Instance
+createWeb3Modal({
+  ethersConfig,
+  chains,
+  projectId: config.walletTools.walletConnectProjectID || '1',
+  chainImages: walletConnectChainImages,
+  featuredWalletIds: ['NONE'],
+  themeMode: 'light',
 });
 
 export function AppKit({ children }: any) {
