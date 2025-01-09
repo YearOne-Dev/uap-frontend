@@ -41,7 +41,6 @@ export default function WalletConnectButton() {
     color: '#053241',
   });
   const { walletProvider } = useWeb3ModalProvider();
-  const provider = new BrowserProvider(walletProvider as Eip1193Provider);
 
   useEffect(() => {
     setButtonMessage(
@@ -71,28 +70,44 @@ export default function WalletConnectButton() {
       />
     ) : null;
 
-  useEffect(() => {
+  
+useEffect(() => {
+  const handleSignMessage = async () => {
     if (isConnected) {
       setUserConnected(true);
-      const siweMessage = new SiweMessage({
-        domain: window.location.host, // Domain requesting the signing
-        uri: window.location.origin,
-        address: address, // Address performing the signing
-        statement:
-          'Signing this message will enable the Universal Assistants Catalog to allow your UP Browser Extension to manage Assistant configurations.', // Human-readable assertion the user signs  // URI from the resource that is the subject of the signature
-        version: '1', // Current version of the SIWE Message
-        chainId: chainId, // Chain ID to which the session is bound to
-        resources: [`${window.location.origin}/terms`], // Authentication resource as part of authentication by the relying party
-      }).prepareMessage();
-      
-      const signer = await provider.getSigner(address);
 
-      const signature = signer.signMessage(siweMessage);
+      try {
+        // Prepare the SIWE message
+        const provider = new BrowserProvider(walletProvider as Eip1193Provider);
 
+        const siweMessage = new SiweMessage({
+          domain: window.location.host, // Domain requesting the signing
+          uri: window.location.origin,
+          address: address, // Address performing the signing
+          statement:
+            'Signing this message will enable the Universal Assistants Catalog to allow your UP Browser Extension to manage Assistant configurations.', // Human-readable assertion the user signs
+          version: '1', // Current version of the SIWE Message
+          chainId: chainId, // Chain ID to which the session is bound
+          resources: [`${window.location.origin}/terms`], // Authentication resource
+        }).prepareMessage();
+
+        // Get the signer and sign the message
+        const signer = await provider.getSigner(address);
+        const signature = await signer.signMessage(siweMessage);
+
+        // Log or store the signature
+        console.log('Signature:', signature);
+      } catch (error) {
+        console.error('Error signing the message:', error);
+      }
     } else {
       setUserConnected(false);
     }
-  }, [isConnected]);
+  };
+
+  handleSignMessage(); // Call the async function
+}, [isConnected, address, chainId,
+  walletProvider]);
 
   useEffect(() => {
     if (chainId) {
