@@ -24,14 +24,13 @@ import { useProfile } from '@/contexts/ProfileContext';
 import Link from 'next/link';
 import { getUrlNameByChainId } from '@/utils/universalProfile';
 import { SiweMessage } from 'siwe';
-import { BrowserProvider, Eip1193Provider } from 'ethers';
+import { BrowserProvider, Eip1193Provider, verifyMessage } from 'ethers';
 
 export default function WalletConnectButton() {
   const { open } = useWeb3Modal();
   const { disconnect } = useDisconnect();
   const { address, isConnected, chainId } = useWeb3ModalAccount();
-
-  const { profile } = useProfile();
+  const { setMainControllerData, mainControllerData, profile } = useProfile();
   const [networkIcon, setNetworkIcon] = useState<string>();
   const [networkName, setNetworkName] = useState<string>();
   const [userConnected, setUserConnected] = useState(false);
@@ -70,44 +69,61 @@ export default function WalletConnectButton() {
       />
     ) : null;
 
-  
-useEffect(() => {
-  const handleSignMessage = async () => {
-    if (isConnected) {
-      setUserConnected(true);
+  const shouldDisplaySignature =
+    isConnected &&
+    (!mainControllerData || mainControllerData.upWallet !== address);
 
-      try {
-        // Prepare the SIWE message
-        const provider = new BrowserProvider(walletProvider as Eip1193Provider);
+  useEffect(() => {
+    const handleSignMessage = async () => {
+      console.log('mainControllerData:', mainControllerData);
+      if (shouldDisplaySignature) {
+        setUserConnected(true);
 
-        const siweMessage = new SiweMessage({
-          domain: window.location.host, // Domain requesting the signing
-          uri: window.location.origin,
-          address: address, // Address performing the signing
-          statement:
-            'Signing this message will enable the Universal Assistants Catalog to allow your UP Browser Extension to manage Assistant configurations.', // Human-readable assertion the user signs
-          version: '1', // Current version of the SIWE Message
-          chainId: chainId, // Chain ID to which the session is bound
-          resources: [`${window.location.origin}/terms`], // Authentication resource
-        }).prepareMessage();
+        try {
+          const provider = new BrowserProvider(
+            walletProvider as Eip1193Provider
+          );
 
-        // Get the signer and sign the message
-        const signer = await provider.getSigner(address);
-        const signature = await signer.signMessage(siweMessage);
+          const siweMessage = new SiweMessage({
+            domain: window.location.host,
+            uri: window.location.origin,
+            address: address,
+            statement:
+              'Signing this message will enable the Universal Assistants Catalog to read your UP Browser Extension to manage Assistant configurations.',
+            version: '1',
+            chainId: chainId,
+            resources: [`${window.location.origin}/terms`],
+          }).prepareMessage();
 
-        // Log or store the signature
-        console.log('Signature:', signature);
-      } catch (error) {
-        console.error('Error signing the message:', error);
+          const signer = await provider.getSigner(address);
+          const signature = await signer.signMessage(siweMessage);
+          const mainUPController = verifyMessage(siweMessage, signature);
+
+          // Save the main controller and UP wallet in the context
+          setMainControllerData({
+            mainUPController,
+            upWallet: address as string,
+          });
+
+          console.log('Signature:', signature);
+        } catch (error) {
+          console.error('Error signing the message:', error);
+        }
+      } else {
+        setUserConnected(false);
       }
-    } else {
-      setUserConnected(false);
-    }
-  };
+    };
 
-  handleSignMessage(); // Call the async function
-}, [isConnected, address, chainId,
-  walletProvider]);
+    handleSignMessage();
+  }, [
+    isConnected,
+    address,
+    chainId,
+    walletProvider,
+    mainControllerData,
+    setMainControllerData,
+    shouldDisplaySignature,
+  ]);
 
   useEffect(() => {
     if (chainId) {
@@ -118,7 +134,7 @@ useEffect(() => {
   }, [chainId]);
 
   const getProfileUrl = () => {
-    if (!chainId || !address) return '/'; // lint
+    if (!chainId || !address) return '/';
     const networkUrlName = getUrlNameByChainId(chainId);
     return `/${networkUrlName}/profile/${address}`;
   };
