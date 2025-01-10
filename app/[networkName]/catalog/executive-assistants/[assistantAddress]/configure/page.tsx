@@ -25,7 +25,7 @@ export default function ExecutiveAssistantConfigurePage({
   const { networkName } = params;
   const networkUrlId = getChainIdByUrlName(params.networkName);
   const { open } = useWeb3Modal();
-  const { mainUPController } = useProfile();
+  const { mainControllerData } = useProfile();
   const [isMissingPermissions, setIsMissingPermissions] = React.useState(false);
   const [isURDInstalled, setIsURDInstalled] = React.useState(false);
   const { network } = useNetwork();
@@ -34,16 +34,16 @@ export default function ExecutiveAssistantConfigurePage({
   // todo validate that id from url is a valid assistant id
 
   useEffect(() => {
-    console.log('mainUPController', mainUPController);
+    console.log('mainUPController', mainControllerData?.mainUPController);
 
-    if (!address || !mainUPController) {
+    if (!address || !mainControllerData?.mainUPController) {
       return;
     }
 
     const getMissingPermissions = async () => {
       try {
         const missingPermissions = await doesControllerHaveMissingPermissions(
-          mainUPController,
+          mainControllerData?.mainUPController,
           address
         );
         setIsMissingPermissions(missingPermissions.length > 0);
@@ -70,7 +70,7 @@ export default function ExecutiveAssistantConfigurePage({
     getMissingPermissions();
   }, [
     address,
-    mainUPController,
+    mainControllerData,
     network.protocolAddress,
     setIsMissingPermissions,
   ]);
@@ -119,9 +119,13 @@ export default function ExecutiveAssistantConfigurePage({
     }
     console.log('renderConfigureBody');
     console.log('isMissingPermissions', isMissingPermissions);
-    console.log('mainUPController', mainUPController);
+    console.log('mainUPController', mainControllerData?.mainUPController);
     console.log('isURDInstalled', isURDInstalled);
-    if (!mainUPController || isMissingPermissions || !isURDInstalled) {
+    if (
+      !mainControllerData?.mainUPController ||
+      isMissingPermissions ||
+      !isURDInstalled
+    ) {
       // todo pass isMissingPermissions to URDSetup
       return <URDSetup />;
     }

@@ -6,9 +6,7 @@ import React, {
   useMemo,
   useState,
 } from 'react';
-import {
-  useWeb3ModalAccount,
-} from '@web3modal/ethers/react';
+import { useWeb3ModalAccount } from '@web3modal/ethers/react';
 
 interface Profile {
   name: string;
