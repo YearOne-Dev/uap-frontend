@@ -75,7 +75,6 @@ export default function WalletConnectButton() {
 
   useEffect(() => {
     const handleSignMessage = async () => {
-      console.log('mainControllerData:', mainControllerData);
       if (shouldDisplaySignature) {
         setUserConnected(true);
 

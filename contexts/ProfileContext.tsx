@@ -8,14 +8,7 @@ import React, {
 } from 'react';
 import {
   useWeb3ModalAccount,
-  useWeb3ModalProvider,
 } from '@web3modal/ethers/react';
-import lsp3ProfileSchema from '@erc725/erc725.js/schemas/LSP3ProfileMetadata.json' assert { type: 'json' };
-import { ERC725, ERC725JSONSchema } from '@erc725/erc725.js';
-
-import { getImageFromIPFS } from '@/utils/ipfs';
-import { supportedNetworks } from '@/constants/supportedNetworks';
-import { getNetwork } from '@/utils/utils';
 
 interface Profile {
   name: string;
