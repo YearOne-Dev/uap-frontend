@@ -6,16 +6,7 @@ import React, {
   useMemo,
   useState,
 } from 'react';
-import {
-  useWeb3ModalAccount,
-  useWeb3ModalProvider,
-} from '@web3modal/ethers/react';
-import lsp3ProfileSchema from '@erc725/erc725.js/schemas/LSP3ProfileMetadata.json' assert { type: 'json' };
-import { ERC725, ERC725JSONSchema } from '@erc725/erc725.js';
-
-import { getImageFromIPFS } from '@/utils/ipfs';
-import { supportedNetworks } from '@/constants/supportedNetworks';
-import { getNetwork } from '@/utils/utils';
+import { useWeb3ModalAccount } from '@web3modal/ethers/react';
 
 interface Profile {
   name: string;
@@ -40,13 +31,20 @@ interface Image {
   url: string;
 }
 
+interface MainControllerData {
+  mainUPController: string;
+  upWallet: string;
+}
+
 interface ProfileContextType {
   profile: Profile | null;
   setProfile: React.Dispatch<React.SetStateAction<Profile | null>>;
   setIssuedAssets: React.Dispatch<React.SetStateAction<string[]>>;
   issuedAssets: string[];
-  mainUPController: string | undefined;
-  setMainUPController: React.Dispatch<React.SetStateAction<string | undefined>>;
+  mainControllerData: MainControllerData | null;
+  setMainControllerData: React.Dispatch<
+    React.SetStateAction<MainControllerData | null>
+  >;
 }
 
 const initialProfileContextValue: ProfileContextType = {
@@ -54,8 +52,8 @@ const initialProfileContextValue: ProfileContextType = {
   setProfile: () => {},
   setIssuedAssets: () => {},
   issuedAssets: [],
-  mainUPController: undefined,
-  setMainUPController: () => {}, // todo do we need a disconnect?
+  mainControllerData: null,
+  setMainControllerData: () => {},
 };
 
 // Set up the empty React context
@@ -73,15 +71,19 @@ export function ProfileProvider({
   const { address } = useWeb3ModalAccount();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [issuedAssets, setIssuedAssets] = useState<string[]>([]);
-  const [mainUPController, setMainUPController] = useState<
-    string | undefined
-  >();
+  const [mainControllerData, setMainControllerData] =
+    useState<MainControllerData | null>(null);
 
-  // Load profile from local storage on initial render
+  // Load profile and controller data from local storage on initial render
   useEffect(() => {
     const loadProfileFromLocalStorage = () => {
       const storedProfileData = localStorage.getItem('profileData');
       return storedProfileData ? JSON.parse(storedProfileData) : null;
+    };
+
+    const loadMainControllerDataFromLocalStorage = () => {
+      const storedData = localStorage.getItem('mainControllerData');
+      return storedData ? JSON.parse(storedData) : null;
     };
 
     const storedProfile = loadProfileFromLocalStorage();
@@ -91,20 +93,21 @@ export function ProfileProvider({
       setProfile(null);
     }
 
-    const storedController = localStorage.getItem('mainUPController');
-    if (storedController) {
-      setMainUPController(storedController);
-    }
+    const storedControllerData = loadMainControllerDataFromLocalStorage();
+    setMainControllerData(storedControllerData);
   }, [address]);
 
-  // Save `mainUPController` to local storage when it changes
+  // Save `mainControllerData` to local storage when it changes
   useEffect(() => {
-    if (mainUPController) {
-      localStorage.setItem('mainUPController', mainUPController);
+    if (mainControllerData) {
+      localStorage.setItem(
+        'mainControllerData',
+        JSON.stringify(mainControllerData)
+      );
     } else {
-      localStorage.removeItem('mainUPController');
+      localStorage.removeItem('mainControllerData');
     }
-  }, [mainUPController]);
+  }, [mainControllerData]);
 
   // Context properties
   const contextProperties = useMemo(
@@ -113,10 +116,10 @@ export function ProfileProvider({
       setProfile,
       setIssuedAssets,
       issuedAssets,
-      mainUPController,
-      setMainUPController,
+      mainControllerData,
+      setMainControllerData,
     }),
-    [profile, issuedAssets, mainUPController]
+    [profile, issuedAssets, mainControllerData]
   );
 
   return (
