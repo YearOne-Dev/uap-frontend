@@ -15,10 +15,10 @@ export type AbstractAssistant = {
 
 export type ExecutiveAssistant = AbstractAssistant & {
   assistantType: 'Executive';
-  configParams: { destinationAddress: string };
+  configParams: { name: string; type: string }[];
 };
 
 export type ScreenerAssistant = AbstractAssistant & {
   assistantType: 'Screener';
-  configParams: { curatedListAddress: string };
+  configParams: { name: string; type: string }[];
 };

@@ -4,7 +4,11 @@ import { Box, Button, Flex, Text, VStack } from '@chakra-ui/react';
 import AssistantInfo from '@/components/AssistantInfo';
 import { forwarderAssistant } from '@/constants/dummyData';
 import URDSetup from '@/components/URDSetup';
-import { useWeb3Modal, useWeb3ModalAccount } from '@web3modal/ethers/react';
+import {
+  useWeb3Modal,
+  useWeb3ModalAccount,
+  useWeb3ModalProvider,
+} from '@web3modal/ethers/react';
 import SignInBox from '@/components/SignInBox';
 import { getNetwork } from '@/utils/utils';
 import { getChainIdByUrlName } from '@/utils/universalProfile';
@@ -16,6 +20,7 @@ import {
 import { useProfile } from '@/contexts/ProfileContext';
 import SetupAssistant from '@/components/SetupAssistant';
 import Breadcrumbs from '@/components/Breadcrumbs';
+import { BrowserProvider, Eip1193Provider } from 'ethers';
 
 export default function ExecutiveAssistantConfigurePage({
   params,
@@ -25,12 +30,17 @@ export default function ExecutiveAssistantConfigurePage({
   const { networkName } = params;
   const networkUrlId = getChainIdByUrlName(params.networkName);
   const { open } = useWeb3Modal();
+  const { walletProvider } = useWeb3ModalProvider();
   const { mainControllerData } = useProfile();
   const [isMissingPermissions, setIsMissingPermissions] = React.useState(false);
   const [isURDInstalled, setIsURDInstalled] = React.useState(false);
   const { network } = useNetwork();
 
-  const { address, chainId: walletNetworkId } = useWeb3ModalAccount();
+  const {
+    address,
+    chainId: walletNetworkId,
+    isConnected,
+  } = useWeb3ModalAccount();
   // todo validate that id from url is a valid assistant id
 
   useEffect(() => {
@@ -54,8 +64,14 @@ export default function ExecutiveAssistantConfigurePage({
 
     const checkURDInstalled = async () => {
       console.log('checkURDInstalled called');
+      if (!isConnected) {
+        alert('User disconnected');
+        return;
+      }
       try {
+        const provider = new BrowserProvider(walletProvider as Eip1193Provider);
         const urdInstalled = await isDelegateAlreadySet(
+          provider,
           address,
           network.protocolAddress
         );
