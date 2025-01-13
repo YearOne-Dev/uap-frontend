@@ -224,34 +224,24 @@ export const getMissingPermissions = (
 
 export const isDelegateAlreadySet = async (
   provider: any,
-  upAddress: string
+  upAddress: string,
+  expectedDelegate: string
 ): Promise<any> => {
-  const urdData = {
-    lsp7Urd: null as string | null,
-    lsp8Urd: null as string | null,
-  };
+  console.log('isDelegateAlreadySet called');
+  let UPURD: null | string = null;
   try {
-    // const UP = new ethers.Contract(
-    //   upAddress as string,
-    //   UniversalProfile.abi,
-    //   provider
-    // );
-    // todo not working
-    const UP = ERC725__factory.connect(upAddress, provider);
-
-    const UPData = await UP.connect(provider.getSigner()).getDataBatch([
-      ERC725YDataKeys.LSP1.LSP1UniversalReceiverDelegatePrefix +
-        LSP1_TYPE_IDS.LSP7Tokens_RecipientNotification.slice(2).slice(0, 40),
-      ERC725YDataKeys.LSP1.LSP1UniversalReceiverDelegatePrefix +
-        LSP1_TYPE_IDS.LSP8Tokens_RecipientNotification.slice(2).slice(0, 40),
-    ]);
-    if (UPData) {
-      urdData.lsp7Urd = getChecksumAddress(UPData[0]);
-      urdData.lsp8Urd = getChecksumAddress(UPData[1]);
-    }
+    const UPContract = new ethers.Contract(
+      upAddress,
+      UniversalProfile.abi,
+      provider
+    );
+    UPURD = await UPContract.getData(
+      ERC725YDataKeys.LSP1.LSP1UniversalReceiverDelegate
+    );
+    console.log('UPURD value', UPURD);
   } catch (err) {
     console.error(err);
     throw err;
   }
-  return urdData && urdData.lsp7Urd && urdData.lsp8Urd;
+  return UPURD?.toLowerCase() === expectedDelegate?.toLowerCase();
 };
