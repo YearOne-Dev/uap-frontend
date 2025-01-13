@@ -1,5 +1,5 @@
 import React from 'react';
-import { Badge, Box, Flex, Image, Text, Button } from '@chakra-ui/react';
+import { Badge, Box, Button, Flex, Image, Text } from '@chakra-ui/react';
 import { ExecutiveAssistant, ScreenerAssistant } from '@/constants/CustomTypes';
 import { getNetwork } from '@/utils/utils';
 
