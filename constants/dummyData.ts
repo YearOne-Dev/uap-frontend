@@ -2,16 +2,16 @@ import { ExecutiveAssistant, ScreenerAssistant } from './CustomTypes';
 
 // todo remove dummy data
 export const forwarderAssistant: ExecutiveAssistant = {
-  address: '0x...',
+  address: '0xA9b77D351200f5C9B1F6b7B730fFFA97bF991503',
   name: 'Asset Forwarder',
   description:
     'An executive assistant that can forward digital assets to another destination address.',
   iconPath: 'assets/assistants/forwarder.svg',
   links: [{ name: 'X', url: 'https://x.com/yearone_io' }],
   assistantType: 'Executive',
-  creatorAddress: '0x...',
+  creatorAddress: '0xEfD8Dc18502167988633f29d88ad45103D84C28A',
   supportedTransactionTypes: ['LSP7Tokens', 'LSP8Tokens', 'LYX'],
-  configParams: { destinationAddress: '0x...' },
+  configParams: [{ name: 'destinationAddress', type: 'address' }],
   chainId: 4201,
 };
 
@@ -25,6 +25,6 @@ export const curationCheckerAssistant: ScreenerAssistant = {
   assistantType: 'Screener',
   supportedTransactionTypes: ['LSP7Tokens', 'LSP8Tokens', 'LYX'],
   creatorAddress: '0x...',
-  configParams: { curatedListAddress: '0x...' },
+  configParams: [{ name: 'curatedListAddress', type: 'address' }],
   chainId: 4201,
 };
