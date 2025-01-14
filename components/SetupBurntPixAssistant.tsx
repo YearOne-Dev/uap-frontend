@@ -51,7 +51,9 @@ const SetupAssistant = (props: { assistantAddress: string }) => {
   };
 
   // Handler for number of iterations (integer only)
-  const handleNumIterationsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleNumIterationsChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const val = e.target.value;
     // Only allow integers (including an empty string for clearing)
     if (/^\d*$/.test(val)) {
@@ -63,13 +65,23 @@ const SetupAssistant = (props: { assistantAddress: string }) => {
     try {
       const upAddress = address as string;
       const signer = await provider.getSigner(upAddress);
-      const dataKeyForBurntPixAddress = generateMappingKey('BurntPixAddress', burntPixAddress);
+      const dataKeyForBurntPixAddress = generateMappingKey(
+        'BurntPixAddress',
+        burntPixAddress
+      );
       const dataKeyForBurntPixId = generateMappingKey('BurntPixId', burntPixId);
-      const dataKeyForNumIterations = generateMappingKey('NumIterations', numIterations);
+      const dataKeyForNumIterations = generateMappingKey(
+        'NumIterations',
+        numIterations
+      );
       const dataValues = [burntPixAddress, burntPixId, numIterations];
       const UP = ERC725__factory.connect(upAddress, signer);
       const tx = await UP.setDataBatch(
-        [dataKeyForBurntPixAddress, dataKeyForBurntPixId, dataKeyForNumIterations],
+        [
+          dataKeyForBurntPixAddress,
+          dataKeyForBurntPixId,
+          dataKeyForNumIterations,
+        ],
         dataValues
       );
       await tx.wait();

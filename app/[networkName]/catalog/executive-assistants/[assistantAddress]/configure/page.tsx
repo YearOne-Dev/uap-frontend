@@ -144,7 +144,9 @@ export default function ExecutiveAssistantConfigurePage({
     }
 
     return (
-      <SetupBurntPixAssistant assistantAddress={params.assistantAddress as string} />
+      <SetupBurntPixAssistant
+        assistantAddress={params.assistantAddress as string}
+      />
     );
   };
 
