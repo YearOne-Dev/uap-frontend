@@ -30,6 +30,11 @@ type SetupAssistantProps = {
   assistantAddress: string;
 };
 
+// TODO:
+// 1- figure out issue on test profile
+// 2- Review permissions on unsubscribing urd
+// 3- Need to unsubscribe assistants before uninstalling URD?
+
 const SetupAssistant: React.FC<SetupAssistantProps> = ({
   assistantAddress,
 }) => {
