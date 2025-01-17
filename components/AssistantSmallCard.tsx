@@ -15,11 +15,8 @@ const AssistantSmallCard = ({
     const network = getNetwork(assistant.chainId);
     link += '/' + network.urlName;
     link += '/catalog';
-    link +=
-      assistant.assistantType === 'Screener'
-        ? '/screener-assistants'
-        : '/executive-assistants';
-    link += `/${assistant.address}`;
+    link += `/${assistant.assistantType.toLowerCase()}-assistants`;
+    link += `/${assistant.address}/configure`;
   }
 
   return (
