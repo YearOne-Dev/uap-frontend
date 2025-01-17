@@ -2,7 +2,6 @@
 import React, { useEffect } from 'react';
 import { Box, Button, Flex, Text, VStack } from '@chakra-ui/react';
 import AssistantInfo from '@/components/AssistantInfo';
-import { forwarderAssistant } from '@/constants/dummyData';
 import URDSetup from '@/components/URDSetup';
 import {
   useWeb3Modal,
@@ -21,13 +20,22 @@ import { useProfile } from '@/contexts/ProfileContext';
 import SetupAssistant from '@/components/SetupAssistant';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import { BrowserProvider, Eip1193Provider } from 'ethers';
+import { getAssistant } from '@/constants/assistantsConfig';
+import { CHAINS, networkNameToIdMapping } from '@/constants/supportedNetworks';
 
 export default function ExecutiveAssistantConfigurePage({
   params,
 }: {
-  params: { networkName: string; assistantAddress: string };
+  params: { networkName: CHAINS; assistantAddress: string };
 }) {
   const { networkName } = params;
+  const assistantInfo = getAssistant(
+    params.assistantAddress,
+    networkNameToIdMapping[networkName]
+  );
+  if (!assistantInfo) {
+    return <Text>Assistant not found</Text>;
+  }
   const networkUrlId = getChainIdByUrlName(params.networkName);
   const { open } = useWeb3Modal();
   const { walletProvider } = useWeb3ModalProvider();
@@ -90,7 +98,7 @@ export default function ExecutiveAssistantConfigurePage({
     network.protocolAddress,
     setIsMissingPermissions,
     isConnected,
-    walletProvider
+    walletProvider,
   ]);
 
   const breadCrumbs = Breadcrumbs({
@@ -158,7 +166,7 @@ export default function ExecutiveAssistantConfigurePage({
       {breadCrumbs}
       <Flex direction="column" gap={4} mt={4} w="100%">
         <Flex w="100%">
-          <AssistantInfo assistant={forwarderAssistant} />
+          <AssistantInfo assistant={assistantInfo} />
         </Flex>
         <Box border="1px" borderColor="gray.200" w="100%" />
         {renderConfigureBody()}
