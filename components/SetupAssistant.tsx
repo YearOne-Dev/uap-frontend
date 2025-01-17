@@ -38,10 +38,12 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
   const [selectedTransactions, setSelectedTransactions] = useState<string[]>(
     []
   );
-  const [isUpSubscribed, setIsUpSubscribed] = useState<boolean>(false);
+  const [isUpSubscribedToAssistant, setIsUpSubscribedToAssistant] =
+    useState<boolean>(false);
+  const [isLoadingTrans, setIsLoadingTrans] = useState<boolean>(true);
 
   // For debugging leftover data:
-  const [wipeTxTypeId, setWipeTxTypeId] = useState<string>('');
+  // const [wipeTxTypeId, setWipeTxTypeId] = useState<string>('');
 
   const toast = useToast({ position: 'bottom-left' });
   const { walletProvider } = useWeb3ModalProvider();
@@ -119,14 +121,16 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
           const iterationCount = decoded[2] as any;
           setBurntPixId(pixId);
           setIters(iterationCount.toString());
-          setIsUpSubscribed(true);
+          setIsUpSubscribedToAssistant(true);
         } else {
-          setIsUpSubscribed(false);
+          setIsUpSubscribedToAssistant(false);
         }
 
         // Update state with discovered subscriptions
         setSelectedTransactions(newlySelectedTx);
+        setIsLoadingTrans(false);
       } catch (err) {
+        setIsLoadingTrans(false);
         console.error('Failed to load existing config:', err);
       }
     };
@@ -181,6 +185,7 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
     }
 
     try {
+      setIsLoadingTrans(true);
       const signer = await getSigner();
       const upContract = ERC725__factory.connect(address, signer);
 
@@ -226,7 +231,10 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
         duration: 5000,
         isClosable: true,
       });
+      setIsLoadingTrans(false);
+      setIsUpSubscribedToAssistant(true);
     } catch (err: any) {
+      setIsLoadingTrans(false);
       console.error('Error setting configuration', err);
       toast({
         title: 'Error',
@@ -254,6 +262,7 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
     }
 
     try {
+      setIsLoadingTrans(true);
       const signer = await getSigner();
       const upContract = ERC725__factory.connect(address, signer);
 
@@ -290,7 +299,10 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
       setSelectedTransactions([]);
       setBurntPixId('');
       setIters('');
+      setIsUpSubscribedToAssistant(false);
+      setIsLoadingTrans(false);
     } catch (err: any) {
+      setIsLoadingTrans(false);
       console.error('Error unsubscribing assistant', err);
       toast({
         title: 'Error',
@@ -305,7 +317,7 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
   // --------------------------------------------------------------------------
   // Unsubscribe the entire UAP
   // --------------------------------------------------------------------------
-  const handleUnsubscribe = async () => {
+  const handleUnsubscribeURD = async () => {
     if (!address) {
       toast({
         title: 'Not connected',
@@ -318,6 +330,7 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
     }
 
     try {
+      setIsLoadingTrans(true);
       const provider = new BrowserProvider(walletProvider as Eip1193Provider);
       await toggleUniveralAssistantsSubscribe(
         provider,
@@ -339,9 +352,11 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
       setSelectedTransactions([]);
       setBurntPixId('');
       setIters('');
+      setIsLoadingTrans(false);
       // refresh page
       window.location.reload();
     } catch (err: any) {
+      setIsLoadingTrans(false);
       console.error('Error uninstalling UAP:', err);
       toast({
         title: 'Error',
@@ -356,56 +371,56 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
   // --------------------------------------------------------------------------
   //  Wipe a single "bad" key (for debugging leftover data)
   // --------------------------------------------------------------------------
-  const handleWipeKey = async () => {
-    if (!address) {
-      toast({
-        title: 'Not connected',
-        description: 'Please connect your wallet first.',
-        status: 'info',
-        duration: 5000,
-        isClosable: true,
-      });
-      return;
-    }
-    if (!/^0x[0-9A-Fa-f]{64}$/.test(wipeTxTypeId)) {
-      toast({
-        title: 'Bad TxType ID format',
-        description: 'Please provide a 32-byte hex (0x + 64 chars).',
-        status: 'error',
-        duration: 5000,
-        isClosable: true,
-      });
-      return;
-    }
+  // const handleWipeKey = async () => {
+  //   if (!address) {
+  //     toast({
+  //       title: 'Not connected',
+  //       description: 'Please connect your wallet first.',
+  //       status: 'info',
+  //       duration: 5000,
+  //       isClosable: true,
+  //     });
+  //     return;
+  //   }
+  //   if (!/^0x[0-9A-Fa-f]{64}$/.test(wipeTxTypeId)) {
+  //     toast({
+  //       title: 'Bad TxType ID format',
+  //       description: 'Please provide a 32-byte hex (0x + 64 chars).',
+  //       status: 'error',
+  //       duration: 5000,
+  //       isClosable: true,
+  //     });
+  //     return;
+  //   }
 
-    try {
-      const signer = await getSigner();
-      const upContract = ERC725__factory.connect(address, signer);
+  //   try {
+  //     const signer = await getSigner();
+  //     const upContract = ERC725__factory.connect(address, signer);
 
-      // If you use this ID to generate the key:
-      const keyToWipe = generateMappingKey('UAPTypeConfig', wipeTxTypeId);
+  //     // If you use this ID to generate the key:
+  //     const keyToWipe = generateMappingKey('UAPTypeConfig', wipeTxTypeId);
 
-      const tx = await upContract.setData(keyToWipe, '0x');
-      await tx.wait();
+  //     const tx = await upContract.setData(keyToWipe, '0x');
+  //     await tx.wait();
 
-      toast({
-        title: 'Key Wiped',
-        description: `The leftover key for ${wipeTxTypeId} has been overwritten with 0x.`,
-        status: 'success',
-        duration: 5000,
-        isClosable: true,
-      });
-    } catch (err: any) {
-      console.error('Error wiping key:', err);
-      toast({
-        title: 'Error',
-        description: `Error wiping key: ${err.message}`,
-        status: 'error',
-        duration: 5000,
-        isClosable: true,
-      });
-    }
-  };
+  //     toast({
+  //       title: 'Key Wiped',
+  //       description: `The leftover key for ${wipeTxTypeId} has been overwritten with 0x.`,
+  //       status: 'success',
+  //       duration: 5000,
+  //       isClosable: true,
+  //     });
+  //   } catch (err: any) {
+  //     console.error('Error wiping key:', err);
+  //     toast({
+  //       title: 'Error',
+  //       description: `Error wiping key: ${err.message}`,
+  //       status: 'error',
+  //       duration: 5000,
+  //       isClosable: true,
+  //     });
+  //   }
+  // };
 
   // --------------------------------------------------------------------------
   // Render
@@ -481,7 +496,7 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
 
         {/* Action Buttons */}
         <GridItem mt={4}>
-          {isUpSubscribed ? (
+          {isUpSubscribedToAssistant ? (
             <Button
               size="sm"
               bg="orange.500"
@@ -490,6 +505,8 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
               _hover={{ bg: 'orange.600' }}
               _active={{ bg: 'orange.700' }}
               onClick={handleUnsubscribeAssistant}
+              isLoading={isLoadingTrans}
+              isDisabled={isLoadingTrans}
             >
               Unsubscribe Assistant
             </Button>
@@ -500,7 +517,9 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
             color="white"
             _hover={{ bg: 'orange.600' }}
             _active={{ bg: 'orange.700' }}
-            onClick={handleUnsubscribe}
+            onClick={handleUnsubscribeURD}
+            isLoading={isLoadingTrans}
+            isDisabled={isLoadingTrans}
           >
             Unsubscribe URD
           </Button>
@@ -513,13 +532,15 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
             _hover={{ bg: 'orange.600' }}
             _active={{ bg: 'orange.700' }}
             onClick={handleSubmitConfig}
+            isLoading={isLoadingTrans}
+            isDisabled={isLoadingTrans}
           >
             Save
           </Button>
         </GridItem>
 
         {/* Debug: Wipe a leftover key */}
-        <GridItem colSpan={2} mt={8}>
+        {/* <GridItem colSpan={2} mt={8}>
           <Text fontWeight="bold" fontSize="md" mb={2}>
             Wipe a "Bad" TxType Key
           </Text>
@@ -549,7 +570,7 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
           >
             Wipe Key
           </Button>
-        </GridItem>
+        </GridItem> */}
       </Grid>
     </Box>
   );
