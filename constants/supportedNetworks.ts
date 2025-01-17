@@ -14,6 +14,11 @@ interface ChainInfo {
   icon: string;
 }
 
+export enum CHAINS {
+  LUKSO = 'lukso',
+  LUKSO_TESTNET = 'lukso-testnet',
+}
+
 export const supportedNetworks: { [key: string]: ChainInfo } = {
   '42': {
     name: 'LUKSO',
@@ -45,4 +50,9 @@ export const supportedNetworks: { [key: string]: ChainInfo } = {
     hasUPSupport: true,
     icon: '/lyx_icon_testnet.svg',
   },
+};
+
+export const networkNameToIdMapping = {
+  [CHAINS.LUKSO]: 42,
+  [CHAINS.LUKSO_TESTNET]: 4201,
 };
