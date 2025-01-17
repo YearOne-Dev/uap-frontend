@@ -8,6 +8,7 @@ interface ChainInfo {
   ipfsGateway: string;
   explorer: string;
   token: string;
+  burntPixCollectionAddress: string;
   protocolAddress: string;
   defaultURDUP: string;
   hasUPSupport: boolean;
@@ -32,6 +33,7 @@ export const supportedNetworks: { [key: string]: ChainInfo } = {
     token: 'LYX',
     protocolAddress: '',
     defaultURDUP: '0x7870C5B8BC9572A8001C3f96f7ff59961B23500D',
+    burntPixCollectionAddress: '0x',
     hasUPSupport: true,
     icon: '/lyx_icon_mainnet.svg',
   },
@@ -45,6 +47,7 @@ export const supportedNetworks: { [key: string]: ChainInfo } = {
     ipfsGateway: 'https://api.universalprofile.cloud/ipfs',
     explorer: 'https://explorer.execution.testnet.lukso.network/',
     token: 'LYXt',
+    burntPixCollectionAddress: '0x12167f1c2713ac4f740b4700c4c72bc2de6c686f',
     protocolAddress: '0xc3F4196fbe74E7257Cb4A5c92aaD1E21186d7cAE',
     defaultURDUP: '0x7870C5B8BC9572A8001C3f96f7ff59961B23500D',
     hasUPSupport: true,

@@ -161,6 +161,10 @@ export default function ExecutiveAssistantConfigurePage({
     );
   };
 
+  if (!assistantInfo) {
+    return <Text>Assistant not found</Text>;
+  }
+
   return (
     <Box p={4} w="100%">
       {breadCrumbs}
