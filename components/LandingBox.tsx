@@ -1,11 +1,14 @@
 'use client';
 import React from 'react';
 import { Flex, Image, Text, VStack, Wrap, WrapItem } from '@chakra-ui/react';
+
+import AssistantSmallCard from '@/components/AssistantSmallCard';
 import {
-  curationCheckerAssistant,
-  forwarderAssistant,
-} from '@/constants/dummyData';
-import AssistantSmallCard from './AssistantSmallCard';
+  burntPixRefinerTestnet,
+  getAllAssistants,
+  getAssistant,
+} from '@/constants/assistantsConfig';
+import { getNetwork } from '@/utils/utils';
 
 const LandingBox = () => {
   return (
@@ -70,14 +73,9 @@ const LandingBox = () => {
         w="100%" // Full width for cards
       >
         <WrapItem>
-          <AssistantSmallCard
-            assistant={curationCheckerAssistant}
-            includeLink
-          />
+          <AssistantSmallCard assistant={burntPixRefinerTestnet} includeLink />
         </WrapItem>
-        <WrapItem>
-          <AssistantSmallCard assistant={forwarderAssistant} includeLink />
-        </WrapItem>
+        <WrapItem>{/** */}</WrapItem>
       </Wrap>
     </Flex>
   );

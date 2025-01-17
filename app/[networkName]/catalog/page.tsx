@@ -3,10 +3,7 @@ import React from 'react';
 import { Box, Flex } from '@chakra-ui/react';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import AssistantInfo from '@/components/AssistantInfo';
-import {
-  curationCheckerAssistant,
-  forwarderAssistant,
-} from '@/constants/dummyData';
+import { networkNameToIdMapping } from '@/constants/supportedNetworks';
 
 export default function CatalogPage({
   params,
@@ -46,7 +43,11 @@ export default function CatalogPage({
               borderRadius={10}
               p={4}
             >
-              <AssistantInfo assistant={forwarderAssistant} includeLink />
+              <AssistantInfo
+                assistant={forwarderAssistant}
+                chainId={networkNameToIdMapping[params.networkName]}
+                includeLink
+              />
             </Box>
           </Box>
           <Box flex="1">
