@@ -43,7 +43,6 @@ const SetupAssistant: React.FC<SetupAssistantProps> = props => {
   const { walletProvider } = useWeb3ModalProvider();
   const { address } = useWeb3ModalAccount();
   const { network } = useNetwork();
-
   // Helper to get ethers.js provider + signer
   const getSigner = async () => {
     const provider = new BrowserProvider(walletProvider as Eip1193Provider);
@@ -117,7 +116,7 @@ const SetupAssistant: React.FC<SetupAssistantProps> = props => {
         return;
       }
 
-      const collectionAddress = 'TODO';
+      const collectionAddress = network.burntPixCollectionAddress;
       const assistantSettingsKey = generateMappingKey(
         'UAPExecutiveConfig',
         props.assistantAddress
@@ -177,18 +176,14 @@ const SetupAssistant: React.FC<SetupAssistantProps> = props => {
       selectedTransactions.forEach(txTypeId => {
         const typeConfigKey = generateMappingKey('UAPTypeConfig', txTypeId);
         dataKeys.push(typeConfigKey);
-        dataValues.push(customEncodeAddresses(['0x']));
+        dataValues.push('0x');
       });
 
       const assistantSettingsKey = generateMappingKey(
         'UAPExecutiveConfig',
         props.assistantAddress
       );
-      const abiCoder = new AbiCoder();
-      const settingsValue = abiCoder.encode(
-        ['address', 'bytes32', 'uint256'],
-        ['0x', '0x0000000000000000000000000000000000000000000000000000000000000000', 0]
-      );
+      const settingsValue = '0x';
 
       // Push these to the batch
       dataKeys.push(assistantSettingsKey);
