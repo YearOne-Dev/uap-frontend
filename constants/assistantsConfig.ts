@@ -19,7 +19,7 @@ export const burntPixRefinerTestnet: ExecutiveAssistant = {
     { name: 'collectionAddress', type: 'address' },
     { name: 'burntPixId', type: 'bytes32' },
   ],
-  chainId: 42,
+  chainId: 4201,
 };
 
 export const burntPixRefinerMainnet: ExecutiveAssistant = {
@@ -40,7 +40,7 @@ export const burntPixRefinerMainnet: ExecutiveAssistant = {
     { name: 'collectionAddress', type: 'address' },
     { name: 'burntPixId', type: 'bytes32' },
   ],
-  chainId: 4201,
+  chainId: 42,
 };
 
 const testnetAssistants: {

@@ -31,6 +31,7 @@ const AssistantSmallCard = ({
   let link = '';
   if (includeLink) {
     const network = getNetwork(assistant.chainId);
+    console.log("network", network);
     link += '/' + network.urlName;
     link += '/catalog';
     link += `/${assistant.assistantType.toLowerCase()}-assistants`;
