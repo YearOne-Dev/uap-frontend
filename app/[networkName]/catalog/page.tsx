@@ -3,7 +3,7 @@ import React from 'react';
 import { Box, Flex } from '@chakra-ui/react';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import AssistantInfo from '@/components/AssistantInfo';
-import { networkNameToIdMapping } from '@/constants/supportedNetworks';
+import { networkNameToIdMapping, supportedNetworks } from "@/constants/supportedNetworks";
 
 export default function CatalogPage({
   params,
@@ -16,6 +16,7 @@ export default function CatalogPage({
       { name: 'Catalog', href: `/${params.networkName}/catalog` },
     ],
   });
+
   return (
     <>
       {breadCrumbs}
@@ -44,8 +45,21 @@ export default function CatalogPage({
               p={4}
             >
               <AssistantInfo
-                assistant={forwarderAssistant}
-                chainId={networkNameToIdMapping[params.networkName]}
+                assistant={{
+                  address: '0x7870C5B8BC9572A8001C3f96f7ff59961B23500D',
+                  name: 'Universal Profile Assistant',
+                  description: 'The Universal Profile Assistant is a decentralized application that allows users to manage their universal profiles.',
+                  iconPath: '/lyx_icon_mainnet.svg',
+                  links: [{
+                    name: 'X',
+                    url: 'https://x.com/yearone_io',
+                  }],
+                  creatorAddress: '0x',
+                  supportedTransactionTypes: [],
+                  chainId: networkNameToIdMapping[params.networkName],
+                  assistantType: 'Executive',
+                  configParams: [],
+                }}
                 includeLink
               />
             </Box>
@@ -66,7 +80,21 @@ export default function CatalogPage({
               borderRadius={10}
               p={4}
             >
-              <AssistantInfo assistant={curationCheckerAssistant} includeLink />
+              <AssistantInfo assistant={{
+                address: '0x7870C5B8BC9572A8001C3f96f7ff59961B23500D',
+                name: 'Universal Profile Assistant',
+                description: 'The Universal Profile Assistant is a decentralized application that allows users to manage their universal profiles.',
+                iconPath: '/lyx_icon_mainnet.svg',
+                links: [{
+                  name: 'X',
+                  url: 'https://x.com/yearone_io',
+                }],
+                creatorAddress: '0x',
+                supportedTransactionTypes: [],
+                chainId: networkNameToIdMapping[params.networkName],
+                assistantType: 'Screener',
+                configParams: [],
+              }} includeLink />
             </Box>
           </Box>
         </Flex>
