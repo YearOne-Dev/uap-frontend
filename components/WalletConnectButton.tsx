@@ -34,6 +34,7 @@ export default function WalletConnectButton() {
   const [networkIcon, setNetworkIcon] = useState<string>();
   const [networkName, setNetworkName] = useState<string>();
   const [userConnected, setUserConnected] = useState(false);
+  const [shouldDisplaySignature, setShouldDisplaySignature] = useState(false);
   const [buttonMessage, setButtonMessage] = useState('Sign In');
   const [buttonStyling, setButtonStyling] = useState({
     background: '#FFF8DD',
@@ -69,9 +70,14 @@ export default function WalletConnectButton() {
       />
     ) : null;
 
-  const shouldDisplaySignature =
-    isConnected &&
-    (!mainControllerData || mainControllerData.upWallet !== address);
+  useEffect(() => {
+    if (isConnected &&
+      (!mainControllerData || mainControllerData.upWallet !== address)) {
+      setShouldDisplaySignature(true);
+    } else {
+      setShouldDisplaySignature(false);
+    }
+  }, [isConnected, mainControllerData]);
 
   useEffect(() => {
     const handleSignMessage = async () => {

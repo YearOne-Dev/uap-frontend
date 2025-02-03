@@ -3,7 +3,7 @@ import React from 'react';
 import { Box, Flex } from '@chakra-ui/react';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import AssistantInfo from '@/components/AssistantInfo';
-import { networkNameToIdMapping } from '@/constants/supportedNetworks';
+import { burntPixRefinerTestnet } from "@/constants/assistantsConfig";
 
 export default function CatalogPage({
   params,
@@ -16,6 +16,7 @@ export default function CatalogPage({
       { name: 'Catalog', href: `/${params.networkName}/catalog` },
     ],
   });
+
   return (
     <>
       {breadCrumbs}
@@ -35,29 +36,6 @@ export default function CatalogPage({
               fontWeight={700}
               mb={4}
             >
-              Executive Assistants
-            </Box>
-            <Box
-              border="1px solid"
-              borderColor="uap.font"
-              borderRadius={10}
-              p={4}
-            >
-              <AssistantInfo
-                assistant={forwarderAssistant}
-                chainId={networkNameToIdMapping[params.networkName]}
-                includeLink
-              />
-            </Box>
-          </Box>
-          <Box flex="1">
-            <Box
-              color="uap.font"
-              fontFamily="Montserrat"
-              fontSize={['lg', 'xl', '2xl']} // Responsive font size
-              fontWeight={700}
-              mb={4}
-            >
               Screener Assistants
             </Box>
             <Box
@@ -66,7 +44,7 @@ export default function CatalogPage({
               borderRadius={10}
               p={4}
             >
-              <AssistantInfo assistant={curationCheckerAssistant} includeLink />
+              <AssistantInfo assistant={burntPixRefinerTestnet} includeLink />
             </Box>
           </Box>
         </Flex>
