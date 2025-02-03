@@ -1,7 +1,10 @@
-import React from 'react';
-import { Badge, Box, Button, Flex, Image, Text } from '@chakra-ui/react';
+"use client";
+
+import React, { useEffect, useState } from 'react';
+import { Avatar, Badge, Box, Button, Flex, Image, Link, Text } from '@chakra-ui/react';
 import { ExecutiveAssistant, ScreenerAssistant } from '@/constants/CustomTypes';
-import { getNetwork } from '@/utils/utils';
+import { formatAddress, getNetwork } from '@/utils/utils';
+import { getProfileBasicInfo } from '@/utils/universalProfile';
 
 const AssistantSmallCard = ({
   assistant,
@@ -10,6 +13,21 @@ const AssistantSmallCard = ({
   assistant: ExecutiveAssistant | ScreenerAssistant;
   includeLink?: boolean;
 }) => {
+  console.log("executive info", assistant);
+  const networkConfig = getNetwork(assistant.chainId);
+  const [creatorName, setCreatorName] = useState<string>(
+    formatAddress(assistant.creatorAddress)
+  );
+  const [creatorAvatar, setCreatorAvatar] = useState<string | null>();
+
+  useEffect(() => {
+    getProfileBasicInfo(assistant.chainId, assistant.creatorAddress).then(profileData => {
+        console.log("profile data", profileData);
+        setCreatorName(profileData.upName || formatAddress(assistant.creatorAddress));
+        setCreatorAvatar(profileData.avatar || null);
+      });
+  });
+  
   let link = '';
   if (includeLink) {
     const network = getNetwork(assistant.chainId);
@@ -28,11 +46,13 @@ const AssistantSmallCard = ({
       alignItems="center"
       maxWidth={['100%', '400px']}
       w="100%"
-      minHeight="250px" // Ensures all cards have the same height
+      minHeight="250px"
+      minW={"300px"} // Ensures all cards have the same height
     >
       <Image
-        boxSize={['40px', '50px']} // Smaller image on small screens
+        boxSize={['80px', '120px']} // Smaller image on small screens
         borderRadius="full"
+        border="2px solid"
         src={assistant.iconPath}
         alt={`${assistant.name} Logo`}
         mb={[4, 0]} // Margin bottom for stacked layout
@@ -52,14 +72,12 @@ const AssistantSmallCard = ({
           </Text>
           <Text fontSize={['sm', 'md']} color="gray.600" mb={2}>
             By:{' '}
-            <a
-              href={assistant.links[0].url}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ fontWeight: 'bold', color: '#E53E3E' }}
-            >
-              Year One
-            </a>
+            {creatorAvatar && (
+              <Avatar src={creatorAvatar} height={'20px'} width={'20px'} />
+            )}
+            <Link isExternal href={`${networkConfig.universalEverything}/${assistant.creatorAddress}`}>
+              {creatorName}
+            </Link>
           </Text>
           <Badge
             fontSize={['0.7em', '0.8em']} // Smaller font size on small screens
@@ -86,6 +104,7 @@ const AssistantSmallCard = ({
             variant="solid"
             size="sm"
             width={['100%', '200px']} // Full width on small screens
+            borderRadius={"10px"}
           >
             View Details
           </Button>
