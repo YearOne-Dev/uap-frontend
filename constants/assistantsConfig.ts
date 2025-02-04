@@ -2,7 +2,7 @@ import { ExecutiveAssistant, ScreenerAssistant } from './CustomTypes';
 import { LSP1_TYPE_IDS } from '@lukso/lsp-smart-contracts';
 
 export const burntPixRefinerTestnet: ExecutiveAssistant = {
-  address: '0x8097f5E8236eFDCD743cd9615C6167685eD233ee',
+  address: '0x4a34eb223F78c063610060eacd586c983185ebcf',
   name: 'BurntPix Refiner',
   description: 'Make transactions directed at you iterate a BurntPix as a tax.',
   iconPath: 'assistants/BurntPixRefiner.png',
@@ -24,6 +24,42 @@ export const burntPixRefinerTestnet: ExecutiveAssistant = {
 
 export const burntPixRefinerMainnet: ExecutiveAssistant = {
   address: '',
+  name: 'Donation Assistant',
+  description: 'Donate LYX to an external wallet in every transaction that you sends you LYX.',
+  iconPath: 'assistants/DonationAssistant.png',
+  links: [{ name: 'X', url: 'https://x.com/yearone_io' }],
+  assistantType: 'Executive',
+  creatorAddress: '',
+  supportedTransactionTypes: [
+    LSP1_TYPE_IDS.LSP0ValueReceived,
+  ],
+  configParams: [
+    { name: 'destinationAddress', type: 'address' },
+    { name: 'donationPercentage', type: 'uint256' },
+  ],
+  chainId: 4201,
+};
+
+export const DonationAssistantTestnet: ExecutiveAssistant = {
+  address: '0x0326D8d0427f785AB755dd4E3A6cEd1f99a86A13',
+  name: 'Donation Assistant',
+  description: 'Donate LYX to an external wallet in every transaction that you sends you LYX.',
+  iconPath: 'assistants/DonationAssistant.png',
+  links: [{ name: 'X', url: 'https://x.com/yearone_io' }],
+  assistantType: 'Executive',
+  creatorAddress: '0xfE67D89DeBEC38592aB2FeD217b8bbb28851DF88',
+  supportedTransactionTypes: [
+    LSP1_TYPE_IDS.LSP0ValueReceived,
+  ],
+  configParams: [
+    { name: 'destinationAddress', type: 'address' },
+    { name: 'donationPercentage', type: 'uint256' },
+  ],
+  chainId: 42,
+};
+
+export const DonationAssistantMainnet: ExecutiveAssistant = {
+  address: '',
   name: 'BurntPix Refiner',
   description: 'Make transactions directed at you iterate a BurntPix as a tax.',
   iconPath: 'assistants/BurntPixRefiner.png',
@@ -42,6 +78,7 @@ export const burntPixRefinerMainnet: ExecutiveAssistant = {
   ],
   chainId: 4201,
 };
+
 
 const testnetAssistants: {
   [key: string]: ExecutiveAssistant | ScreenerAssistant;

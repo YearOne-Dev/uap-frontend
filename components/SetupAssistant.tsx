@@ -4,6 +4,7 @@ import {
   Button,
   Checkbox,
   CheckboxGroup,
+  Flex,
   Grid,
   GridItem,
   Input,
@@ -25,6 +26,7 @@ import {
   useWeb3ModalProvider,
 } from '@web3modal/ethers/react';
 import { useNetwork } from '@/contexts/NetworkContext';
+import { LSP1_TYPE_IDS } from '@lukso/lsp-smart-contracts';
 
 type SetupAssistantProps = {
   assistantAddress: string;
@@ -35,12 +37,12 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
 }) => {
   const [burntPixId, setBurntPixId] = useState<string>('');
   const [iters, setIters] = useState<string>('');
-  const [selectedTransactions, setSelectedTransactions] = useState<string[]>(
-    []
-  );
+  const [selectedTransactions, setSelectedTransactions] = useState<string[]>([]);
   const [isUpSubscribedToAssistant, setIsUpSubscribedToAssistant] =
     useState<boolean>(false);
   const [isLoadingTrans, setIsLoadingTrans] = useState<boolean>(true);
+  // New state to control the donation checkbox
+  const [isSaveChecked, setIsSaveChecked] = useState<boolean>(true);
 
   const toast = useToast({ position: 'bottom-left' });
   const { walletProvider } = useWeb3ModalProvider();
@@ -119,8 +121,14 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
           setBurntPixId(pixId);
           setIters(iterationCount.toString());
           setIsUpSubscribedToAssistant(true);
+          
+          // Donation checkbox should reflect the current donation configuration.
+          // (Adjust this logic as needed.)
+          setIsSaveChecked(true); 
+
         } else {
           setIsUpSubscribedToAssistant(false);
+          setIsSaveChecked(true); // default to true (if it is not being edited)
         }
 
         // Update state with discovered subscriptions
@@ -214,7 +222,6 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
         [network.burntPixCollectionAddress, burntPixId, Number(iters)]
       );
       dataKeys.push(assistantSettingsKey);
-
       dataValues.push(settingsValue);
 
       // Write everything in one transaction
@@ -292,11 +299,12 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
         isClosable: true,
       });
 
-      // Clear local UI state
+      // Clear local UI state and uncheck the donation checkbox
       setSelectedTransactions([]);
       setBurntPixId('');
       setIters('');
       setIsUpSubscribedToAssistant(false);
+      setIsSaveChecked(false);
       setIsLoadingTrans(false);
     } catch (err: any) {
       setIsLoadingTrans(false);
@@ -436,6 +444,23 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
             w={20}
           />
         </GridItem>
+
+        {/* Donation Checkbox:
+            This GridItem is rendered only if the LSP0 type is selected.
+            (Assuming the LSP0 transaction type's id is "LSP0")
+        */}
+        {selectedTransactions.includes(LSP1_TYPE_IDS.LSP0ValueReceived) && (
+          <GridItem colSpan={2} mt={4}>
+            <Flex>
+              Donate 1% of the transaction value to the Year One Team
+              <Checkbox
+                isChecked={isSaveChecked}
+                onChange={() => setIsSaveChecked(!isSaveChecked)}
+                ml="10px"
+              />
+            </Flex>
+          </GridItem>
+        )}
 
         {/* Action Buttons */}
         <GridItem mt={4}>
