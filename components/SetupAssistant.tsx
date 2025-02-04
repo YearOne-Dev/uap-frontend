@@ -35,6 +35,7 @@ type SetupAssistantProps = {
 const SetupAssistant: React.FC<SetupAssistantProps> = ({
   assistantAddress,
 }) => {
+  const DONATION_PERCENTAGE = 1;
   const [burntPixId, setBurntPixId] = useState<string>('');
   const [iters, setIters] = useState<string>('');
   const [selectedTransactions, setSelectedTransactions] = useState<string[]>([]);
@@ -122,8 +123,8 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
           setIters(iterationCount.toString());
           setIsUpSubscribedToAssistant(true);
           
-          // Donation checkbox should reflect the current donation configuration.
-          // (Adjust this logic as needed.)
+          // TODO Donation checkbox should reflect the current donation configuration.
+          // Check if the DOnation assistant is set and update the checkbox accordingly
           setIsSaveChecked(true); 
 
         } else {
@@ -223,6 +224,24 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
       );
       dataKeys.push(assistantSettingsKey);
       dataValues.push(settingsValue);
+
+      // Donation Assistant:
+      if (selectedTransactions.includes(LSP1_TYPE_IDS.LSP0ValueReceived) &&
+          isSaveChecked) {
+        // Donation Assistant address needs to be set with a configuration of the donation percentage and the destination address
+        const donationAssitantAddress = '0x0326D8d0427f785AB755dd4E3A6cEd1f99a86A13';
+        const destinationAddress = '0x1234567890123456789012345678901234567890';
+        const donationAssistantConfigKey = generateMappingKey(
+          'UAPExecutiveConfig',
+          donationAssitantAddress
+        );
+        const donationAssistantSettingsValue = abiCoder.encode(
+          ['address', 'uint256'],
+          [destinationAddress, DONATION_PERCENTAGE]
+        );
+        dataKeys.push(donationAssistantConfigKey);
+        dataValues.push(donationAssistantSettingsValue);
+      }
 
       // Write everything in one transaction
       const tx = await upContract.setDataBatch(dataKeys, dataValues);
@@ -447,7 +466,6 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
 
         {/* Donation Checkbox:
             This GridItem is rendered only if the LSP0 type is selected.
-            (Assuming the LSP0 transaction type's id is "LSP0")
         */}
         {selectedTransactions.includes(LSP1_TYPE_IDS.LSP0ValueReceived) && (
           <GridItem colSpan={2} mt={4}>
