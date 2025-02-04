@@ -34,6 +34,7 @@ export default function ExecutiveAssistantConfigurePage({
     networkNameToIdMapping[networkName]
   );
 
+  // Call all hooks unconditionally
   const networkUrlId = getChainIdByUrlName(params.networkName);
   const { open } = useWeb3Modal();
   const { walletProvider } = useWeb3ModalProvider();
@@ -41,13 +42,11 @@ export default function ExecutiveAssistantConfigurePage({
   const [isMissingPermissions, setIsMissingPermissions] = React.useState(false);
   const [isURDInstalled, setIsURDInstalled] = React.useState(false);
   const { network } = useNetwork();
-
   const {
     address,
     chainId: walletNetworkId,
     isConnected,
   } = useWeb3ModalAccount();
-  // todo validate that id from url is a valid assistant id
 
   useEffect(() => {
     console.log('mainUPController', mainControllerData?.mainUPController);
@@ -59,7 +58,7 @@ export default function ExecutiveAssistantConfigurePage({
     const getMissingPermissions = async () => {
       try {
         const missingPermissions = await doesControllerHaveMissingPermissions(
-          mainControllerData?.mainUPController,
+          mainControllerData.mainUPController,
           address
         );
         setIsMissingPermissions(missingPermissions.length > 0);
@@ -99,14 +98,16 @@ export default function ExecutiveAssistantConfigurePage({
     walletProvider,
   ]);
 
+  // Now that all hooks have been called, conditionally render if assistantInfo is missing.
+  if (!assistantInfo) {
+    return <Text>Assistant not found</Text>;
+  }
+
   const breadCrumbs = Breadcrumbs({
     items: [
       { name: 'UPAC', href: '/' },
       { name: 'Catalog', href: `/${networkName}/catalog` },
-      {
-        name: 'Executives',
-        href: `/${networkName}/catalog`,
-      },
+      { name: 'Executives', href: `/${networkName}/catalog` },
       {
         name: `Assistant ${params.assistantAddress}`,
         href: `/${networkName}/catalog/executive-assistants/${params.assistantAddress}`,
@@ -117,6 +118,7 @@ export default function ExecutiveAssistantConfigurePage({
       },
     ],
   });
+
   const renderConfigureBody = () => {
     if (!walletNetworkId || !address) {
       return <SignInBox boxText={'Sign in to set UAPTypeConfig'} />;
@@ -132,7 +134,7 @@ export default function ExecutiveAssistantConfigurePage({
           pt={4}
         >
           <VStack>
-            <Text>You're connect to {getNetwork(walletNetworkId).name}.</Text>
+            <Text>You’re connected to {getNetwork(walletNetworkId).name}.</Text>
             <Text>Please change network</Text>
             <Button onClick={() => open({ view: 'Networks' })}>
               Change network
@@ -141,6 +143,7 @@ export default function ExecutiveAssistantConfigurePage({
         </Flex>
       );
     }
+
     console.log('renderConfigureBody');
     console.log('isMissingPermissions', isMissingPermissions);
     console.log('mainUPController', mainControllerData?.mainUPController);
@@ -150,18 +153,12 @@ export default function ExecutiveAssistantConfigurePage({
       isMissingPermissions ||
       !isURDInstalled
     ) {
-      // todo pass isMissingPermissions to URDSetup
+      // TODO: pass isMissingPermissions to URDSetup if needed
       return <URDSetup />;
     }
 
-    return (
-      <SetupAssistant assistantAddress={params.assistantAddress as string} />
-    );
+    return <SetupAssistant assistantAddress={params.assistantAddress} />;
   };
-
-  if (!assistantInfo) {
-    return <Text>Assistant not found</Text>;
-  }
 
   return (
     <Box p={4} w="100%">

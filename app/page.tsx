@@ -1,11 +1,10 @@
-import { Metadata } from 'next';
-import LandingBox from '@/components/LandingBox';
+// app/page.tsx
+import { permanentRedirect } from 'next/navigation';
+import { CHAINS } from '@/constants/supportedNetworks';
 
-export const metadata: Metadata = {
-  title: 'UPAC - 🆙 Assistants Catalog',
-  description: 'tbd',
-};
-
-export default function Home() {
-  return <LandingBox />;
+export default function HomePage() {
+  // This will perform a server-side redirect to '/lukso'
+  permanentRedirect(`/${CHAINS.LUKSO_TESTNET}`);
+  // The component returns nothing since redirect() never allows further rendering.
+  return null;
 }

@@ -69,3 +69,8 @@ export const getChainIdByUrlName = (urlName: string): number => {
     )?.chainId || 42
   );
 };
+
+export interface IProfileBasicInfo {
+  upName: string | null;
+  avatar: string | null;
+}

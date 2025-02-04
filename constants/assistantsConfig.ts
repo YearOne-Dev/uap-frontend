@@ -5,7 +5,7 @@ export const burntPixRefinerTestnet: ExecutiveAssistant = {
   address: '0x8097f5E8236eFDCD743cd9615C6167685eD233ee',
   name: 'BurntPix Refiner',
   description: 'Make transactions directed at you iterate a BurntPix as a tax.',
-  iconPath: 'assistants/BurntPixRefiner.png',
+  iconPath: '/assistants/BurntPixRefiner.png',
   links: [{ name: 'X', url: 'https://x.com/yearone_io' }],
   assistantType: 'Executive',
   creatorAddress: '0xfE67D89DeBEC38592aB2FeD217b8bbb28851DF88',
@@ -19,14 +19,14 @@ export const burntPixRefinerTestnet: ExecutiveAssistant = {
     { name: 'collectionAddress', type: 'address' },
     { name: 'burntPixId', type: 'bytes32' },
   ],
-  chainId: 42,
+  chainId: 4201,
 };
 
 export const burntPixRefinerMainnet: ExecutiveAssistant = {
   address: '',
   name: 'BurntPix Refiner',
   description: 'Make transactions directed at you iterate a BurntPix as a tax.',
-  iconPath: 'assistants/BurntPixRefiner.png',
+  iconPath: '/assistants/BurntPixRefiner.png',
   links: [{ name: 'X', url: 'https://x.com/yearone_io' }],
   assistantType: 'Executive',
   creatorAddress: '',
@@ -40,7 +40,7 @@ export const burntPixRefinerMainnet: ExecutiveAssistant = {
     { name: 'collectionAddress', type: 'address' },
     { name: 'burntPixId', type: 'bytes32' },
   ],
-  chainId: 4201,
+  chainId: 42,
 };
 
 const testnetAssistants: {
