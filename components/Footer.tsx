@@ -1,8 +1,16 @@
+'use client';
 import React from 'react';
 import { Box, Flex, Link, Text } from '@chakra-ui/react';
 import { FaBookMedical, FaDatabase, FaSquareGithub } from 'react-icons/fa6';
+import { usePathname } from 'next/navigation';
 
 export default function Footer() {
+  // Get the current pathname (e.g. "/lukso/catalog")
+  const pathname = usePathname();
+  // Split the pathname and filter out empty segments.
+  const pathSegments = pathname.split('/').filter(seg => seg.length > 0);
+  // The network name is assumed to be the first segment in the URL.
+  const networkNameFromUrl = pathSegments[0] || '';
   return (
     <Box
       as="footer"
@@ -25,7 +33,7 @@ export default function Footer() {
             >
               <FaSquareGithub color={'var(--chakra-colors-uap-grey)'} />
             </Link>
-            <Link href={'/contracts'}>
+            <Link href={`${networkNameFromUrl}/contracts`}>
               <Text fontSize="md" fontWeight={400} letterSpacing={1.5}>
                 Contracts
               </Text>
@@ -61,7 +69,7 @@ export default function Footer() {
         >
           built by
           <Link
-            href="https://twitter.com/YearOneIO"
+            href="https://x.com/YearOneIO"
             textDecoration="underline"
             target="blank"
             color={'var(--chakra-colors-uap-grey)'}

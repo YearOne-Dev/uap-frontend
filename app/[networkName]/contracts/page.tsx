@@ -8,17 +8,25 @@ import {
   Image,
   Link as ChakraLink,
 } from '@chakra-ui/react';
-import { supportedNetworks } from '@/constants/supportedNetworks';
+import {
+  CHAINS,
+  networkNameToIdMapping,
+  supportedNetworks,
+} from '@/constants/supportedNetworks';
 import { FaExternalLinkAlt } from 'react-icons/fa';
-import { useNetwork } from '@/contexts/NetworkContext';
 import Breadcrumbs from '@/components/Breadcrumbs';
+import { getNetwork } from '@/utils/utils';
 
-export default function Contracts() {
-  const { network } = useNetwork();
+export default function Contracts({
+  params,
+}: {
+  params: { networkName: CHAINS };
+}) {
+  const network = getNetwork(networkNameToIdMapping[params.networkName]);
   const breadCrumbs = Breadcrumbs({
     items: [
-      { name: 'UPAC', href: '/' },
-      { name: 'Contracts', href: '/contracts' },
+      { name: 'UPAC', href: `/${params.networkName}` },
+      { name: 'Contracts', href: `/${params.networkName}/contracts` },
     ],
   });
 
@@ -57,7 +65,7 @@ export default function Contracts() {
               <ChakraLink
                 isExternal
                 key={networkId}
-                href={`${network.explorer}address/${network.protocolAddress}`}
+                href={`${supportedNetworks[networkId].explorer}address/${supportedNetworks[networkId].protocolAddress}`}
               >
                 <Button>
                   <Flex
@@ -67,11 +75,11 @@ export default function Contracts() {
                     flexDirection="row"
                     w="250px"
                   >
-                    <Box>{network.name}</Box>
+                    <Box>{supportedNetworks[networkId].name}</Box>
                     <FaExternalLinkAlt />
                     <Image
-                      src={network.icon}
-                      alt={network.icon}
+                      src={supportedNetworks[networkId].icon}
+                      alt={supportedNetworks[networkId].icon}
                       height={'30px'}
                     />
                   </Flex>
