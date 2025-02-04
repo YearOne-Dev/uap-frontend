@@ -71,8 +71,10 @@ export default function WalletConnectButton() {
     ) : null;
 
   useEffect(() => {
-    if (isConnected &&
-      (!mainControllerData || mainControllerData.upWallet !== address)) {
+    if (
+      isConnected &&
+      (!mainControllerData || mainControllerData.upWallet !== address)
+    ) {
       setShouldDisplaySignature(true);
     } else {
       setShouldDisplaySignature(false);

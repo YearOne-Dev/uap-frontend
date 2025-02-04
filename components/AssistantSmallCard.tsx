@@ -1,7 +1,16 @@
-"use client";
+'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Avatar, Badge, Box, Button, Flex, Image, Link, Text } from '@chakra-ui/react';
+import {
+  Avatar,
+  Badge,
+  Box,
+  Button,
+  Flex,
+  Image,
+  Link,
+  Text,
+} from '@chakra-ui/react';
 import { ExecutiveAssistant, ScreenerAssistant } from '@/constants/CustomTypes';
 import { formatAddress, getNetwork } from '@/utils/utils';
 import { getProfileBasicInfo } from '@/utils/universalProfile';
@@ -13,7 +22,7 @@ const AssistantSmallCard = ({
   assistant: ExecutiveAssistant | ScreenerAssistant;
   includeLink?: boolean;
 }) => {
-  console.log("executive info", assistant);
+  console.log('executive info', assistant);
   const networkConfig = getNetwork(assistant.chainId);
   const [creatorName, setCreatorName] = useState<string>(
     formatAddress(assistant.creatorAddress)
@@ -21,17 +30,21 @@ const AssistantSmallCard = ({
   const [creatorAvatar, setCreatorAvatar] = useState<string | null>();
 
   useEffect(() => {
-    getProfileBasicInfo(assistant.chainId, assistant.creatorAddress).then(profileData => {
-        console.log("profile data", profileData);
-        setCreatorName(profileData.upName || formatAddress(assistant.creatorAddress));
+    getProfileBasicInfo(assistant.chainId, assistant.creatorAddress).then(
+      profileData => {
+        console.log('profile data', profileData);
+        setCreatorName(
+          profileData.upName || formatAddress(assistant.creatorAddress)
+        );
         setCreatorAvatar(profileData.avatar || null);
-      });
+      }
+    );
   });
-  
+
   let link = '';
   if (includeLink) {
     const network = getNetwork(assistant.chainId);
-    console.log("network", network);
+    console.log('network', network);
     link += '/' + network.urlName;
     link += '/catalog';
     link += `/${assistant.assistantType.toLowerCase()}-assistants`;
@@ -48,10 +61,10 @@ const AssistantSmallCard = ({
       maxWidth={['100%', '400px']}
       w="100%"
       minHeight="250px"
-      minW={"300px"} // Ensures all cards have the same height
+      minW={'300px'} // Ensures all cards have the same height
     >
       <Image
-        boxSize={['80px', '120px']} // Smaller image on small screens
+        boxSize={['80px', '100px']} // Smaller image on small screens
         borderRadius="full"
         border="2px solid"
         src={assistant.iconPath}
@@ -71,15 +84,32 @@ const AssistantSmallCard = ({
           <Text fontSize={['md', 'lg']} fontWeight="bold" mb={1}>
             {assistant.name}
           </Text>
-          <Text fontSize={['sm', 'md']} color="gray.600" mb={2}>
-            By:{' '}
+          <Flex
+            fontSize={['sm', 'md']}
+            color="gray.600"
+            mb={2}
+            flexDirection={'row'}
+            gap={2}
+            justifyContent={'flex-start'}
+            alignItems={'center'}
+          >
+            <Text fontWeight={600}>By:</Text>
             {creatorAvatar && (
-              <Avatar src={creatorAvatar} height={'20px'} width={'20px'} />
+              <Avatar
+                border={'1px solid var(--chakra-colors-uap-grey)'}
+                src={creatorAvatar}
+                height={'20px'}
+                width={'20px'}
+              />
             )}
-            <Link isExternal href={`${networkConfig.universalEverything}/${assistant.creatorAddress}`}>
+            <Link
+              fontWeight={600}
+              isExternal
+              href={`${networkConfig.universalEverything}/${assistant.creatorAddress}?network=${networkConfig.luksoSiteName}`}
+            >
               {creatorName}
             </Link>
-          </Text>
+          </Flex>
           <Badge
             fontSize={['0.7em', '0.8em']} // Smaller font size on small screens
             borderRadius="md"
@@ -105,7 +135,7 @@ const AssistantSmallCard = ({
             variant="solid"
             size="sm"
             width={['100%', '200px']} // Full width on small screens
-            borderRadius={"10px"}
+            borderRadius={'10px'}
           >
             View Details
           </Button>

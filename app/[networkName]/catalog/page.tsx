@@ -3,16 +3,24 @@ import React from 'react';
 import { Box, Flex } from '@chakra-ui/react';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import AssistantInfo from '@/components/AssistantInfo';
-import { burntPixRefinerTestnet } from "@/constants/assistantsConfig";
+import {
+  burntPixRefinerMainnet,
+  burntPixRefinerTestnet,
+} from '@/constants/assistantsConfig';
+import { CHAINS } from '@/constants/supportedNetworks';
 
 export default function CatalogPage({
   params,
 }: {
   params: { networkName: string };
 }) {
+  const burntPixRefiner =
+    params.networkName === CHAINS.LUKSO_TESTNET
+      ? burntPixRefinerTestnet
+      : burntPixRefinerMainnet;
   const breadCrumbs = Breadcrumbs({
     items: [
-      { name: 'UPAC', href: '/' },
+      { name: 'UPAC', href: `/${params.networkName}` },
       { name: 'Catalog', href: `/${params.networkName}/catalog` },
     ],
   });
@@ -36,7 +44,7 @@ export default function CatalogPage({
               fontWeight={700}
               mb={4}
             >
-              Screener Assistants
+              Executive Assistants
             </Box>
             <Box
               border="1px solid"
@@ -44,7 +52,7 @@ export default function CatalogPage({
               borderRadius={10}
               p={4}
             >
-              <AssistantInfo assistant={burntPixRefinerTestnet} includeLink />
+              <AssistantInfo assistant={burntPixRefiner} includeLink />
             </Box>
           </Box>
         </Flex>

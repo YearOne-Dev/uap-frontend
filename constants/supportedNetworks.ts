@@ -14,6 +14,7 @@ interface ChainInfo {
   hasUPSupport: boolean;
   icon: string;
   universalEverything: string;
+  luksoSiteName: string;
 }
 
 export enum CHAINS {
@@ -38,6 +39,7 @@ export const supportedNetworks: { [key: string]: ChainInfo } = {
     hasUPSupport: true,
     icon: '/lyx_icon_mainnet.svg',
     universalEverything: 'https://universaleverything.io',
+    luksoSiteName: 'mainnet',
   },
   '4201': {
     name: 'LUKSO Testnet',
@@ -55,10 +57,11 @@ export const supportedNetworks: { [key: string]: ChainInfo } = {
     hasUPSupport: true,
     icon: '/lyx_icon_testnet.svg',
     universalEverything: 'https://universaleverything.io',
+    luksoSiteName: 'testnet',
   },
 };
 
 export const networkNameToIdMapping: { [key: string]: number } = {
   [CHAINS.LUKSO]: 42,
   [CHAINS.LUKSO_TESTNET]: 4201,
-} ;
+};

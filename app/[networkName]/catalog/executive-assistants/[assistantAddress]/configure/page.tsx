@@ -42,7 +42,11 @@ export default function ExecutiveAssistantConfigurePage({
   const [isMissingPermissions, setIsMissingPermissions] = React.useState(false);
   const [isURDInstalled, setIsURDInstalled] = React.useState(false);
   const { network } = useNetwork();
-  const { address, chainId: walletNetworkId, isConnected } = useWeb3ModalAccount();
+  const {
+    address,
+    chainId: walletNetworkId,
+    isConnected,
+  } = useWeb3ModalAccount();
 
   useEffect(() => {
     console.log('mainUPController', mainControllerData?.mainUPController);
@@ -122,11 +126,19 @@ export default function ExecutiveAssistantConfigurePage({
 
     if (walletNetworkId !== networkUrlId) {
       return (
-        <Flex height="100%" w="100%" alignContent="center" justifyContent="center" pt={4}>
+        <Flex
+          height="100%"
+          w="100%"
+          alignContent="center"
+          justifyContent="center"
+          pt={4}
+        >
           <VStack>
             <Text>You’re connected to {getNetwork(walletNetworkId).name}.</Text>
             <Text>Please change network</Text>
-            <Button onClick={() => open({ view: 'Networks' })}>Change network</Button>
+            <Button onClick={() => open({ view: 'Networks' })}>
+              Change network
+            </Button>
           </VStack>
         </Flex>
       );

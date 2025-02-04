@@ -9,10 +9,11 @@ import {
 } from '@/constants/assistantsConfig';
 import { CHAINS } from '@/constants/supportedNetworks';
 
-const LandingBox = ({
-  networkName,
-}: { networkName: CHAINS }) => {
-  const burntPixRefiner = networkName === CHAINS.LUKSO_TESTNET ? burntPixRefinerTestnet : burntPixRefinerMainnet; 
+const LandingBox = ({ networkName }: { networkName: CHAINS }) => {
+  const burntPixRefiner =
+    networkName === CHAINS.LUKSO_TESTNET
+      ? burntPixRefinerTestnet
+      : burntPixRefinerMainnet;
   return (
     <Flex
       minHeight="inherit"
