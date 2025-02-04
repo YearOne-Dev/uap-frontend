@@ -36,6 +36,10 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
   assistantAddress,
 }) => {
   const DONATION_PERCENTAGE = 1;
+  // This is the donation assistant address used to build the key.
+  // (It may be different from the value stored on-chain.)
+  const donationAssistantAddress = '0x51abDe764f6ccA1beAB04e9c864b95d28Bb92116';
+
   const [burntPixId, setBurntPixId] = useState<string>('');
   const [iters, setIters] = useState<string>('');
   const [selectedTransactions, setSelectedTransactions] = useState<string[]>(
@@ -44,15 +48,20 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
   const [isUpSubscribedToAssistant, setIsUpSubscribedToAssistant] =
     useState<boolean>(false);
   const [isLoadingTrans, setIsLoadingTrans] = useState<boolean>(true);
-  // New state to control the donation checkbox
-  const [isSaveChecked, setIsSaveChecked] = useState<boolean>(true);
+  // State to control the donation checkbox value
+  const [isSaveChecked, setIsSaveChecked] = useState<boolean>(false);
+  //if true, the donation checkbox is disabled (because a donation config exists).
+  const [donationCheckboxDisabled, setDonationCheckboxDisabled] =
+    useState<boolean>(false);
 
   const toast = useToast({ position: 'bottom-left' });
   const { walletProvider } = useWeb3ModalProvider();
   const { address } = useWeb3ModalAccount();
   const { network } = useNetwork();
 
-  // Ethers helper
+  // --------------------------------------------------------------------------
+  // Ethers helper: get the signer.
+  // --------------------------------------------------------------------------
   const getSigner = async () => {
     if (!walletProvider || !address)
       throw new Error('No wallet/address found!');
@@ -70,51 +79,47 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
       try {
         const signer = await getSigner();
         const upContract = ERC725__factory.connect(address, signer);
+        const abiCoder = new AbiCoder();
 
-        // Build an array of transaction type IDs
+        // Build an array of transaction type IDs and corresponding keys for this assistant.
         const allTypeIds = Object.values(transactionTypeMap).map(obj => obj.id);
-        // Build the data keys for each ID
         const allTypeConfigKeys = allTypeIds.map(id =>
           generateMappingKey('UAPTypeConfig', id)
         );
 
-        // Build the assistant config key
+        // Build the burn‑pix assistant config key.
         const assistantConfigKey = generateMappingKey(
           'UAPExecutiveConfig',
           assistantAddress
         );
 
-        // Fetch them all in one call
+        // Fetch all keys in one batch call.
         const allData = await upContract.getDataBatch([
           ...allTypeConfigKeys,
           assistantConfigKey,
         ]);
-        // The first N are the type config values; the last is assistant config
+        // The first N entries are the type config values; the last one is the assistant config.
         const typeConfigValues = allData.slice(0, allTypeIds.length);
         const assistantConfigValue = allData[allTypeIds.length];
 
-        const abiCoder = new AbiCoder();
         const newlySelectedTx: string[] = [];
 
-        // Decode each transaction type: single address
+        // Decode each transaction type (each stored as a single address).
         typeConfigValues.forEach((encodedValue, index) => {
-          if (!encodedValue || encodedValue === '0x') {
-            return; // no address stored
-          }
-          // Decode as a single address (32 bytes expected)
+          if (!encodedValue || encodedValue === '0x') return;
           const storedAddress = abiCoder.decode(
             ['address'],
             encodedValue
           )[0] as string;
-
-          // If it matches our assistant’s address, we push that txTypeId
           if (storedAddress.toLowerCase() === assistantAddress.toLowerCase()) {
             newlySelectedTx.push(allTypeIds[index]);
           }
         });
 
-        // Decode the assistant config => (collectionAddr, burntPixId, iters)
-        if (assistantConfigValue && assistantConfigValue !== '0x') {
+        // Determine if the burn‑pix assistant is configured.
+        const burnpixConfigured =
+          assistantConfigValue && assistantConfigValue !== '0x';
+        if (burnpixConfigured) {
           const decoded = abiCoder.decode(
             ['address', 'bytes32', 'uint256'],
             assistantConfigValue
@@ -124,17 +129,42 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
           setBurntPixId(pixId);
           setIters(iterationCount.toString());
           setIsUpSubscribedToAssistant(true);
-
-          // TODO Donation checkbox should reflect the current donation configuration.
-          // Check if the DOnation assistant is set and update the checkbox accordingly
-          setIsSaveChecked(true);
         } else {
           setIsUpSubscribedToAssistant(false);
-          setIsSaveChecked(true); // default to true (if it is not being edited)
         }
 
-        // Update state with discovered subscriptions
+        // Update state with discovered transaction subscriptions.
         setSelectedTransactions(newlySelectedTx);
+
+        // --- Donation Assistant Configuration Check ---
+        // Build the donation assistant config key.
+        const donationAssistantConfigKey = generateMappingKey(
+          'UAPExecutiveConfig',
+          donationAssistantAddress
+        );
+        const donationAssistantConfigValue = await upContract.getData(
+          donationAssistantConfigKey
+        );
+
+        if (
+          donationAssistantConfigValue &&
+          donationAssistantConfigValue !== '0x'
+        ) {
+          // Donation assistant is configured.
+          setDonationCheckboxDisabled(true);
+          setIsSaveChecked(true); // The checkbox is checked (and disabled) when donation config exists.
+        } else {
+          // Donation assistant not configured.
+          setDonationCheckboxDisabled(false);
+          // If no burn‑pix assistant is configured, default the donation checkbox to true;
+          // otherwise (if burnpix is configured) default it to false.
+          if (!burnpixConfigured) {
+            setIsSaveChecked(true);
+          } else {
+            setIsSaveChecked(false);
+          }
+        }
+
         setIsLoadingTrans(false);
       } catch (err) {
         setIsLoadingTrans(false);
@@ -195,18 +225,15 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
       setIsLoadingTrans(true);
       const signer = await getSigner();
       const upContract = ERC725__factory.connect(address, signer);
+      const abiCoder = new AbiCoder();
 
       const dataKeys: string[] = [];
       const dataValues: string[] = [];
 
-      const abiCoder = new AbiCoder();
-
-      // For each selected transaction type, store the *single address*
+      // Save the burn‑pix assistant configuration for each selected transaction type.
       selectedTransactions.forEach(txTypeId => {
         const typeConfigKey = generateMappingKey('UAPTypeConfig', txTypeId);
         dataKeys.push(typeConfigKey);
-
-        // Encode as a single address
         const singleAddressEncoded = abiCoder.encode(
           ['address'],
           [assistantAddress]
@@ -214,7 +241,7 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
         dataValues.push(singleAddressEncoded);
       });
 
-      // Also encode the assistant’s settings (collectionAddr, burntPixId, iters)
+      // Save the burn‑pix assistant's settings (collectionAddr, burntPixId, iters).
       const assistantSettingsKey = generateMappingKey(
         'UAPExecutiveConfig',
         assistantAddress
@@ -226,19 +253,18 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
       dataKeys.push(assistantSettingsKey);
       dataValues.push(settingsValue);
 
-      // Donation Assistant:
+      // Save Donation Assistant configuration only if the donation checkbox is not disabled
+      // (i.e. donation assistant is not already configured) and the checkbox is checked.
       if (
+        !donationCheckboxDisabled &&
         selectedTransactions.includes(LSP1_TYPE_IDS.LSP0ValueReceived) &&
         isSaveChecked
       ) {
-        // Donation Assistant address needs to be set with a configuration of the donation percentage and the destination address
-        const donationAssitantAddress =
-          '0x51abDe764f6ccA1beAB04e9c864b95d28Bb92116';
-        const destinationAddress = '0x9b071Fe3d22EAd27E2CDFA1Afec7EAa3c3F32009';
         const donationAssistantConfigKey = generateMappingKey(
           'UAPExecutiveConfig',
-          donationAssitantAddress
+          donationAssistantAddress
         );
+        const destinationAddress = '0x9b071Fe3d22EAd27E2CDFA1Afec7EAa3c3F32009';
         const donationAssistantSettingsValue = abiCoder.encode(
           ['address', 'uint256'],
           [destinationAddress, DONATION_PERCENTAGE]
@@ -247,7 +273,7 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
         dataValues.push(donationAssistantSettingsValue);
       }
 
-      // Write everything in one transaction
+      // Write all configurations in one transaction.
       const tx = await upContract.setDataBatch(dataKeys, dataValues);
       await tx.wait();
 
@@ -296,14 +322,14 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
       const dataKeys: string[] = [];
       const dataValues: string[] = [];
 
-      // For each currently subscribed type, clear the key with '0x'
+      // Clear each subscribed transaction type key.
       selectedTransactions.forEach(txTypeId => {
         const typeConfigKey = generateMappingKey('UAPTypeConfig', txTypeId);
         dataKeys.push(typeConfigKey);
         dataValues.push('0x');
       });
 
-      // Also clear the assistant config
+      // Also clear the burn‑pix assistant config.
       const assistantSettingsKey = generateMappingKey(
         'UAPExecutiveConfig',
         assistantAddress
@@ -322,7 +348,7 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
         isClosable: true,
       });
 
-      // Clear local UI state and uncheck the donation checkbox
+      // Clear local UI state and reset donation checkbox.
       setSelectedTransactions([]);
       setBurntPixId('');
       setIters('');
@@ -360,7 +386,7 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
     try {
       setIsLoadingTrans(true);
       const provider = new BrowserProvider(walletProvider as Eip1193Provider);
-      // todo unsubscribe Donation assistant
+      // (If needed, add additional logic to unsubscribe the Donation Assistant here.)
       await toggleUniveralAssistantsSubscribe(
         provider,
         address,
@@ -377,12 +403,11 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
         isClosable: true,
       });
 
-      // Clear local states
+      // Clear local states and refresh.
       setSelectedTransactions([]);
       setBurntPixId('');
       setIters('');
       setIsLoadingTrans(false);
-      // refresh page
       window.location.reload();
     } catch (err: any) {
       setIsLoadingTrans(false);
@@ -390,6 +415,63 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
       toast({
         title: 'Error',
         description: `Error uninstalling UAP: ${err.message}`,
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+  };
+
+  // Unsubscribe only the Donation Assistant
+  const handleUnsubscribeDonationAssistant = async () => {
+    if (!address) {
+      toast({
+        title: 'Not connected',
+        description: 'Please connect your wallet first.',
+        status: 'info',
+        duration: 5000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    try {
+      setIsLoadingTrans(true);
+      const signer = await getSigner();
+      const upContract = ERC725__factory.connect(address, signer);
+
+      // Build the donation assistant config key.
+      const donationAssistantConfigKey = generateMappingKey(
+        'UAPExecutiveConfig',
+        donationAssistantAddress
+      );
+
+      // Clear the donation assistant configuration by setting its value to "0x"
+      const tx = await upContract.setDataBatch(
+        [donationAssistantConfigKey],
+        ['0x']
+      );
+      await tx.wait();
+
+      toast({
+        title: 'Success',
+        description: 'Unsubscribed from Donation Assistant!',
+        status: 'success',
+        duration: 5000,
+        isClosable: true,
+      });
+
+      // Reset donation assistant state.
+      setDonationCheckboxDisabled(false);
+      // Optionally, reset the checkbox value to your desired default.
+      setIsSaveChecked(false);
+      setIsLoadingTrans(false);
+    } catch (err: any) {
+      setIsLoadingTrans(false);
+      console.error('Error unsubscribing donation assistant', err);
+      toast({
+        title: 'Error',
+        description: `Error unsubscribing donation assistant: ${err.message}`,
         status: 'error',
         duration: 5000,
         isClosable: true,
@@ -469,21 +551,25 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
           />
         </GridItem>
 
-        {/* Donation Checkbox:
-            This GridItem is rendered only if the LSP0 type is selected.
-        */}
+        {/* Donation Checkbox (rendered only if the donation transaction type is selected) */}
         {selectedTransactions.includes(LSP1_TYPE_IDS.LSP0ValueReceived) && (
-            <GridItem colSpan={2} mt={4}>
-              <Text fontWeight="bold" fontSize="lg" mb={2}>
-                2. Configure Donation Assistant Settings
+          <GridItem colSpan={2} mt={4}>
+            <Text fontWeight="bold" fontSize="lg" mb={2}>
+              2. Configure Donation Assistant Settings
             </Text>
-            <Flex>
+            <Flex align="center">
               Donate 1% of the transaction value to the Year One Team
               <Checkbox
                 isChecked={isSaveChecked}
                 onChange={() => setIsSaveChecked(!isSaveChecked)}
                 ml="10px"
+                isDisabled={donationCheckboxDisabled}
               />
+              {donationCheckboxDisabled && (
+                <Text ml="10px" color="gray.600">
+                  (Already Configured, go to the Donation Assistant to edit it.)
+                </Text>
+              )}
             </Flex>
           </GridItem>
         )}
@@ -491,19 +577,36 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
         {/* Action Buttons */}
         <GridItem mt={4}>
           {isUpSubscribedToAssistant ? (
-            <Button
-              size="sm"
-              bg="orange.500"
-              color="white"
-              mr="2"
-              _hover={{ bg: 'orange.600' }}
-              _active={{ bg: 'orange.700' }}
-              onClick={handleUnsubscribeAssistant}
-              isLoading={isLoadingTrans}
-              isDisabled={isLoadingTrans}
-            >
-              Unsubscribe Assistant
-            </Button>
+            <>
+              <Button
+                size="sm"
+                bg="orange.500"
+                color="white"
+                mr="2"
+                _hover={{ bg: 'orange.600' }}
+                _active={{ bg: 'orange.700' }}
+                onClick={handleUnsubscribeAssistant}
+                isLoading={isLoadingTrans}
+                isDisabled={isLoadingTrans}
+              >
+                Unsubscribe Assistant
+              </Button>
+              {donationCheckboxDisabled && (
+                <Button
+                  size="sm"
+                  bg="orange.500"
+                  color="white"
+                  mr="2"
+                  _hover={{ bg: 'orange.600' }}
+                  _active={{ bg: 'orange.700' }}
+                  onClick={handleUnsubscribeDonationAssistant}
+                  isLoading={isLoadingTrans}
+                  isDisabled={isLoadingTrans}
+                >
+                  Unsubscribe Donation Assistant
+                </Button>
+              )}
+            </>
           ) : null}
           <Button
             size="sm"
