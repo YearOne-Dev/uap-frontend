@@ -4,6 +4,7 @@ import {
   Button,
   Checkbox,
   CheckboxGroup,
+  Flex,
   Grid,
   GridItem,
   Input,
@@ -369,15 +370,16 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
   // Render
   // --------------------------------------------------------------------------
   return (
-    <Box p={4}>
-      <Grid templateColumns="1fr 2fr" gap={2} alignItems="start">
-        {/* Transaction Types */}
-        <GridItem>
-          <Text fontWeight="bold" fontSize="md">
-            Select a transaction type that you will engage this assistant for:
+    <Flex p={6} flexDirection={'column'} gap={8}>
+      <Text fontWeight="bold" fontSize="lg">
+        Assistant Instructions
+      </Text>
+      <Flex gap={4} flexDirection={'column'}>
+        <Flex flexDirection={'row'} gap={4} maxWidth="550px">
+          <Text fontWeight="bold" fontSize="sm">
+            Select the transaction types that you will engage this assistant
+            for:
           </Text>
-        </GridItem>
-        <GridItem>
           <CheckboxGroup
             colorScheme="orange"
             value={selectedTransactions}
@@ -385,10 +387,10 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
           >
             <VStack
               align="stretch"
-              border="1px solid #E2E8F0"
-              borderRadius="10px"
-              p={6}
-              width="fit-content"
+              border="1px solid var(--chakra-colors-uap-grey)"
+              borderRadius="xl"
+              py={2}
+              px={7}
             >
               {Object.entries(transactionTypeMap).map(
                 ([key, { id, label, typeName, icon, iconPath }]) => (
@@ -404,85 +406,56 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
               )}
             </VStack>
           </CheckboxGroup>
-        </GridItem>
-
-        {/* Assistant Settings */}
-        <GridItem colSpan={2} mt={6}>
-          <Text fontWeight="bold" fontSize="lg" mb={2}>
-            1. Configure Burnt Pix Refiner Assistant Settings
+        </Flex>
+        <Flex flexDirection={'row'} gap={4} maxWidth="550px">
+          <Text fontWeight="bold" fontSize="sm">
+            BurntPix NFT id you want to refine:
           </Text>
-        </GridItem>
-
-        <GridItem>
-          <Text>The id of the burnt pix you want to refine:</Text>
-        </GridItem>
-        <GridItem>
           <Input
-            placeholder="0x1234... (64 chars)"
+            placeholder="Enter NFT id"
             value={burntPixId}
-            w={80}
             onChange={e => setBurntPixId(e.target.value)}
+            w="70%"
           />
-        </GridItem>
-
-        <GridItem>
-          <Text>Iterations:</Text>
-        </GridItem>
-        <GridItem>
+        </Flex>
+        <Flex flexDirection={'row'} gap={4} maxWidth="550px">
+          <Text fontWeight="bold" fontSize="sm">
+            Number of refinement iterations incoming transactions will
+            contribute:
+          </Text>
           <Input
             placeholder="e.g. 100"
             value={iters}
             onChange={e => setIters(e.target.value)}
-            w={20}
+            w="70%"
           />
-        </GridItem>
-
-        {/* Action Buttons */}
-        <GridItem mt={4}>
-          {isUpSubscribedToAssistant ? (
-            <Button
-              size="sm"
-              bg="orange.500"
-              color="white"
-              mr="2"
-              _hover={{ bg: 'orange.600' }}
-              _active={{ bg: 'orange.700' }}
-              onClick={handleUnsubscribeAssistant}
-              isLoading={isLoadingTrans}
-              isDisabled={isLoadingTrans}
-            >
-              Unsubscribe Assistant
-            </Button>
-          ) : null}
-          <Button
-            size="sm"
-            bg="orange.500"
-            color="white"
-            _hover={{ bg: 'orange.600' }}
-            _active={{ bg: 'orange.700' }}
-            onClick={handleUnsubscribeURD}
-            isLoading={isLoadingTrans}
-            isDisabled={isLoadingTrans}
-          >
-            Unsubscribe URD
-          </Button>
-        </GridItem>
-        <GridItem mt={4}>
-          <Button
-            size="sm"
-            bg="orange.500"
-            color="white"
-            _hover={{ bg: 'orange.600' }}
-            _active={{ bg: 'orange.700' }}
-            onClick={handleSubmitConfig}
-            isLoading={isLoadingTrans}
-            isDisabled={isLoadingTrans}
-          >
-            Save
-          </Button>
-        </GridItem>
-      </Grid>
-    </Box>
+        </Flex>
+      </Flex>
+      <Flex gap={2}>
+        <Button
+          size="sm"
+          colorScheme="red"
+          variant={'outline'}
+          onClick={handleUnsubscribeURD}
+          isLoading={isLoadingTrans}
+          isDisabled={isLoadingTrans}
+        >
+          Unsubscribe Assistants
+        </Button>
+        <Button
+          size="sm"
+          bg="orange.500"
+          color="white"
+          _hover={{ bg: 'orange.600' }}
+          _active={{ bg: 'orange.700' }}
+          onClick={handleSubmitConfig}
+          isLoading={isLoadingTrans}
+          isDisabled={isLoadingTrans}
+        >
+          Save Assistant Settings
+        </Button>
+      </Flex>
+    </Flex>
   );
 };
 

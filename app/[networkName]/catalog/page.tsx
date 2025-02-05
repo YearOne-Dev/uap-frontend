@@ -20,7 +20,7 @@ export default function CatalogPage({
       : burntPixRefinerMainnet;
   const breadCrumbs = Breadcrumbs({
     items: [
-      { name: 'UPAC', href: `/${params.networkName}` },
+      { name: 'UP Assistants', href: `/${params.networkName}` },
       { name: 'Catalog', href: `/${params.networkName}/catalog` },
     ],
   });

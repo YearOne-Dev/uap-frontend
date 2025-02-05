@@ -69,7 +69,7 @@ export default function Footer() {
                 Contracts
               </Text>
             </Link>
-            <Link href="https://docs.uap.xyz">
+            <Link isExternal href="https://docs.upassistants.com">
               <Text fontSize="md" fontWeight={400} letterSpacing={1.5}>
                 Docs
               </Text>
@@ -88,7 +88,11 @@ export default function Footer() {
             <Link href={`/${currentNetwork}/contracts`} fontSize="20px">
               <FaDatabase color="var(--chakra-colors-uap-grey)" />
             </Link>
-            <Link href="https://docs.uap.xyz" fontSize="20px">
+            <Link
+              isExternal
+              href="https://docs.upassistants.com"
+              fontSize="20px"
+            >
               <FaBookMedical color="var(--chakra-colors-uap-grey)" />
             </Link>
           </Flex>

@@ -12,7 +12,7 @@ export default function AssistantPage({
 
   const breadCrumbs = Breadcrumbs({
     items: [
-      { name: 'UPAC', href: '/' },
+      { name: 'UP Assistants', href: '/' },
       { name: 'Catalog', href: `/${networkName}/catalog` },
       {
         name: 'Screeners',

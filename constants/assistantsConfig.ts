@@ -4,7 +4,8 @@ import { LSP1_TYPE_IDS } from '@lukso/lsp-smart-contracts';
 export const burntPixRefinerTestnet: ExecutiveAssistant = {
   address: '0x8097f5E8236eFDCD743cd9615C6167685eD233ee',
   name: 'BurntPix Refiner',
-  description: 'Make transactions directed at you iterate a BurntPix as a tax.',
+  description:
+    'Make transactions directed at you contribute iterations to a BurntPix of your choice.',
   iconPath: '/assistants/BurntPixRefiner.png',
   links: [{ name: 'X', url: 'https://x.com/yearone_io' }],
   assistantType: 'Executive',
@@ -25,7 +26,8 @@ export const burntPixRefinerTestnet: ExecutiveAssistant = {
 export const burntPixRefinerMainnet: ExecutiveAssistant = {
   address: '',
   name: 'BurntPix Refiner',
-  description: 'Make transactions directed at you iterate a BurntPix as a tax.',
+  description:
+    'Make transactions directed at you contribute iterations to a BurntPix of your choice.',
   iconPath: '/assistants/BurntPixRefiner.png',
   links: [{ name: 'X', url: 'https://x.com/yearone_io' }],
   assistantType: 'Executive',

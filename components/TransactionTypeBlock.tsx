@@ -37,20 +37,20 @@ const TransactionTypeBlock: React.FC<{
   icon?: string;
   iconPath?: string;
 }> = ({ label, typeName, icon, iconPath }) => (
-  <VStack textAlign="center" spacing={1}>
-    <Text fontWeight="bold" fontSize="md">
+  <Flex flexDirection={'column'} alignItems={'center'}>
+    <Text fontWeight="bold" fontSize="sm">
       {label}
     </Text>
-    <Flex>
-      <Text fontWeight="bold" fontSize="md" ml="2px">
+    <Flex gap={1} alignItems={'center'}>
+      <Text fontWeight="bold" fontSize="sm" ml="2px">
         {icon && icon}
-        {iconPath && <Image src={iconPath} alt={iconPath} height={'20px'} />}
+        {iconPath && <Image src={iconPath} alt={iconPath} height={'16px'} />}
       </Text>
-      <Text fontWeight="bold" fontSize="md">
+      <Text fontWeight="bold" fontSize="sm">
         {typeName}
       </Text>
     </Flex>
-  </VStack>
+  </Flex>
 );
 
 export default TransactionTypeBlock;

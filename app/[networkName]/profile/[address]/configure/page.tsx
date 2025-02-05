@@ -25,7 +25,7 @@ export default function ProfileConfigurePage({
 
   const breadCrumbs = Breadcrumbs({
     items: [
-      { name: 'UPAC', href: '/' },
+      { name: 'UP Assistants', href: '/' },
       { name: 'Profile', href: `/${networkName}/profile/${address}` },
       {
         name: 'Configure',

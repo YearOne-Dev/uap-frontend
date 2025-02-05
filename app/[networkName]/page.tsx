@@ -3,7 +3,7 @@ import LandingBox from '@/components/LandingBox';
 import { CHAINS, networkNameToIdMapping } from '@/constants/supportedNetworks';
 
 export const metadata: Metadata = {
-  title: 'UPAC - 🆙 Assistants Catalog',
+  title: 'UP Assistants - 🆙 Assistants Catalog',
   description: 'tbd',
 };
 

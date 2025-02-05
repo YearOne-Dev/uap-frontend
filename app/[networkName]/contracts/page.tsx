@@ -25,7 +25,7 @@ export default function Contracts({
   const network = getNetwork(networkNameToIdMapping[params.networkName]);
   const breadCrumbs = Breadcrumbs({
     items: [
-      { name: 'UPAC', href: `/${params.networkName}` },
+      { name: 'UP Assistants', href: `/${params.networkName}` },
       { name: 'Contracts', href: `/${params.networkName}/contracts` },
     ],
   });

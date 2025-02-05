@@ -8,6 +8,7 @@ import {
   burntPixRefinerTestnet,
 } from '@/constants/assistantsConfig';
 import { CHAINS } from '@/constants/supportedNetworks';
+import AssistantPlaceholderCard from './AssistantPlaceholderCard';
 
 const LandingBox = ({ networkName }: { networkName: CHAINS }) => {
   const burntPixRefiner =
@@ -77,6 +78,9 @@ const LandingBox = ({ networkName }: { networkName: CHAINS }) => {
       >
         <WrapItem>
           <AssistantSmallCard assistant={burntPixRefiner} includeLink />
+        </WrapItem>
+        <WrapItem>
+          <AssistantPlaceholderCard />
         </WrapItem>
       </Wrap>
     </Flex>
