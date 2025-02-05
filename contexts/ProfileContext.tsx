@@ -15,7 +15,7 @@ interface Profile {
   links: Link[];
   profileImage: Image[];
   backgroundImage: Image[];
-  mainImage: string | undefined;
+  mainImage?: string;
 }
 
 interface Link {
@@ -64,45 +64,56 @@ export function useProfile() {
   return useContext(ProfileContext);
 }
 
-export function ProfileProvider({
-                                  children,
-                                }: Readonly<{ children: React.ReactNode }>) {
+export function ProfileProvider({ children }: { children: React.ReactNode }) {
   const { address } = useWeb3ModalAccount();
+
   const [profile, setProfile] = useState<Profile | null>(null);
   const [issuedAssets, setIssuedAssets] = useState<string[]>([]);
   const [mainControllerData, setMainControllerData] =
     useState<MainControllerData | null>(null);
 
-  // 1) Load both profile and controller data from local storage
+  // Load from localStorage whenever 'address' changes or on first mount
   useEffect(() => {
-    // If no address, just clear
-    if (!address) {
-      setProfile(null);
-      setMainControllerData(null);
-      return;
-    }
-
+    // 1) Try loading the saved Profile
     const storedProfileData = localStorage.getItem('profileData');
     if (storedProfileData) {
       const parsed = JSON.parse(storedProfileData);
-      if (parsed.account === address) {
+      // If we stored a specific 'account' inside the data,
+      // we might match it to the current address.
+      // Some folks skip the "account" check and always set it.
+      // Up to you:
+      if (address && parsed.account === address) {
         setProfile(parsed.data);
       } else {
+        // you could setProfile(null) or leave the old profile if you prefer
         setProfile(null);
       }
     } else {
       setProfile(null);
     }
 
+    // 2) Try loading the saved Controller Data
     const storedControllerData = localStorage.getItem('mainControllerData');
     if (storedControllerData) {
-      setMainControllerData(JSON.parse(storedControllerData));
+      const parsedController = JSON.parse(storedControllerData);
+      // You could check if parsedController.upWallet === address
+      // If so, set it. Otherwise, set it to null.
+      // But typically it's okay to keep it unless you explicitly want
+      // to tie it to the same wallet each time:
+      if (address && parsedController.upWallet === address) {
+        setMainControllerData(parsedController);
+      } else {
+        // OPTIONAL: If you want to require a matching address in localStorage:
+        // setMainControllerData(null);
+        // Otherwise:
+        setMainControllerData(parsedController);
+      }
     } else {
       setMainControllerData(null);
     }
   }, [address]);
 
-  // 2) Whenever mainControllerData changes, write to local storage (or remove)
+  // Whenever mainControllerData changes, store it (do not remove if null unless you want to).
   useEffect(() => {
     if (mainControllerData) {
       localStorage.setItem(
@@ -110,11 +121,12 @@ export function ProfileProvider({
         JSON.stringify(mainControllerData)
       );
     } else {
-      localStorage.removeItem('mainControllerData');
+      // If you truly want to remove data from localStorage when set to null:
+      // localStorage.removeItem('mainControllerData');
+      // Or you can do nothing, so that we keep the data around.
     }
   }, [mainControllerData]);
 
-  // Collect values in a memo to avoid re-creating the context on every render
   const contextValue = useMemo(
     () => ({
       profile,
