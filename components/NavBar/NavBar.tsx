@@ -15,7 +15,7 @@ const NavBar = () => {
   // Get the current pathname (e.g. "/lukso/catalog")
   const pathname = usePathname();
   // Split the pathname and filter out empty segments.
-  const pathSegments = pathname.split('/').filter((seg) => seg.length > 0);
+  const pathSegments = pathname.split('/').filter(seg => seg.length > 0);
   // The network name is assumed to be the first segment in the URL.
   const networkNameFromUrl = pathSegments[0] || '';
 
