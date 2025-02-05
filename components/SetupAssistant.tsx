@@ -236,7 +236,7 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
         dataKeys.push(typeConfigKey);
         const singleAddressEncoded = abiCoder.encode(
           ['address'],
-          [donationAssistantAddress]
+          [donationAssistantAddress] // needs the 2 assistants
         );
         dataValues.push(singleAddressEncoded);
       });
