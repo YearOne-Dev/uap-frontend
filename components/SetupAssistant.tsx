@@ -383,7 +383,7 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
         // const encodedAssistants = abiCoder.encode(['address[]'], [assistants]);
         // dataValues.push(encodedAssistants);
         dataValues.push(
-          customEncodeAddresses([assistantAddress, donationAssistantAddress])
+          customEncodeAddresses(assistants)
         );
       }
 
