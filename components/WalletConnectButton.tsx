@@ -80,7 +80,9 @@ export default function WalletConnectButton() {
       signTriggeredRef.current = true;
       (async () => {
         try {
-          const provider = new BrowserProvider(walletProvider as Eip1193Provider);
+          const provider = new BrowserProvider(
+            walletProvider as Eip1193Provider
+          );
           const siweMessage = new SiweMessage({
             domain: window.location.host,
             uri: window.location.origin,
@@ -110,7 +112,14 @@ export default function WalletConnectButton() {
         }
       })();
     }
-  }, [isConnected, isSigned, chainId, address, walletProvider, setMainControllerData]);
+  }, [
+    isConnected,
+    isSigned,
+    chainId,
+    address,
+    walletProvider,
+    setMainControllerData,
+  ]);
 
   // Build dynamic profile link
   const getProfileUrl = () => {

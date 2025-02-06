@@ -105,11 +105,11 @@ export default function ExecutiveAssistantConfigurePage({
 
   const breadCrumbs = Breadcrumbs({
     items: [
-      { name: 'UPAC', href: '/' },
+      { name: 'UP Assistants', href: '/' },
       { name: 'Catalog', href: `/${networkName}/catalog` },
       { name: 'Executives', href: `/${networkName}/catalog` },
       {
-        name: `Assistant ${params.assistantAddress}`,
+        name: `${assistantInfo.name}`,
         href: `/${networkName}/catalog/executive-assistants/${params.assistantAddress}`,
       },
       {
@@ -121,7 +121,7 @@ export default function ExecutiveAssistantConfigurePage({
 
   const renderConfigureBody = () => {
     if (!walletNetworkId || !address) {
-      return <SignInBox boxText={'Sign in to set UAPTypeConfig'} />;
+      return <SignInBox boxText={'Sign in to configure an Assistant'} />;
     }
 
     if (walletNetworkId !== networkUrlId) {
@@ -144,17 +144,13 @@ export default function ExecutiveAssistantConfigurePage({
       );
     }
 
-    console.log('renderConfigureBody');
-    console.log('isMissingPermissions', isMissingPermissions);
-    console.log('mainUPController', mainControllerData?.mainUPController);
-    console.log('isURDInstalled', isURDInstalled);
     if (
       !mainControllerData?.mainUPController ||
       isMissingPermissions ||
       !isURDInstalled
     ) {
       // TODO: pass isMissingPermissions to URDSetup if needed
-      return <URDSetup />;
+      return <URDSetup extensionHasPermissions={!isMissingPermissions} />;
     }
 
     return <SetupAssistant assistantAddress={params.assistantAddress} />;
@@ -169,7 +165,6 @@ export default function ExecutiveAssistantConfigurePage({
         </Flex>
         <Box border="1px" borderColor="gray.200" w="100%" />
         {renderConfigureBody()}
-        <Box border="1px" borderColor="gray.200" w="100%" />
       </Flex>
     </Box>
   );
