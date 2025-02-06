@@ -90,6 +90,7 @@ export const toggleUniveralAssistantsSubscribe = async (
   const assistantsURDPermissions = !isUsingDefaultURD
     ? upPermissions.encodePermissions({
         SUPER_CALL: true,
+        SUPER_TRANSFERVALUE: true, //TODO make dynamic per assistant
         ...DEFAULT_UP_URD_PERMISSIONS,
       })
     : '0x';
