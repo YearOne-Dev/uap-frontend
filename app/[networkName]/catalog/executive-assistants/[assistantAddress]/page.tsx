@@ -32,7 +32,7 @@ const ExecutiveAssistantPage: React.FC<{
   */
   const breadCrumbs = Breadcrumbs({
     items: [
-      { name: 'UPAC', href: '/' },
+      { name: 'UP Assistants', href: '/' },
       { name: 'Catalog', href: `/${networkName}/catalog` },
       {
         name: 'Executives',

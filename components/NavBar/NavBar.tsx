@@ -48,7 +48,7 @@ const NavBar = () => {
                 fontFamily="Tomorrow"
                 fontWeight="500"
               >
-                UPAC
+                UP Assistants
               </Text>
             </Flex>
           </Link>
