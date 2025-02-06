@@ -12,7 +12,8 @@ import {
   MenuGroup,
   MenuItem,
   MenuList,
-} from '@chakra-ui/react';
+  useToast
+} from "@chakra-ui/react";
 import {
   useDisconnect,
   useWeb3Modal,
@@ -32,6 +33,7 @@ export default function WalletConnectButton() {
   const { disconnect } = useDisconnect();
   const { address, isConnected, chainId } = useWeb3ModalAccount();
   const { walletProvider } = useWeb3ModalProvider();
+  const toast = useToast({ position: 'bottom-left' });
 
   const { profile, mainControllerData, setMainControllerData } = useProfile();
 
@@ -103,8 +105,18 @@ export default function WalletConnectButton() {
           });
 
           console.log('Signature:', signature);
-        } catch (error) {
+        } catch (error: any) {
           console.error('Error signing the message:', error);
+          if(!error.message.includes("user rejected action")) {
+            toast({
+              title: 'Error',
+              description: `Error signing the message: ${error.message}`,
+              status: 'error',
+              duration: null,
+              isClosable: true,
+            });
+          }
+          disconnect();
           // If error, allow future sign attempts
           signTriggeredRef.current = false;
         }

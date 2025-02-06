@@ -174,7 +174,7 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
         title: 'Invalid burntPixId',
         description: 'Must be 32-byte hex (0x + 64 characters).',
         status: 'error',
-        duration: 5000,
+        duration: null,
         isClosable: true,
       });
       return;
@@ -184,7 +184,7 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
         title: 'Invalid iterations',
         description: 'Please enter a valid number.',
         status: 'error',
-        duration: 5000,
+        duration: null,
         isClosable: true,
       });
       return;
@@ -242,7 +242,7 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
         title: 'Error',
         description: `Error setting configuration: ${err.message}`,
         status: 'error',
-        duration: 5000,
+        duration: null,
         isClosable: true,
       });
     }
@@ -306,13 +306,15 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
     } catch (err: any) {
       setIsLoadingTrans(false);
       console.error('Error unsubscribing assistant', err);
-      toast({
-        title: 'Error',
-        description: `Error unsubscribing assistant: ${err.message}`,
-        status: 'error',
-        duration: 5000,
-        isClosable: true,
-      });
+      if(!err.message.includes("user rejected action")) {
+        toast({
+          title: 'Error',
+          description: `Error unsubscribing assistant: ${err.message}`,
+          status: 'error',
+          duration: null,
+          isClosable: true,
+        });
+      }
     }
   };
 
@@ -360,13 +362,15 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
     } catch (err: any) {
       setIsLoadingTrans(false);
       console.error('Error uninstalling UAP:', err);
-      toast({
-        title: 'Error',
-        description: `Error uninstalling UAP: ${err.message}`,
-        status: 'error',
-        duration: 5000,
-        isClosable: true,
-      });
+      if(!err.message.includes("user rejected action")) {
+        toast({
+          title: 'Error',
+          description: `Error uninstalling UAP: ${err.message}`,
+          status: 'error',
+          duration: null,
+          isClosable: true,
+        });
+      }
     }
   };
 
