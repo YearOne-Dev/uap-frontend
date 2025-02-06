@@ -4,7 +4,6 @@ import { Flex, Image, Text, VStack, Wrap, WrapItem } from '@chakra-ui/react';
 
 import AssistantSmallCard from '@/components/AssistantSmallCard';
 import { CHAINS, networkNameToIdMapping, supportedNetworks } from "@/constants/supportedNetworks";
-import AssistantPlaceholderCard from './AssistantPlaceholderCard';
 
 const LandingBox = ({ networkName }: { networkName: CHAINS }) => {
 
@@ -73,7 +72,7 @@ const LandingBox = ({ networkName }: { networkName: CHAINS }) => {
         {
           networkConfig.assistants.map(assistant => (
             <WrapItem>
-              <AssistantSmallCard assistant={assistant} includeLink />
+              <AssistantSmallCard key={assistant.address} assistant={assistant} includeLink />
             </WrapItem>
           ))
         }
