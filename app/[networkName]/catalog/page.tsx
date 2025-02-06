@@ -3,21 +3,14 @@ import React from 'react';
 import { Box, Flex } from '@chakra-ui/react';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import AssistantInfo from '@/components/AssistantInfo';
-import {
-  burntPixRefinerMainnet,
-  burntPixRefinerTestnet,
-} from '@/constants/assistantsConfig';
-import { CHAINS } from '@/constants/supportedNetworks';
+import { networkNameToIdMapping, supportedNetworks } from "@/constants/supportedNetworks";
 
 export default function CatalogPage({
   params,
 }: {
   params: { networkName: string };
 }) {
-  const burntPixRefiner =
-    params.networkName === CHAINS.LUKSO_TESTNET
-      ? burntPixRefinerTestnet
-      : burntPixRefinerMainnet;
+  const networkConfig = supportedNetworks[networkNameToIdMapping[params.networkName]];
   const breadCrumbs = Breadcrumbs({
     items: [
       { name: 'UP Assistants', href: `/${params.networkName}` },
@@ -46,14 +39,18 @@ export default function CatalogPage({
             >
               Executive Assistants
             </Box>
-            <Box
-              border="1px solid"
-              borderColor="uap.font"
-              borderRadius={10}
-              p={4}
-            >
-              <AssistantInfo assistant={burntPixRefiner} includeLink />
-            </Box>
+              {
+                networkConfig.assistants.map((assistant) => (
+                  <Box
+                    border="1px solid"
+                    borderColor="uap.font"
+                    borderRadius={10}
+                    p={4}
+                  >
+                  <AssistantInfo key={assistant.address} assistant={assistant} includeLink />
+                  </Box>
+                ))
+              }
           </Box>
         </Flex>
       </Flex>
