@@ -2,7 +2,7 @@ import { ExecutiveAssistant, ScreenerAssistant } from './CustomTypes';
 import { LSP1_TYPE_IDS } from '@lukso/lsp-smart-contracts';
 
 export const burntPixRefinerTestnet: ExecutiveAssistant = {
-  address: '0x4a34eb223F78c063610060eacd586c983185ebcf',
+  address: '0x8097f5E8236eFDCD743cd9615C6167685eD233ee',
   name: 'BurntPix Refiner',
   description:
     'Make transactions directed at you contribute iterations to a BurntPix of your choice.',
