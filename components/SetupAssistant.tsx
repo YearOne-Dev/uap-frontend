@@ -74,25 +74,25 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
   // --------------------------------------------------------------------------
   useEffect(() => {
     if (!address) return;
-
+  
     const loadExistingConfig = async () => {
       try {
         const signer = await getSigner();
         const upContract = ERC725__factory.connect(address, signer);
         const abiCoder = new AbiCoder();
-
+  
         // Build an array of transaction type IDs and corresponding keys for this assistant.
         const allTypeIds = Object.values(transactionTypeMap).map(obj => obj.id);
         const allTypeConfigKeys = allTypeIds.map(id =>
           generateMappingKey('UAPTypeConfig', id)
         );
-
+  
         // Build the burn‑pix assistant config key.
         const assistantConfigKey = generateMappingKey(
           'UAPExecutiveConfig',
           assistantAddress
         );
-
+  
         // Fetch all keys in one batch call.
         const allData = await upContract.getDataBatch([
           ...allTypeConfigKeys,
@@ -101,21 +101,42 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
         // The first N entries are the type config values; the last one is the assistant config.
         const typeConfigValues = allData.slice(0, allTypeIds.length);
         const assistantConfigValue = allData[allTypeIds.length];
-
+  
         const newlySelectedTx: string[] = [];
-
-        // Decode each transaction type (each stored as a single address).
+  
+        // Decode each transaction type.
         typeConfigValues.forEach((encodedValue, index) => {
           if (!encodedValue || encodedValue === '0x') return;
-          const storedAddress = abiCoder.decode(
-            ['address'],
-            encodedValue
-          )[0] as string;
-          if (storedAddress.toLowerCase() === assistantAddress.toLowerCase()) {
-            newlySelectedTx.push(allTypeIds[index]);
+  
+          const typeId = allTypeIds[index];
+          let addresses: string[];
+  
+          if (typeId === LSP1_TYPE_IDS.LSP0ValueReceived) {
+            // For LSP0ValueReceived, the value is encoded as an array via abiCoder.encode(['address[]'], [assistants])
+            addresses = abiCoder.decode(['address[]'], encodedValue)[0];
+          } else {
+            // For other types, the value might be custom encoded.
+            // Our custom encoding for a single address produces 22 bytes (0x + 44 hex digits).
+            if (encodedValue.length === 46) {
+              // Skip the first 4 hex characters (the uint16 count) and take the remaining 40 hex digits as the address.
+              const addr = "0x" + encodedValue.slice(6);
+              addresses = [addr];
+            } else {
+              // Otherwise, assume standard ABI encoding.
+              addresses = [abiCoder.decode(['address'], encodedValue)[0]];
+            }
+          }
+  
+          // Check if the burn‑pix assistant is among the addresses.
+          if (
+            addresses
+              .map((addr) => addr.toLowerCase())
+              .includes(assistantAddress.toLowerCase())
+          ) {
+            newlySelectedTx.push(typeId);
           }
         });
-
+  
         // Determine if the burn‑pix assistant is configured.
         const burnpixConfigured =
           assistantConfigValue && assistantConfigValue !== '0x';
@@ -132,10 +153,10 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
         } else {
           setIsUpSubscribedToAssistant(false);
         }
-
+  
         // Update state with discovered transaction subscriptions.
         setSelectedTransactions(newlySelectedTx);
-
+  
         // --- Donation Assistant Configuration Check ---
         // Build the donation assistant config key.
         const donationAssistantConfigKey = generateMappingKey(
@@ -145,7 +166,7 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
         const donationAssistantConfigValue = await upContract.getData(
           donationAssistantConfigKey
         );
-
+  
         if (
           donationAssistantConfigValue &&
           donationAssistantConfigValue !== '0x'
@@ -164,17 +185,17 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
             setIsSaveChecked(false);
           }
         }
-
+  
         setIsLoadingTrans(false);
       } catch (err) {
         setIsLoadingTrans(false);
         console.error('Failed to load existing config:', err);
       }
     };
-
+  
     loadExistingConfig();
   }, [address, assistantAddress]);
-
+  
   // --------------------------------------------------------------------------
   // Save config
   // --------------------------------------------------------------------------
@@ -312,7 +333,7 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
   
 
   // --------------------------------------------------------------------------
-  // Unsubscribe only this Assistant
+  // Unsubscribe only this Burnt pix Assistant
   // --------------------------------------------------------------------------
   const handleUnsubscribeAssistant = async () => {
     if (!address) {
@@ -325,33 +346,56 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
       });
       return;
     }
-
+  
     try {
       setIsLoadingTrans(true);
       const signer = await getSigner();
       const upContract = ERC725__factory.connect(address, signer);
-
+      const abiCoder = new AbiCoder();
+  
       const dataKeys: string[] = [];
       const dataValues: string[] = [];
-
-      // Clear each subscribed transaction type key.
-      selectedTransactions.forEach(txTypeId => {
+  
+      // Process each selected transaction type.
+      for (const txTypeId of selectedTransactions) {
         const typeConfigKey = generateMappingKey('UAPTypeConfig', txTypeId);
-        dataKeys.push(typeConfigKey);
-        dataValues.push('0x');
-      });
-
-      // Also clear the burn‑pix assistant config.
-      const assistantSettingsKey = generateMappingKey(
-        'UAPExecutiveConfig',
-        assistantAddress
-      );
+        if (txTypeId !== LSP1_TYPE_IDS.LSP0ValueReceived) {
+          // For non-array-based type configs, simply clear the value.
+          dataKeys.push(typeConfigKey);
+          dataValues.push('0x');
+        } else {
+          // For LSP0ValueReceived, decode the stored array.
+          const currentValue = await upContract.getData(typeConfigKey);
+          if (currentValue && currentValue !== '0x') {
+            // Decode as an array of addresses.
+            const decoded = abiCoder.decode(['address[]'], currentValue);
+            let addresses: string[] = decoded[0];
+            // Remove the burn‑pix assistant address.
+            addresses = addresses.filter(
+              addr => addr.toLowerCase() !== assistantAddress.toLowerCase()
+            );
+            if (addresses.length > 0) {
+              // Re‑encode the updated array.
+              const newEncoded = abiCoder.encode(['address[]'], [addresses]);
+              dataKeys.push(typeConfigKey);
+              dataValues.push(newEncoded);
+            } else {
+              // If no addresses remain, clear the key.
+              dataKeys.push(typeConfigKey);
+              dataValues.push('0x');
+            }
+          }
+        }
+      }
+  
+      // Clear the burn‑pix assistant's executive configuration.
+      const assistantSettingsKey = generateMappingKey('UAPExecutiveConfig', assistantAddress);
       dataKeys.push(assistantSettingsKey);
       dataValues.push('0x');
-
+  
       const tx = await upContract.setDataBatch(dataKeys, dataValues);
       await tx.wait();
-
+  
       toast({
         title: 'Success',
         description: 'Unsubscribed from Burnt Pix Refiner Assistant!',
@@ -359,13 +403,15 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
         duration: 5000,
         isClosable: true,
       });
-
-      // Clear local UI state and reset donation checkbox.
-      setSelectedTransactions([]);
+  
+      // Update UI state as appropriate.
+      // (For example, you might remove LSP0ValueReceived from selectedTransactions if no assistants remain.)
+      setSelectedTransactions(prev =>
+        prev.filter(txId => txId !== LSP1_TYPE_IDS.LSP0ValueReceived)
+      );
       setBurntPixId('');
       setIters('');
       setIsUpSubscribedToAssistant(false);
-      setIsSaveChecked(false);
       setIsLoadingTrans(false);
     } catch (err: any) {
       setIsLoadingTrans(false);
@@ -379,6 +425,7 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
       });
     }
   };
+  
 
   // --------------------------------------------------------------------------
   // Unsubscribe the entire UAP
@@ -434,7 +481,6 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
     }
   };
 
-  // Unsubscribe only the Donation Assistant
   const handleUnsubscribeDonationAssistant = async () => {
     if (!address) {
       toast({
@@ -446,25 +492,45 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
       });
       return;
     }
-
+  
     try {
       setIsLoadingTrans(true);
       const signer = await getSigner();
       const upContract = ERC725__factory.connect(address, signer);
-
-      // Build the donation assistant config key.
-      const donationAssistantConfigKey = generateMappingKey(
-        'UAPExecutiveConfig',
-        donationAssistantAddress
-      );
-
-      // Clear the donation assistant configuration by setting its value to "0x"
-      const tx = await upContract.setDataBatch(
-        [donationAssistantConfigKey],
-        ['0x']
-      );
+      const abiCoder = new AbiCoder();
+  
+      const dataKeys: string[] = [];
+      const dataValues: string[] = [];
+  
+      // Build the donation assistant executive config key.
+      const donationAssistantConfigKey = generateMappingKey('UAPExecutiveConfig', donationAssistantAddress);
+      // Clear the donation assistant executive config.
+      dataKeys.push(donationAssistantConfigKey);
+      dataValues.push('0x');
+  
+      // Update the LSP0ValueReceived type configuration.
+      const typeConfigKey = generateMappingKey('UAPTypeConfig', LSP1_TYPE_IDS.LSP0ValueReceived);
+      const currentValue = await upContract.getData(typeConfigKey);
+      if (currentValue && currentValue !== '0x') {
+        const decoded = abiCoder.decode(['address[]'], currentValue);
+        let addresses: string[] = decoded[0];
+        // Remove the donation assistant address.
+        addresses = addresses.filter(
+          addr => addr.toLowerCase() !== donationAssistantAddress.toLowerCase()
+        );
+        if (addresses.length > 0) {
+          const newEncoded = abiCoder.encode(['address[]'], [addresses]);
+          dataKeys.push(typeConfigKey);
+          dataValues.push(newEncoded);
+        } else {
+          dataKeys.push(typeConfigKey);
+          dataValues.push('0x');
+        }
+      }
+  
+      const tx = await upContract.setDataBatch(dataKeys, dataValues);
       await tx.wait();
-
+  
       toast({
         title: 'Success',
         description: 'Unsubscribed from Donation Assistant!',
@@ -472,10 +538,9 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
         duration: 5000,
         isClosable: true,
       });
-
-      // Reset donation assistant state.
+  
+      // Reset donation assistant state in the UI.
       setDonationCheckboxDisabled(false);
-      // Optionally, reset the checkbox value to your desired default.
       setIsSaveChecked(false);
       setIsLoadingTrans(false);
     } catch (err: any) {
@@ -490,6 +555,7 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
       });
     }
   };
+  
 
   // --------------------------------------------------------------------------
   // Render
