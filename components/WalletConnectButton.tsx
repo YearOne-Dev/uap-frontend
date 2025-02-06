@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   Avatar,
   Box,
@@ -19,78 +19,68 @@ import {
   useWeb3ModalAccount,
   useWeb3ModalProvider,
 } from '@web3modal/ethers/react';
-import { formatAddress, getNetwork } from '@/utils/utils';
-import { useProfile } from '@/contexts/ProfileContext';
 import Link from 'next/link';
-import { getUrlNameByChainId } from '@/utils/universalProfile';
 import { SiweMessage } from 'siwe';
 import { BrowserProvider, Eip1193Provider, verifyMessage } from 'ethers';
+
+import { formatAddress, getNetwork } from '@/utils/utils';
+import { getUrlNameByChainId } from '@/utils/universalProfile';
+import { useProfile } from '@/contexts/ProfileContext';
 
 export default function WalletConnectButton() {
   const { open } = useWeb3Modal();
   const { disconnect } = useDisconnect();
   const { address, isConnected, chainId } = useWeb3ModalAccount();
-  const { setMainControllerData, mainControllerData, profile } = useProfile();
-  const [networkIcon, setNetworkIcon] = useState<string>();
-  const [networkName, setNetworkName] = useState<string>();
-  const [userConnected, setUserConnected] = useState(false);
-  const [shouldDisplaySignature, setShouldDisplaySignature] = useState(false);
-  const [buttonMessage, setButtonMessage] = useState('Sign In');
-  const [buttonStyling, setButtonStyling] = useState({
-    background: '#FFF8DD',
-    color: '#053241',
-  });
   const { walletProvider } = useWeb3ModalProvider();
 
-  useEffect(() => {
-    setButtonMessage(
-      isConnected
-        ? profile?.name
-          ? profile.name
-          : formatAddress(address as string)
-        : 'Sign In'
-    );
-  }, [profile, isConnected, address]);
+  const { profile, mainControllerData, setMainControllerData } = useProfile();
 
-  useEffect(() => {
-    setButtonStyling(
-      isConnected
-        ? { background: '#DB7C3D', color: '#fff' }
-        : { background: '#FFF8DD', color: '#053241' }
-    );
-  }, [isConnected]);
+  // Determine if we already have a mainControllerData entry for the current wallet
+  const isSigned =
+    Boolean(isConnected) &&
+    Boolean(mainControllerData) &&
+    mainControllerData?.upWallet === address;
+
+  // Derived display variables
+  const buttonText = isConnected
+    ? profile?.name || formatAddress(address ?? '')
+    : 'Sign In';
+
+  const buttonStyles = isConnected
+    ? { background: '#DB7C3D', color: '#fff' }
+    : { background: '#FFF8DD', color: '#053241' };
 
   const profileImage =
-    isConnected && profile && profile.mainImage ? (
+    isConnected && profile?.mainImage ? (
       <Avatar
-        size={'sm'}
-        border={'1px solid #053241'}
+        size="sm"
+        border="1px solid #053241"
         name={profile.name}
         src={profile.mainImage}
       />
     ) : null;
 
+  const currentNetwork = chainId ? getNetwork(chainId) : undefined;
+  const networkIcon = currentNetwork?.icon;
+  const networkName = currentNetwork?.name;
+
+  // We only want to run the sign-in once, so we use a ref to track if we've triggered it.
+  const signTriggeredRef = useRef(false);
+
+  // Attempt to sign the SIWE message if connected but not yet signed
   useEffect(() => {
-    if (
-      isConnected &&
-      (!mainControllerData || mainControllerData.upWallet !== address)
-    ) {
-      setShouldDisplaySignature(true);
-    } else {
-      setShouldDisplaySignature(false);
+    // Reset the ref if user disconnects
+    if (!isConnected) {
+      signTriggeredRef.current = false;
+      return;
     }
-  }, [isConnected, mainControllerData]);
 
-  useEffect(() => {
-    const handleSignMessage = async () => {
-      if (shouldDisplaySignature) {
-        setUserConnected(true);
-
+    // If connected and not signed, run the signature flow once
+    if (isConnected && !isSigned && !signTriggeredRef.current) {
+      signTriggeredRef.current = true;
+      (async () => {
         try {
-          const provider = new BrowserProvider(
-            walletProvider as Eip1193Provider
-          );
-
+          const provider = new BrowserProvider(walletProvider as Eip1193Provider);
           const siweMessage = new SiweMessage({
             domain: window.location.host,
             uri: window.location.origin,
@@ -106,7 +96,7 @@ export default function WalletConnectButton() {
           const signature = await signer.signMessage(siweMessage);
           const mainUPController = verifyMessage(siweMessage, signature);
 
-          // Save the main controller and UP wallet in the context
+          // Save the main controller data
           setMainControllerData({
             mainUPController,
             upWallet: address as string,
@@ -115,92 +105,82 @@ export default function WalletConnectButton() {
           console.log('Signature:', signature);
         } catch (error) {
           console.error('Error signing the message:', error);
+          // If error, allow future sign attempts
+          signTriggeredRef.current = false;
         }
-      } else {
-        setUserConnected(false);
-      }
-    };
-
-    handleSignMessage();
-  }, [
-    isConnected,
-    address,
-    chainId,
-    walletProvider,
-    mainControllerData,
-    setMainControllerData,
-    shouldDisplaySignature,
-  ]);
-
-  useEffect(() => {
-    if (chainId) {
-      const currentNetwork = getNetwork(chainId!);
-      setNetworkIcon(currentNetwork.icon);
-      setNetworkName(currentNetwork.name);
+      })();
     }
-  }, [chainId]);
+  }, [isConnected, isSigned, chainId, address, walletProvider, setMainControllerData]);
 
+  // Build dynamic profile link
   const getProfileUrl = () => {
     if (!chainId || !address) return '/';
     const networkUrlName = getUrlNameByChainId(chainId);
     return `/${networkUrlName}/profile/${address}`;
   };
 
-  return userConnected ? (
-    <Menu>
-      <MenuButton
-        as={Button}
-        style={{
-          fontFamily: 'Montserrat',
-          fontWeight: 600,
-          border: '1px solid #053241',
-          borderRadius: 10,
-          ...buttonStyling,
-        }}
-        size={'md'}
-      >
-        <Flex gap={2} alignItems={'center'} justifyContent={'center'}>
-          {profileImage}
-          {buttonMessage}
-        </Flex>
-      </MenuButton>
-      <MenuList>
-        <MenuItem as={Link} href={getProfileUrl()}>
-          View profile
-        </MenuItem>
-        <MenuDivider />
-        <MenuGroup>
-          <Flex
-            mx={4}
-            my={2}
-            fontWeight={600}
-            flexDirection={'row'}
-            gap={2}
-            alignItems={'center'}
-          >
-            <Box>Network:</Box>
-            <Image height={'20px'} src={networkIcon} alt={networkName} />
+  // If user is signed/connected, show the menu; otherwise, show a connect button
+  if (isSigned) {
+    return (
+      <Menu>
+        <MenuButton
+          as={Button}
+          style={{
+            fontFamily: 'Montserrat',
+            fontWeight: 600,
+            border: '1px solid #053241',
+            borderRadius: 10,
+            ...buttonStyles,
+          }}
+          size="md"
+        >
+          <Flex gap={2} alignItems="center" justifyContent="center">
+            {profileImage}
+            {buttonText}
           </Flex>
-          <MenuItem onClick={() => open({ view: 'Networks' })}>
-            Change network
+        </MenuButton>
+        <MenuList>
+          <MenuItem as={Link} href={getProfileUrl()}>
+            View profile
           </MenuItem>
-          <MenuItem onClick={() => disconnect()}>Sign out</MenuItem>
-        </MenuGroup>
-      </MenuList>
-    </Menu>
-  ) : (
+          <MenuDivider />
+          <MenuGroup>
+            <Flex
+              mx={4}
+              my={2}
+              fontWeight={600}
+              flexDirection="row"
+              gap={2}
+              alignItems="center"
+            >
+              <Box>Network:</Box>
+              {networkIcon && (
+                <Image height="20px" src={networkIcon} alt={networkName} />
+              )}
+            </Flex>
+            <MenuItem onClick={() => open({ view: 'Networks' })}>
+              Change network
+            </MenuItem>
+            <MenuItem onClick={() => disconnect()}>Sign out</MenuItem>
+          </MenuGroup>
+        </MenuList>
+      </Menu>
+    );
+  }
+
+  return (
     <Button
       style={{
         fontFamily: 'Montserrat',
         fontWeight: 600,
         border: '1px solid #053241',
         borderRadius: 10,
-        ...buttonStyling,
+        ...buttonStyles,
       }}
       onClick={() => open()}
-      size={'md'}
+      size="md"
     >
-      {buttonMessage}
+      {buttonText}
     </Button>
   );
 }
