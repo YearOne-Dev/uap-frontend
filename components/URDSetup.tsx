@@ -78,7 +78,7 @@ const URDSetup: React.FC<URDSetupProps> = ({ extensionHasPermissions }) => {
       });
     } catch (error: any) {
       console.error('Error updating permissions', error);
-      if(!error.message.includes("user rejected action")) {
+      if (!error.message.includes('user rejected action')) {
         toast({
           title: 'Error',
           description: `Error giving UP Extension permissions: ${error.message}`,
@@ -138,7 +138,7 @@ const URDSetup: React.FC<URDSetupProps> = ({ extensionHasPermissions }) => {
         'Error subscribing to UAP Universal Receiver Delegate',
         error
       );
-      if(!error.message.includes("user rejected action")) {
+      if (!error.message.includes('user rejected action')) {
         toast({
           title: 'Error',
           description: `EError subscribing to UAP Universal Receiver Delegate: ${error.message}`,

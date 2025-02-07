@@ -3,10 +3,13 @@ import React from 'react';
 import { Flex, Image, Text, VStack, Wrap, WrapItem } from '@chakra-ui/react';
 
 import AssistantSmallCard from '@/components/AssistantSmallCard';
-import { CHAINS, networkNameToIdMapping, supportedNetworks } from "@/constants/supportedNetworks";
+import {
+  CHAINS,
+  networkNameToIdMapping,
+  supportedNetworks,
+} from '@/constants/supportedNetworks';
 
 const LandingBox = ({ networkName }: { networkName: CHAINS }) => {
-
   const networkConfig = supportedNetworks[networkNameToIdMapping[networkName]];
   return (
     <Flex
@@ -69,13 +72,15 @@ const LandingBox = ({ networkName }: { networkName: CHAINS }) => {
         justify="center"
         w="100%" // Full width for cards
       >
-        {
-          networkConfig.assistants.map(assistant => (
-            <WrapItem key={assistant.address}>
-              <AssistantSmallCard key={assistant.address} assistant={assistant} includeLink />
-            </WrapItem>
-          ))
-        }
+        {networkConfig.assistants.map(assistant => (
+          <WrapItem key={assistant.address}>
+            <AssistantSmallCard
+              key={assistant.address}
+              assistant={assistant}
+              includeLink
+            />
+          </WrapItem>
+        ))}
       </Wrap>
     </Flex>
   );
