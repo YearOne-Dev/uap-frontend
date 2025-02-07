@@ -15,7 +15,14 @@ export type AbstractAssistant = {
 
 export type ExecutiveAssistant = AbstractAssistant & {
   assistantType: 'Executive';
-  configParams: { name: string; type: string }[];
+  configParams: {
+    name: string;
+    type: string;
+    description: string;
+    defaultValue?: string;
+    placeholder?: string;
+    hidden?: boolean;
+  }[];
 };
 
 export type ScreenerAssistant = AbstractAssistant & {

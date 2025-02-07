@@ -3,14 +3,18 @@ import React from 'react';
 import { Box, Flex } from '@chakra-ui/react';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import AssistantInfo from '@/components/AssistantInfo';
-import { networkNameToIdMapping, supportedNetworks } from "@/constants/supportedNetworks";
+import {
+  networkNameToIdMapping,
+  supportedNetworks,
+} from '@/constants/supportedNetworks';
 
 export default function CatalogPage({
   params,
 }: {
   params: { networkName: string };
 }) {
-  const networkConfig = supportedNetworks[networkNameToIdMapping[params.networkName]];
+  const networkConfig =
+    supportedNetworks[networkNameToIdMapping[params.networkName]];
   const breadCrumbs = Breadcrumbs({
     items: [
       { name: 'UP Assistants', href: `/${params.networkName}` },
@@ -39,19 +43,17 @@ export default function CatalogPage({
             >
               Executive Assistants
             </Box>
-              {
-                networkConfig.assistants.map((assistant) => (
-                  <Box
-                    border="1px solid"
-                    borderColor="uap.font"
-                    borderRadius={10}
-                    p={4}
-                    key={assistant.address}
-                  >
-                  <AssistantInfo  assistant={assistant} includeLink />
-                  </Box>
-                ))
-              }
+            {networkConfig.assistants.map(assistant => (
+              <Box
+                border="1px solid"
+                borderColor="uap.font"
+                borderRadius={10}
+                p={4}
+                key={assistant.address}
+              >
+                <AssistantInfo assistant={assistant} includeLink />
+              </Box>
+            ))}
           </Box>
         </Flex>
       </Flex>
