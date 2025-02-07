@@ -356,7 +356,6 @@ const SetupAssistant: React.FC<{
   // Unsubscribe *only* this Assistant from all transaction types
   // (Do NOT remove or clear the assistant's UAPExecutiveConfig)
   // --------------------------------------------------------------------------
-  // todo what happens with the donation??
   const handleUnsubscribeAssistant = async () => {
     if (!address) {
       toast({
@@ -624,7 +623,7 @@ const SetupAssistant: React.FC<{
           onClick={handleUnsubscribeURD}
           isLoading={isLoadingTrans}
           isDisabled={isLoadingTrans}
-          // todo this is not unsubscribing assistantes. they will back in place if URD is reinstalled
+          // todo this is not unsubscribing assistants. they will be back in place if URD is reinstalled
         >
           Unsubscribe Assistants
         </Button>
