@@ -156,6 +156,7 @@ export default function ExecutiveAssistantConfigurePage({
     return <SetupAssistant assistantAddress={params.assistantAddress}
                            configParams={assistantInfo.configParams}
                            supportedTransactionTypes={assistantInfo.supportedTransactionTypes}
+                           donationconfig={assistantInfo.donationConfig}
     />;
   };
 

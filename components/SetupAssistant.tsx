@@ -36,12 +36,14 @@ type SetupAssistantProps = {
   assistantAddress: string;
   configParams: ConfigParam[];
   supportedTransactionTypes: string[]; // only these types will be rendered
+  donationconfig?: { donationAddress: string; donationPercentage: number };
 };
 
 const SetupAssistant: React.FC<SetupAssistantProps> = ({
                                                          assistantAddress,
                                                          configParams,
-                                                         supportedTransactionTypes
+                                                         supportedTransactionTypes,
+                                                         donationconfig
                                                        }) => {
   // Instead of separate state variables, we hold all configurable fields in one object.
   const [fieldValues, setFieldValues] = useState<Record<string, string>>(() => {
@@ -53,6 +55,11 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
   });
   const [selectedTransactions, setSelectedTransactions] = useState<string[]>([]);
   const [isUpSubscribedToAssistant, setIsUpSubscribedToAssistant] =
+    useState<boolean>(false); // todo needed?
+  // State to control the donation checkbox value
+  const [isDonatingChecked, setIsDonatingChecked] = useState<boolean>(false);
+  //if true, the donation checkbox is disabled (because a donation config already exists).
+  const [donationCheckboxDisabled, setDonationCheckboxDisabled] =
     useState<boolean>(false);
   const [isLoadingTrans, setIsLoadingTrans] = useState<boolean>(true);
 
@@ -147,8 +154,11 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
       }
     };
 
+    // todo load donation assistant config if donationConfig is provided
     loadExistingConfig();
   }, [address, assistantAddress, configParams]);
+
+
 
   // --------------------------------------------------------------------------
   // Save configuration
@@ -229,6 +239,8 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
       dataKeys.push(assistantSettingsKey);
       dataValues.push(settingsValue);
 
+      // todo add donation assistant config if applicable
+
       // Write all configuration keys in one transaction.
       const tx = await upContract.setDataBatch(dataKeys, dataValues);
       await tx.wait();
@@ -252,77 +264,6 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
         duration: null,
         isClosable: true,
       });
-    }
-  };
-
-  // --------------------------------------------------------------------------
-  // Unsubscribe only this Assistant
-  // --------------------------------------------------------------------------
-  const handleUnsubscribeAssistant = async () => {
-    if (!address) {
-      toast({
-        title: 'Not connected',
-        description: 'Please connect your wallet first.',
-        status: 'info',
-        duration: 5000,
-        isClosable: true,
-      });
-      return;
-    }
-
-    try {
-      setIsLoadingTrans(true);
-      const signer = await getSigner();
-      const upContract = ERC725__factory.connect(address, signer);
-
-      const dataKeys: string[] = [];
-      const dataValues: string[] = [];
-
-      // Clear each transaction type subscription.
-      selectedTransactions.forEach((txTypeId) => {
-        const typeConfigKey = generateMappingKey('UAPTypeConfig', txTypeId);
-        dataKeys.push(typeConfigKey);
-        dataValues.push('0x');
-      });
-
-      // Clear the assistant config.
-      const assistantSettingsKey = generateMappingKey(
-        'UAPExecutiveConfig',
-        assistantAddress
-      );
-      dataKeys.push(assistantSettingsKey);
-      dataValues.push('0x');
-
-      const tx = await upContract.setDataBatch(dataKeys, dataValues);
-      await tx.wait();
-
-      toast({
-        title: 'Success',
-        description: 'Unsubscribed from Assistant!',
-        status: 'success',
-        duration: 5000,
-        isClosable: true,
-      });
-
-      // Clear the local UI state.
-      setSelectedTransactions([]);
-      const cleared: Record<string, string> = {};
-      configParams.forEach((param) => (cleared[param.name] = ''));
-      setFieldValues(cleared);
-      setIsUpSubscribedToAssistant(false);
-      setIsLoadingTrans(false);
-    } catch (err: any) {
-      setIsLoadingTrans(false);
-      console.error('Error unsubscribing assistant', err);
-      if (!err.message.includes("user rejected action")) {
-        toast({
-          title: 'Error',
-          description: `Error unsubscribing assistant: ${err.message}`,
-          status: 'error',
-          duration: null,
-          isClosable: true,
-        });
-      }
     }
   };
 
@@ -469,6 +410,24 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
             />
           </Flex>
         ))}
+        {donationconfig && (
+        <Flex flexDirection={'row'} gap={4} maxWidth="550px">
+          <Text fontWeight="bold" fontSize="sm">
+            Donate 1% of the transactions value to the Year One Team
+          </Text>
+          <Checkbox
+            isChecked={isDonatingChecked}
+            onChange={() => setIsDonatingChecked(!isDonatingChecked)}
+            ml="10px"
+            isDisabled={donationCheckboxDisabled}
+          />
+          {donationCheckboxDisabled && (
+            <Text ml="10px" color="gray.600">
+              (Already Configured, go to the Donation Assistant to edit it.)
+            </Text>
+          )}
+        </Flex>
+        )}
       </Flex>
       <Flex gap={2}>
         <Button

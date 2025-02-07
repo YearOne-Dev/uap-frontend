@@ -1,6 +1,10 @@
 import { ExecutiveAssistant, ScreenerAssistant } from './CustomTypes';
 import { LSP1_TYPE_IDS } from '@lukso/lsp-smart-contracts';
 
+const yearOneDonatioMainnetAddress='';
+const yearOneDonatioTestnetAddress='0x9b071Fe3d22EAd27E2CDFA1Afec7EAa3c3F32009';
+const yearOneDonationPercentage=10;
+
 export const burntPixRefinerTestnet: ExecutiveAssistant = {
   address: '0x8097f5E8236eFDCD743cd9615C6167685eD233ee',
   name: 'BurntPix Refiner',
@@ -15,6 +19,10 @@ export const burntPixRefinerTestnet: ExecutiveAssistant = {
     LSP1_TYPE_IDS.LSP8Tokens_RecipientNotification,
     LSP1_TYPE_IDS.LSP0ValueReceived,
   ],
+  donationConfig: {
+    donationPercentage: yearOneDonationPercentage,
+    donationAddress: yearOneDonatioTestnetAddress,
+  },
   configParams: [
     { name: 'iterations', type: 'uint256' },
     { name: 'collectionAddress', type: 'address' },
@@ -54,6 +62,10 @@ export const burntPixRefinerMainnet: ExecutiveAssistant = {
     LSP1_TYPE_IDS.LSP8Tokens_RecipientNotification,
     LSP1_TYPE_IDS.LSP0ValueReceived,
   ],
+  donationConfig: {
+    donationPercentage: yearOneDonationPercentage,
+    donationAddress: yearOneDonatioMainnetAddress, // TODO: Add mainnet address
+  },
   configParams: [
     { name: 'iterations', type: 'uint256' },
     { name: 'collectionAddress', type: 'address' },
