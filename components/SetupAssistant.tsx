@@ -182,7 +182,6 @@ const SetupAssistant: React.FC<{
       }
     };
 
-    // todo load donation assistant config if donationConfig is provided (and set donationCheckboxDisabled if config is found)
     loadExistingConfig();
   }, [address, assistantAddress, configParams]);
 
