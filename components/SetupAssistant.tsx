@@ -51,14 +51,16 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
   // Configuration field values
   const [fieldValues, setFieldValues] = useState<Record<string, string>>(() => {
     const initial: Record<string, string> = {};
-    configParams.forEach((param) => {
+    configParams.forEach(param => {
       initial[param.name] = '';
     });
     return initial;
   });
 
   // Which transaction types currently have this assistant
-  const [selectedTransactions, setSelectedTransactions] = useState<string[]>([]);
+  const [selectedTransactions, setSelectedTransactions] = useState<string[]>(
+    []
+  );
 
   // Each transaction-type ID -> array of addresses
   const [typeConfigAddresses, setTypeConfigAddresses] = useState<
@@ -73,7 +75,8 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
   // Helpers
   // --------------------------------------------------------------------------
   const getSigner = async () => {
-    if (!walletProvider || !address) throw new Error('No wallet/address found!');
+    if (!walletProvider || !address)
+      throw new Error('No wallet/address found!');
     const provider = new BrowserProvider(walletProvider as Eip1193Provider);
     return provider.getSigner(address);
   };
@@ -95,10 +98,8 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
         const upContract = ERC725__factory.connect(address, signer);
 
         // Get keys for all transaction types
-        const allTypeIds = Object.values(transactionTypeMap).map(
-          (obj) => obj.id
-        );
-        const allTypeConfigKeys = allTypeIds.map((id) =>
+        const allTypeIds = Object.values(transactionTypeMap).map(obj => obj.id);
+        const allTypeConfigKeys = allTypeIds.map(id =>
           generateMappingKey('UAPTypeConfig', id)
         );
 
@@ -133,7 +134,7 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
           // If the assistant is in the array, mark this type as selected
           if (
             storedAddresses
-              .map((addr) => addr.toLowerCase())
+              .map(addr => addr.toLowerCase())
               .includes(assistantAddress.toLowerCase())
           ) {
             newlySelectedTx.push(typeId);
@@ -145,7 +146,7 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
 
         // Decode assistant's config if present
         if (assistantConfigValue && assistantConfigValue !== '0x') {
-          const types = configParams.map((param) => param.type);
+          const types = configParams.map(param => param.type);
           const decoded = abiCoder.decode(types, assistantConfigValue);
           const newFieldValues: Record<string, string> = {};
           configParams.forEach((param, index) => {
@@ -226,17 +227,15 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
       const abiCoder = new AbiCoder();
 
       // Update addresses for every transaction type
-      const allTypeIds = Object.values(transactionTypeMap).map(
-        (obj) => obj.id
-      );
+      const allTypeIds = Object.values(transactionTypeMap).map(obj => obj.id);
       const updatedTypeConfigAddresses = { ...typeConfigAddresses };
 
-      allTypeIds.forEach((typeId) => {
+      allTypeIds.forEach(typeId => {
         let addresses = [...(updatedTypeConfigAddresses[typeId] || [])];
 
         if (supportedTransactionTypes.includes(typeId)) {
           const existingIndex = addresses.findIndex(
-            (a) => a.toLowerCase() === assistantAddress.toLowerCase()
+            a => a.toLowerCase() === assistantAddress.toLowerCase()
           );
           // If user selected it, ensure the assistant is in the array
           if (selectedTransactions.includes(typeId)) {
@@ -263,13 +262,13 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
           dataValues.push(customEncodeAddresses(addresses));
         }
       });
-      
+
       const assistantSettingsKey = generateMappingKey(
         'UAPExecutiveConfig',
         assistantAddress
       );
-      const types = configParams.map((param) => param.type);
-      const values = configParams.map((param) => fieldValues[param.name]);
+      const types = configParams.map(param => param.type);
+      const values = configParams.map(param => fieldValues[param.name]);
       const settingsValue = abiCoder.encode(types, values);
 
       dataKeys.push(assistantSettingsKey);
@@ -330,7 +329,7 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
       Object.entries(updatedTypeConfigAddresses).forEach(
         ([typeId, addresses]) => {
           const idx = addresses.findIndex(
-            (a) => a.toLowerCase() === assistantAddress.toLowerCase()
+            a => a.toLowerCase() === assistantAddress.toLowerCase()
           );
           if (idx !== -1) {
             addresses.splice(idx, 1);
@@ -365,7 +364,7 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
 
       const tx = await upContract.setDataBatch(dataKeys, dataValues);
       await tx.wait();
-      
+
       setTypeConfigAddresses(updatedTypeConfigAddresses);
       setSelectedTransactions([]);
       setIsLoadingTrans(false);
@@ -429,7 +428,7 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
       // Clear local states.
       setSelectedTransactions([]);
       const cleared: Record<string, string> = {};
-      configParams.forEach((param) => (cleared[param.name] = ''));
+      configParams.forEach(param => (cleared[param.name] = ''));
       setFieldValues(cleared);
       setIsLoadingTrans(false);
       window.location.reload();
@@ -461,7 +460,8 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
         {/* Transaction Type Selection */}
         <Flex flexDirection="row" gap={4} maxWidth="550px">
           <Text fontWeight="bold" fontSize="sm">
-            Select the transaction types that you will engage this assistant for:
+            Select the transaction types that you will engage this assistant
+            for:
           </Text>
           <CheckboxGroup
             colorScheme="orange"
@@ -490,7 +490,7 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
             </VStack>
           </CheckboxGroup>
         </Flex>
-        {configParams.map((param) => (
+        {configParams.map(param => (
           <Flex key={param.name} flexDirection="row" gap={4} maxWidth="550px">
             <Text fontWeight="bold" fontSize="sm">
               {param.name} ({param.type}):
@@ -498,7 +498,7 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
             <Input
               placeholder={`Enter ${param.name}`}
               value={fieldValues[param.name] || ''}
-              onChange={(e) =>
+              onChange={e =>
                 setFieldValues({
                   ...fieldValues,
                   [param.name]: e.target.value,
@@ -517,7 +517,7 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
                   });
                 }
               }}
-              onPaste={(e) => {
+              onPaste={e => {
                 // Same auto-conversion on paste
                 const pastedData = e.clipboardData.getData('text');
                 if (

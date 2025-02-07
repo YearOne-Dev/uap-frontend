@@ -12,8 +12,8 @@ import {
   MenuGroup,
   MenuItem,
   MenuList,
-  useToast
-} from "@chakra-ui/react";
+  useToast,
+} from '@chakra-ui/react';
 import {
   useDisconnect,
   useWeb3Modal,
@@ -109,7 +109,7 @@ export default function WalletConnectButton() {
           console.log('Signature:', signature);
         } catch (error: any) {
           console.error('Error signing the message:', error);
-          if(!error.message.includes("user rejected action")) {
+          if (!error.message.includes('user rejected action')) {
             toast({
               title: 'Error',
               description: `Error signing the message: ${error.message}`,
