@@ -16,9 +16,9 @@ export const burntPixRefinerTestnet: ExecutiveAssistant = {
     LSP1_TYPE_IDS.LSP0ValueReceived,
   ],
   configParams: [
-    { name: 'iterations', type: 'uint256' },
     { name: 'collectionAddress', type: 'address' },
     { name: 'burntPixId', type: 'bytes32' },
+    { name: 'iterations', type: 'uint256' },
   ],
   chainId: 4201,
 };
