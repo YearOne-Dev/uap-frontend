@@ -22,6 +22,7 @@ import Breadcrumbs from '@/components/Breadcrumbs';
 import { BrowserProvider, Eip1193Provider } from 'ethers';
 import { getAssistant } from '@/constants/assistantsConfig';
 import { CHAINS, networkNameToIdMapping } from '@/constants/supportedNetworks';
+import { ExecutiveAssistant } from '@/constants/CustomTypes';
 
 export default function ExecutiveAssistantConfigurePage({
   params,
@@ -153,13 +154,7 @@ export default function ExecutiveAssistantConfigurePage({
       return <URDSetup extensionHasPermissions={!isMissingPermissions} />;
     }
 
-    return (
-      <SetupAssistant
-        assistantAddress={params.assistantAddress}
-        configParams={assistantInfo.configParams}
-        supportedTransactionTypes={assistantInfo.supportedTransactionTypes}
-      />
-    );
+    return <SetupAssistant config={assistantInfo as ExecutiveAssistant} />;
   };
 
   return (

@@ -28,6 +28,7 @@ const URDSetup: React.FC<URDSetupProps> = ({ extensionHasPermissions }) => {
   // State to track loading/transaction status for each action
   const [isUpdatingPermissions, setIsUpdatingPermissions] = useState(false);
   const [isInstallingProtocol, setIsInstallingProtocol] = useState(false);
+  const [hasExtensionPermissions, setHasExtensionPermissions] = useState(extensionHasPermissions);
 
   const handleUpdateBECPermissions = async () => {
     const upAddress = address as string;
@@ -61,13 +62,6 @@ const URDSetup: React.FC<URDSetupProps> = ({ extensionHasPermissions }) => {
         upAddress,
         mainControllerData.mainUPController
       );
-      toast({
-        title: 'Transaction sent',
-        description: 'Waiting for confirmation...',
-        status: 'info',
-        duration: 5000,
-        isClosable: true,
-      });
 
       toast({
         title: 'Success',
@@ -76,6 +70,7 @@ const URDSetup: React.FC<URDSetupProps> = ({ extensionHasPermissions }) => {
         duration: 5000,
         isClosable: true,
       });
+      setHasExtensionPermissions(true);
     } catch (error: any) {
       console.error('Error updating permissions', error);
       if (!error.message.includes('user rejected action')) {
@@ -174,7 +169,7 @@ const URDSetup: React.FC<URDSetupProps> = ({ extensionHasPermissions }) => {
             _hover={{ bg: 'orange.600' }}
             _active={{ bg: 'orange.700' }}
             onClick={handleUpdateBECPermissions}
-            isDisabled={extensionHasPermissions}
+            isDisabled={hasExtensionPermissions}
             isLoading={isUpdatingPermissions}
           >
             Give Permissions

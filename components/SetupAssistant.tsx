@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Box,
   Button,
   Checkbox,
   CheckboxGroup,
@@ -26,50 +25,41 @@ import {
   useWeb3ModalProvider,
 } from '@web3modal/ethers/react';
 import { useNetwork } from '@/contexts/NetworkContext';
+import { ExecutiveAssistant } from '@/constants/CustomTypes';
 
-type ConfigParam = {
-  name: string;
-  type: string;
-};
-
-type SetupAssistantProps = {
-  assistantAddress: string;
-  configParams: ConfigParam[];
-  supportedTransactionTypes: string[]; // only these types will be rendered
-};
-
-const SetupAssistant: React.FC<SetupAssistantProps> = ({
-  assistantAddress,
-  configParams,
-  supportedTransactionTypes,
+const SetupAssistant: React.FC<{
+  config: ExecutiveAssistant;
+}> = ({
+  config: {
+    address: assistantAddress,
+    supportedTransactionTypes,
+    configParams,
+  },
 }) => {
+  // Instead of separate state variables, we hold all configurable fields in one object.
+  const [fieldValues, setFieldValues] = useState<Record<string, string>>(() => {
+    const initial: Record<string, string> = {};
+    configParams.forEach(param => {
+      initial[param.name] = param.defaultValue ? param.defaultValue : '';
+    });
+    return initial;
+  });
+  const [selectedTransactions, setSelectedTransactions] = useState<string[]>(
+    []
+  );
+  const [isUpSubscribedToAssistant, setIsUpSubscribedToAssistant] =
+    useState<boolean>(false);
+  const [isLoadingTrans, setIsLoadingTrans] = useState<boolean>(true);
+
   const toast = useToast({ position: 'bottom-left' });
   const { walletProvider } = useWeb3ModalProvider();
   const { address } = useWeb3ModalAccount();
   const { network } = useNetwork();
 
-  // Configuration field values
-  const [fieldValues, setFieldValues] = useState<Record<string, string>>(() => {
-    const initial: Record<string, string> = {};
-    configParams.forEach(param => {
-      initial[param.name] = '';
-    });
-    return initial;
-  });
-
-  // Which transaction types currently have this assistant
-  const [selectedTransactions, setSelectedTransactions] = useState<string[]>(
-    []
-  );
-
   // Each transaction-type ID -> array of addresses
   const [typeConfigAddresses, setTypeConfigAddresses] = useState<
     Record<string, string[]>
   >({});
-
-  const [isUpSubscribedToAssistant, setIsUpSubscribedToAssistant] =
-    useState<boolean>(false);
-  const [isLoadingTrans, setIsLoadingTrans] = useState<boolean>(true);
 
   // --------------------------------------------------------------------------
   // Helpers
@@ -97,7 +87,7 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
         const signer = await getSigner();
         const upContract = ERC725__factory.connect(address, signer);
 
-        // Get keys for all transaction types
+        // Build the keys for each transaction type.
         const allTypeIds = Object.values(transactionTypeMap).map(obj => obj.id);
         const allTypeConfigKeys = allTypeIds.map(id =>
           generateMappingKey('UAPTypeConfig', id)
@@ -291,13 +281,15 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
     } catch (err: any) {
       setIsLoadingTrans(false);
       console.error('Error setting configuration', err);
-      toast({
-        title: 'Error',
-        description: `Error setting configuration: ${err.message}`,
-        status: 'error',
-        duration: null,
-        isClosable: true,
-      });
+      if (!err.message.includes('user rejected action')) {
+        toast({
+          title: 'Error',
+          description: `Error setting configuration: ${err.message}`,
+          status: 'error',
+          duration: null,
+          isClosable: true,
+        });
+      }
     }
   };
 
@@ -490,13 +482,21 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
             </VStack>
           </CheckboxGroup>
         </Flex>
+        {/* Dynamically render each configuration field */}
         {configParams.map(param => (
-          <Flex key={param.name} flexDirection="row" gap={4} maxWidth="550px">
-            <Text fontWeight="bold" fontSize="sm">
-              {param.name} ({param.type}):
+          <Flex
+            key={param.name}
+            flexDirection="row"
+            gap={4}
+            maxWidth="550px"
+            display={param.hidden ? 'none' : undefined}
+          >
+            <Text fontWeight="bold" fontSize="sm" w="70%">
+              {param.description}
             </Text>
             <Input
-              placeholder={`Enter ${param.name}`}
+              hidden={param.hidden}
+              placeholder={param.placeholder}
               value={fieldValues[param.name] || ''}
               onChange={e =>
                 setFieldValues({
@@ -513,12 +513,13 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
                 ) {
                   setFieldValues({
                     ...fieldValues,
-                    [param.name]: convertAddressToBytes32(val),
+                    [param.name]: convertAddressToBytes32(
+                      fieldValues[param.name]
+                    ),
                   });
                 }
               }}
               onPaste={e => {
-                // Same auto-conversion on paste
                 const pastedData = e.clipboardData.getData('text');
                 if (
                   param.type === 'bytes32' &&
