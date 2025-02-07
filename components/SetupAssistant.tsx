@@ -155,18 +155,24 @@ const SetupAssistant: React.FC<{
         }
 
         if (donationConfig) {
-          const donationAssistantSettingsKey = generateMappingKey(
-            'UAPExecutiveConfig',
-            donationConfig.donationAssistanAddress
-          );
-          const donationAssistantValue = await upContract.getData(
-            donationAssistantSettingsKey
-          );
-          if (donationAssistantValue && donationAssistantValue !== '0x') {
-            // Donation assistant is already configured:
-            // Disable the donation checkbox and mark it as checked.
+          const donationAssistantAddress =
+            donationConfig.donationAssistanAddress;
+          let donationActive = false;
+          Object.values(newTypeConfigAddresses).forEach(addresses => {
+            if (
+              addresses
+                .map(addr => addr.toLowerCase())
+                .includes(donationAssistantAddress.toLowerCase())
+            ) {
+              donationActive = true;
+            }
+          });
+          if (donationActive) {
             setDonationCheckboxDisabled(true);
             setIsDonatingChecked(true);
+          } else {
+            setDonationCheckboxDisabled(false);
+            setIsDonatingChecked(false);
           }
         }
       } catch (err) {
