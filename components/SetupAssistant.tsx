@@ -36,7 +36,7 @@ type SetupAssistantProps = {
   assistantAddress: string;
   configParams: ConfigParam[];
   supportedTransactionTypes: string[]; // only these types will be rendered
-  donationconfig?: { donationAddress: string; donationPercentage: number };
+  donationconfig?: { donationAssistanAddress: string; donationDestinationAddress: string, donationPercentage: number };
 };
 
 const SetupAssistant: React.FC<SetupAssistantProps> = ({
@@ -154,7 +154,7 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
       }
     };
 
-    // todo load donation assistant config if donationConfig is provided
+    // todo load donation assistant config if donationConfig is provided (and set donationCheckboxDisabled if config is found)
     loadExistingConfig();
   }, [address, assistantAddress, configParams]);
 
@@ -240,6 +240,15 @@ const SetupAssistant: React.FC<SetupAssistantProps> = ({
       dataValues.push(settingsValue);
 
       // todo add donation assistant config if applicable
+      if (donationconfig && isDonatingChecked) { // todo and LSP0 type is selected
+      // it only uses LSP0ValueReceived type
+      // values are donationDestinationAddress, donationPercentage
+        const donationAssistantSettingsKey = generateMappingKey(
+          'UAPExecutiveConfig',
+          donationconfig.donationAssistanAddress
+        );
+        
+      }
 
       // Write all configuration keys in one transaction.
       const tx = await upContract.setDataBatch(dataKeys, dataValues);
