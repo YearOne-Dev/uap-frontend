@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Text } from '@chakra-ui/react';
+import { Box, Spinner, Text } from "@chakra-ui/react";
 import { typeIdOptionsMap, typeIdOrder } from '@/constants/assistantTypes';
 import {
   customDecodeAddresses,
@@ -21,6 +21,7 @@ const ReadConfiguredAssistants: React.FC<UPTypeConfigDisplayProps> = ({
   const [typeConfigs, setTypeConfigs] = useState<{
     [typeId: string]: string[];
   }>({});
+  const [loading, isLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
 
   useEffect(() => {
@@ -58,6 +59,8 @@ const ReadConfiguredAssistants: React.FC<UPTypeConfigDisplayProps> = ({
       } catch (error: any) {
         console.error('Error fetching UP Type Configs:', error);
         setError('Error fetching UP Type Configs');
+      } finally {
+        isLoading(false);
       }
     };
     if (upAddress && networkId) {
@@ -67,6 +70,10 @@ const ReadConfiguredAssistants: React.FC<UPTypeConfigDisplayProps> = ({
 
   if (error) {
     return <Text color="red">{error}</Text>;
+  }
+
+  if (loading) {
+    return <Spinner />;
   }
 
   if (Object.keys(typeConfigs).length === 0) {
