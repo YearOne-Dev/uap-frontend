@@ -207,6 +207,28 @@ const SetupAssistant: React.FC<{
             }
           }
         }
+
+        if (donationConfig) {
+          const donationAssistantAddress =
+            donationConfig.donationAssistanAddress;
+          let donationActive = false;
+          Object.values(newTypeConfigAddresses).forEach(addresses => {
+            if (
+              addresses
+                .map(addr => addr.toLowerCase())
+                .includes(donationAssistantAddress.toLowerCase())
+            ) {
+              donationActive = true;
+            }
+          });
+          if (donationActive) {
+            setDonationCheckboxDisabled(true);
+            setIsDonatingChecked(true);
+          } else {
+            setDonationCheckboxDisabled(false);
+            setIsDonatingChecked(false);
+          }
+        }
       } catch (err) {
         console.error('Failed to load existing config:', err);
       } finally {
@@ -343,8 +365,7 @@ const SetupAssistant: React.FC<{
             !donationCheckboxDisabled &&
             typeId === transactionTypeMap.LYX.id // Ensures it's the LSP0ValueReceived type
           ) {
-            const donationAssistantAddress =
-              donationConfig.donationAssistanAddress;
+            const donationAssistantAddress = donationConfig.donationAssistanAddress;
             const donationAssistantIndex = addresses.findIndex(
               a => a.toLowerCase() === donationAssistantAddress.toLowerCase()
             );
@@ -712,6 +733,7 @@ const SetupAssistant: React.FC<{
           onClick={handleUnsubscribeURD}
           isLoading={isLoadingTrans}
           isDisabled={isLoadingTrans}
+          // todo this is not unsubscribing assistants. they will be back in place if URD is reinstalled
         >
           Unsubscribe Assistants
         </Button>

@@ -27,7 +27,7 @@ export const donationAssistantTestnet: ExecutiveAssistant = {
     {
       name: 'donationPercentage',
       type: 'uint256',
-      defaultValue: '1',
+      defaultValue: '10',
       hidden: false,
       description: 'Percentage of LYX to tip:',
       placeholder: 'e.g 10',
