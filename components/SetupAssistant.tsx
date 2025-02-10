@@ -5,7 +5,6 @@ import {
   CheckboxGroup,
   Flex,
   Input,
-  Link,
   Text,
   useToast,
   VStack,
@@ -13,12 +12,7 @@ import {
 import TransactionTypeBlock, {
   transactionTypeMap,
 } from './TransactionTypeBlock';
-import {
-  AbiCoder,
-  BrowserProvider,
-  Eip1193Provider,
-  JsonRpcSigner,
-} from 'ethers';
+import { AbiCoder, BrowserProvider, Eip1193Provider } from 'ethers';
 import {
   customDecodeAddresses,
   customEncodeAddresses,
