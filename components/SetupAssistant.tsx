@@ -34,7 +34,6 @@ const SetupAssistant: React.FC<{
     address: assistantAddress,
     supportedTransactionTypes,
     configParams,
-    donationConfig,
   },
 }) => {
   // Instead of separate state variables, we hold all configurable fields in one object.
@@ -48,15 +47,9 @@ const SetupAssistant: React.FC<{
   const [selectedTransactions, setSelectedTransactions] = useState<string[]>(
     []
   );
-  const [isUpSubscribedToAssistant, setIsUpSubscribedToAssistant] =
-    useState<boolean>(false); // todo needed?
-  // State to control the donation checkbox value
-  const [isDonatingChecked, setIsDonatingChecked] = useState<boolean>(false);
-  //if true, the donation checkbox is disabled (because a donation config already exists).
-  const [donationCheckboxDisabled, setDonationCheckboxDisabled] =
-    useState<boolean>(false);
   const [isLoadingTrans, setIsLoadingTrans] = useState<boolean>(true);
-
+  const [isUpSubscribedToAssistant, setIsUpSubscribedToAssistant] =
+    useState<boolean>(false);
   const toast = useToast({ position: 'bottom-left' });
   const { walletProvider } = useWeb3ModalProvider();
   const { address } = useWeb3ModalAccount();
@@ -86,7 +79,6 @@ const SetupAssistant: React.FC<{
   // --------------------------------------------------------------------------
   useEffect(() => {
     if (!address) return;
-
     const loadExistingConfig = async () => {
       try {
         setIsLoadingTrans(true);
@@ -140,41 +132,23 @@ const SetupAssistant: React.FC<{
         setTypeConfigAddresses(newTypeConfigAddresses);
         setSelectedTransactions(newlySelectedTx);
 
-        // Decode assistant's config if present
-        if (assistantConfigValue && assistantConfigValue !== '0x') {
-          const types = configParams.map(param => param.type);
-          const decoded = abiCoder.decode(types, assistantConfigValue);
-          const newFieldValues: Record<string, string> = {};
-          configParams.forEach((param, index) => {
-            newFieldValues[param.name] = decoded[index].toString();
-          });
-          setFieldValues(newFieldValues);
-          setIsUpSubscribedToAssistant(true);
-        } else {
-          setIsUpSubscribedToAssistant(false);
-        }
-
-        if (donationConfig) {
-          const donationAssistantAddress =
-            donationConfig.donationAssistanAddress;
-          let donationActive = false;
-          Object.values(newTypeConfigAddresses).forEach(addresses => {
-            if (
-              addresses
-                .map(addr => addr.toLowerCase())
-                .includes(donationAssistantAddress.toLowerCase())
-            ) {
-              donationActive = true;
-            }
-          });
-          if (donationActive) {
-            setDonationCheckboxDisabled(true);
-            setIsDonatingChecked(true);
-          } else {
-            setDonationCheckboxDisabled(false);
-            setIsDonatingChecked(false);
+        // find if the assistant is already configured
+        Object.values(newTypeConfigAddresses).forEach(addresses => {
+          if (
+            addresses
+              .map(addr => addr.toLowerCase())
+              .includes(assistantAddress.toLowerCase())
+          ) {
+            const types = configParams.map(param => param.type);
+            const decoded = abiCoder.decode(types, assistantConfigValue);
+            const newFieldValues: Record<string, string> = {};
+            configParams.forEach((param, index) => {
+              newFieldValues[param.name] = decoded[index].toString();
+            });
+            setFieldValues(newFieldValues);
+            setIsUpSubscribedToAssistant(true);
           }
-        }
+        });
       } catch (err) {
         console.error('Failed to load existing config:', err);
       } finally {
@@ -269,20 +243,16 @@ const SetupAssistant: React.FC<{
 
           // If this is a donation config, add the donation assistant address
           // only for LSPOValueReceived type
-          if (
-            donationConfig &&
-            isDonatingChecked &&
-            !donationCheckboxDisabled &&
-            typeId === transactionTypeMap.LYX.id // Ensures it's the LSP0ValueReceived type
-          ) {
-            const donationAssistantAddress = donationConfig.donationAssistanAddress;
-            const donationAssistantIndex = addresses.findIndex(
-              a => a.toLowerCase() === donationAssistantAddress.toLowerCase()
-            );
-            if (donationAssistantIndex === -1) {
-              addresses.unshift(donationAssistantAddress);
-            }
-          }
+          // if ( User has no assistant
+          // ) {
+          //   const feeAssistantAddress = xxxx;
+          //   const feeAssistantIndex = addresses.findIndex(
+          //     a => a.toLowerCase() === feeAssistantAddress.toLowerCase()
+          //   );
+          //   if (feeAssistantIndex === -1) {
+          //     addresses.unshift(feeAssistantAddress);
+          //   }
+          // }
 
           updatedTypeConfigAddresses[typeId] = addresses;
 
@@ -309,25 +279,25 @@ const SetupAssistant: React.FC<{
       dataKeys.push(assistantSettingsKey);
       dataValues.push(settingsValue);
 
-      if (donationConfig && isDonatingChecked && !donationCheckboxDisabled) {
-        // it only uses LSP0ValueReceived type
-        const donationAssistantSettingsKey = generateMappingKey(
-          'UAPExecutiveConfig',
-          donationConfig.donationAssistanAddress
-        );
+      // if ( User has no assistant) {
+      //   // it only uses LSP0ValueReceived type
+      //   const feeAssistantSettingsKey = generateMappingKey(
+      //     'UAPExecutiveConfig',
+      //     feeAssistanAddress
+      //   );
 
-        const donationTypes = ['address', 'uint256'];
-        const donationValues = [
-          donationConfig.donationDestinationAddress,
-          donationConfig.donationPercentage.toString(),
-        ];
-        const donationSettingsValue = abiCoder.encode(
-          donationTypes,
-          donationValues
-        );
-        dataKeys.push(donationAssistantSettingsKey);
-        dataValues.push(donationSettingsValue);
-      }
+      //   const feeTypes = ['address', 'uint256'];
+      //   const feeValues = [
+      //     feeDestinationAddress,
+      //     feePercentage.toString(),
+      //   ];
+      //   const feeSettingsValue = abiCoder.encode(
+      //     feeTypes,
+      //     feeValues
+      //   );
+      //   dataKeys.push(feeAssistantSettingsKey);
+      //   dataValues.push(feeSettingsValue);
+      // }
 
       const tx = await upContract.setDataBatch(dataKeys, dataValues);
       await tx.wait();
@@ -601,24 +571,6 @@ const SetupAssistant: React.FC<{
             />
           </Flex>
         ))}
-        {donationConfig && (
-          <Flex flexDirection={'row'} gap={4} maxWidth="550px">
-            <Text fontWeight="bold" fontSize="sm">
-              Donate 1% of the transactions value to the Year One Team
-            </Text>
-            <Checkbox
-              isChecked={isDonatingChecked}
-              onChange={() => setIsDonatingChecked(!isDonatingChecked)}
-              ml="10px"
-              isDisabled={donationCheckboxDisabled}
-            />
-            {donationCheckboxDisabled && (
-              <Text ml="10px" color="gray.600">
-                (Already Configured, go to the Donation Assistant to edit it.)
-              </Text>
-            )}
-          </Flex>
-        )}
       </Flex>
 
       <Flex gap={2}>

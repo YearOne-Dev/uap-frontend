@@ -1,11 +1,6 @@
 import { ExecutiveAssistant, ScreenerAssistant } from './CustomTypes';
 import { LSP1_TYPE_IDS } from '@lukso/lsp-smart-contracts';
 
-const yearOneDonatioMainnetAddress = '';
-const yearOneDonatioTestnetAddress =
-  '0x9b071Fe3d22EAd27E2CDFA1Afec7EAa3c3F32009';
-const yearOneDonationPercentage = 1; // 1%
-
 export const donationAssistantTestnet: ExecutiveAssistant = {
   address: '0x4E88F07CA39EBcC589AF2C4f6f5246Df4c820536',
   name: 'Tip Assistant',
@@ -50,11 +45,6 @@ export const burntPixRefinerTestnet: ExecutiveAssistant = {
     LSP1_TYPE_IDS.LSP8Tokens_RecipientNotification,
     LSP1_TYPE_IDS.LSP0ValueReceived,
   ],
-  donationConfig: {
-    donationAssistanAddress: donationAssistantTestnet.address,
-    donationDestinationAddress: yearOneDonatioTestnetAddress,
-    donationPercentage: yearOneDonationPercentage,
-  },
   configParams: [
     {
       name: 'collectionAddress',
@@ -97,7 +87,6 @@ export const burntPixRefinerMainnet: ExecutiveAssistant = {
     LSP1_TYPE_IDS.LSP8Tokens_RecipientNotification,
     LSP1_TYPE_IDS.LSP0ValueReceived,
   ],
-  // donationConfig: TODO: Add mainnet address
   configParams: [
     {
       name: 'collectionAddress',
@@ -127,14 +116,27 @@ export const burntPixRefinerMainnet: ExecutiveAssistant = {
   chainId: 42,
 };
 
+export const feeAssistantTestnet = {
+  address: '0x45aAfdD13B18477c0DC797d871AF32c40A5F0FCE',
+  destinationAddress: '0x9b071Fe3d22EAd27E2CDFA1Afec7EAa3c3F32009',
+  feePercentage: 0.5,
+};
+export const feeAssistantMainnet = {
+  address: '',
+  destinationAddress: '',
+  feePercentage: 0.5,
+};
+
 const testnetAssistants: {
   [key: string]: ExecutiveAssistant | ScreenerAssistant;
 } = {
+  // DO NOT INCLUDE FEE ASSISTANT
   [burntPixRefinerTestnet.address.toLowerCase()]: burntPixRefinerTestnet,
   [donationAssistantTestnet.address.toLowerCase()]: donationAssistantTestnet,
 };
 
 const mainnetAssistants: {
+  // DO NOT INCLUDE FEE ASSISTANT
   [key: string]: ExecutiveAssistant | ScreenerAssistant;
 } = {};
 
