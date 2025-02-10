@@ -32,7 +32,6 @@ import {
 } from '@web3modal/ethers/react';
 import { useNetwork } from '@/contexts/NetworkContext';
 import { ExecutiveAssistant } from '@/constants/CustomTypes';
-import { formatAddress } from '@/utils/utils';
 
 const SetupAssistant: React.FC<{
   config: ExecutiveAssistant;
@@ -41,7 +40,6 @@ const SetupAssistant: React.FC<{
     address: assistantAddress,
     supportedTransactionTypes,
     configParams,
-    donationConfig,
   },
 }) => {
   // Instead of separate state variables, we hold all configurable fields in one object.
@@ -58,19 +56,6 @@ const SetupAssistant: React.FC<{
   const [isLoadingTrans, setIsLoadingTrans] = useState<boolean>(true);
   const [isUpSubscribedToAssistant, setIsUpSubscribedToAssistant] =
     useState<boolean>(false);
-  // === DONATION state ===
-  // State to control the donation checkbox value
-  const [isDonatingChecked, setIsDonatingChecked] = useState<boolean>(false);
-  //if true, the donation checkbox is disabled (because a donation config already exists).
-  const [donationCheckboxDisabled, setDonationCheckboxDisabled] =
-    useState<boolean>(false);
-  const [
-    loadedDonationDestinationAddress,
-    setLoadedDonationDestinationAddress,
-  ] = useState<string>('');
-  const [loadedDonationPercentage, setLoadedDonationPercentage] =
-    useState<string>('');
-
   const toast = useToast({ position: 'bottom-left' });
   const { walletProvider } = useWeb3ModalProvider();
   const { address } = useWeb3ModalAccount();
@@ -170,65 +155,6 @@ const SetupAssistant: React.FC<{
             setIsUpSubscribedToAssistant(true);
           }
         });
-
-        if (donationConfig) {
-          const donationAssistantAddress =
-            donationConfig.donationAssistanAddress;
-          let donationActive = false;
-          // Find if we have a donation config for the assistant
-          Object.values(newTypeConfigAddresses).forEach(addresses => {
-            if (
-              addresses
-                .map(addr => addr.toLowerCase())
-                .includes(donationAssistantAddress.toLowerCase())
-            ) {
-              donationActive = true;
-            }
-          });
-          // if the donation assistant address is in the array, mark the donation as already set
-          if (donationActive) {
-            setDonationCheckboxDisabled(true);
-            setIsDonatingChecked(true);
-            // grab destination address and percentage, save it in variables
-            await grabDonationParameters(
-              donationAssistantAddress,
-              signer,
-              abiCoder
-            );
-          } else {
-            // if it is not in the array, enable the donation checkbox
-            setDonationCheckboxDisabled(false);
-            if (!isUpSubscribedToAssistant) {
-              // Set checkbox to true if no assistant is configured (default on creation)
-              setIsDonatingChecked(true);
-            } else {
-              // Set checkbox to false if the assistantAddress of this page is already configured
-              setIsDonatingChecked(false);
-            }
-          }
-        }
-
-        if (donationConfig) {
-          const donationAssistantAddress =
-            donationConfig.donationAssistanAddress;
-          let donationActive = false;
-          Object.values(newTypeConfigAddresses).forEach(addresses => {
-            if (
-              addresses
-                .map(addr => addr.toLowerCase())
-                .includes(donationAssistantAddress.toLowerCase())
-            ) {
-              donationActive = true;
-            }
-          });
-          if (donationActive) {
-            setDonationCheckboxDisabled(true);
-            setIsDonatingChecked(true);
-          } else {
-            setDonationCheckboxDisabled(false);
-            setIsDonatingChecked(false);
-          }
-        }
       } catch (err) {
         console.error('Failed to load existing config:', err);
       } finally {
@@ -238,42 +164,6 @@ const SetupAssistant: React.FC<{
 
     loadExistingConfig();
   }, [address, assistantAddress, configParams]);
-
-  const grabDonationParameters = async (
-    donationAssistantAddress: string,
-    signer: JsonRpcSigner,
-    abiCoder: AbiCoder
-  ) => {
-    if (!address) return;
-    // Generate the key for the donation assistant's settings:
-    const donationAssistantSettingsKey = generateMappingKey(
-      'UAPExecutiveConfig',
-      donationAssistantAddress
-    );
-    const upContract = ERC725__factory.connect(address, signer);
-
-    // Fetch the donation config data from the contract:
-    const donationAssistantData = await upContract.getData(
-      donationAssistantSettingsKey
-    );
-    if (donationAssistantData && donationAssistantData !== '0x') {
-      // Define the types to match your donation config parameters:
-      const donationTypes = ['address', 'uint256'];
-      // Decode the data using the ethers AbiCoder:
-      const donationDecoded = abiCoder.decode(
-        donationTypes,
-        donationAssistantData
-      );
-      const donationDestination = donationDecoded[0];
-      const donationPercentage = donationDecoded[1].toString();
-      setLoadedDonationDestinationAddress(donationDestination);
-      setLoadedDonationPercentage(donationPercentage);
-    } else {
-      console.warn(
-        'Donation config found in types but no donation settings saved yet.'
-      );
-    }
-  };
 
   // --------------------------------------------------------------------------
   // Save configuration
@@ -359,20 +249,16 @@ const SetupAssistant: React.FC<{
 
           // If this is a donation config, add the donation assistant address
           // only for LSPOValueReceived type
-          if (
-            donationConfig &&
-            isDonatingChecked &&
-            !donationCheckboxDisabled &&
-            typeId === transactionTypeMap.LYX.id // Ensures it's the LSP0ValueReceived type
-          ) {
-            const donationAssistantAddress = donationConfig.donationAssistanAddress;
-            const donationAssistantIndex = addresses.findIndex(
-              a => a.toLowerCase() === donationAssistantAddress.toLowerCase()
-            );
-            if (donationAssistantIndex === -1) {
-              addresses.unshift(donationAssistantAddress);
-            }
-          }
+          // if ( User has no assistant
+          // ) {
+          //   const feeAssistantAddress = xxxx;
+          //   const feeAssistantIndex = addresses.findIndex(
+          //     a => a.toLowerCase() === feeAssistantAddress.toLowerCase()
+          //   );
+          //   if (feeAssistantIndex === -1) {
+          //     addresses.unshift(feeAssistantAddress);
+          //   }
+          // }
 
           updatedTypeConfigAddresses[typeId] = addresses;
 
@@ -399,25 +285,25 @@ const SetupAssistant: React.FC<{
       dataKeys.push(assistantSettingsKey);
       dataValues.push(settingsValue);
 
-      if (donationConfig && isDonatingChecked && !donationCheckboxDisabled) {
-        // it only uses LSP0ValueReceived type
-        const donationAssistantSettingsKey = generateMappingKey(
-          'UAPExecutiveConfig',
-          donationConfig.donationAssistanAddress
-        );
+      // if ( User has no assistant) {
+      //   // it only uses LSP0ValueReceived type
+      //   const feeAssistantSettingsKey = generateMappingKey(
+      //     'UAPExecutiveConfig',
+      //     feeAssistanAddress
+      //   );
 
-        const donationTypes = ['address', 'uint256'];
-        const donationValues = [
-          donationConfig.donationDestinationAddress,
-          donationConfig.donationPercentage.toString(),
-        ];
-        const donationSettingsValue = abiCoder.encode(
-          donationTypes,
-          donationValues
-        );
-        dataKeys.push(donationAssistantSettingsKey);
-        dataValues.push(donationSettingsValue);
-      }
+      //   const feeTypes = ['address', 'uint256'];
+      //   const feeValues = [
+      //     feeDestinationAddress,
+      //     feePercentage.toString(),
+      //   ];
+      //   const feeSettingsValue = abiCoder.encode(
+      //     feeTypes,
+      //     feeValues
+      //   );
+      //   dataKeys.push(feeAssistantSettingsKey);
+      //   dataValues.push(feeSettingsValue);
+      // }
 
       const tx = await upContract.setDataBatch(dataKeys, dataValues);
       await tx.wait();
@@ -594,14 +480,6 @@ const SetupAssistant: React.FC<{
     }
   };
 
-  const buildAlreadyConfiguredDonation = () => {
-    // add link to donation assistant to view
-    return `Already Configured\n  ${formatAddress(
-      loadedDonationDestinationAddress
-    )} -> (${loadedDonationPercentage}%)
-    `;
-  };
-
   // --------------------------------------------------------------------------
   // Render the component
   // --------------------------------------------------------------------------
@@ -699,30 +577,6 @@ const SetupAssistant: React.FC<{
             />
           </Flex>
         ))}
-        {donationConfig && (
-          <Flex flexDirection={'row'} gap={4} maxWidth="550px">
-            <Text fontWeight="bold" fontSize="sm">
-              Donate 1% of the transactions value to the Year One Team
-            </Text>
-            <Checkbox
-              isChecked={isDonatingChecked}
-              onChange={() => setIsDonatingChecked(!isDonatingChecked)}
-              ml="10px"
-              isDisabled={donationCheckboxDisabled}
-            />
-            {donationCheckboxDisabled && (
-              <Text ml="10px" color="gray.600">
-                {buildAlreadyConfiguredDonation()}
-                <Link
-                  fontWeight={'bold'}
-                  href={`/${network.urlName}/catalog/executive-assistants/${donationConfig.donationAssistanAddress}/configure`}
-                >
-                  View
-                </Link>
-              </Text>
-            )}
-          </Flex>
-        )}
       </Flex>
 
       <Flex gap={2}>
