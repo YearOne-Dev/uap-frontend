@@ -15,6 +15,11 @@ export type AbstractAssistant = {
 
 export type ExecutiveAssistant = AbstractAssistant & {
   assistantType: 'Executive';
+  donationConfig?: {
+    donationAssistanAddress: string;
+    donationDestinationAddress: string;
+    donationPercentage: number;
+  };
   configParams: {
     name: string;
     type: string;

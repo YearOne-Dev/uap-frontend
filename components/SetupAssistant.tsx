@@ -34,6 +34,7 @@ const SetupAssistant: React.FC<{
     address: assistantAddress,
     supportedTransactionTypes,
     configParams,
+    donationConfig,
   },
 }) => {
   // Instead of separate state variables, we hold all configurable fields in one object.
@@ -48,6 +49,11 @@ const SetupAssistant: React.FC<{
     []
   );
   const [isUpSubscribedToAssistant, setIsUpSubscribedToAssistant] =
+    useState<boolean>(false); // todo needed?
+  // State to control the donation checkbox value
+  const [isDonatingChecked, setIsDonatingChecked] = useState<boolean>(false);
+  //if true, the donation checkbox is disabled (because a donation config already exists).
+  const [donationCheckboxDisabled, setDonationCheckboxDisabled] =
     useState<boolean>(false);
   const [isLoadingTrans, setIsLoadingTrans] = useState<boolean>(true);
 
@@ -147,6 +153,28 @@ const SetupAssistant: React.FC<{
         } else {
           setIsUpSubscribedToAssistant(false);
         }
+
+        if (donationConfig) {
+          const donationAssistantAddress =
+            donationConfig.donationAssistanAddress;
+          let donationActive = false;
+          Object.values(newTypeConfigAddresses).forEach(addresses => {
+            if (
+              addresses
+                .map(addr => addr.toLowerCase())
+                .includes(donationAssistantAddress.toLowerCase())
+            ) {
+              donationActive = true;
+            }
+          });
+          if (donationActive) {
+            setDonationCheckboxDisabled(true);
+            setIsDonatingChecked(true);
+          } else {
+            setDonationCheckboxDisabled(false);
+            setIsDonatingChecked(false);
+          }
+        }
       } catch (err) {
         console.error('Failed to load existing config:', err);
       } finally {
@@ -218,7 +246,7 @@ const SetupAssistant: React.FC<{
 
       // Update addresses for every transaction type
       const allTypeIds = Object.values(transactionTypeMap).map(obj => obj.id);
-      const updatedTypeConfigAddresses = { ...typeConfigAddresses };
+      const updatedTypeConfigAddresses = { ...typeConfigAddresses }; // todo do we need to add the donation coming from page load?
 
       allTypeIds.forEach(typeId => {
         let addresses = [...(updatedTypeConfigAddresses[typeId] || [])];
@@ -238,21 +266,38 @@ const SetupAssistant: React.FC<{
               addresses.splice(existingIndex, 1);
             }
           }
-        }
 
-        updatedTypeConfigAddresses[typeId] = addresses;
+          // If this is a donation config, add the donation assistant address
+          // only for LSPOValueReceived type
+          if (
+            donationConfig &&
+            isDonatingChecked &&
+            !donationCheckboxDisabled &&
+            typeId === transactionTypeMap.LYX.id // Ensures it's the LSP0ValueReceived type
+          ) {
+            const donationAssistantAddress = donationConfig.donationAssistanAddress;
+            const donationAssistantIndex = addresses.findIndex(
+              a => a.toLowerCase() === donationAssistantAddress.toLowerCase()
+            );
+            if (donationAssistantIndex === -1) {
+              addresses.unshift(donationAssistantAddress);
+            }
+          }
 
-        // Encode or clear
-        const typeConfigKey = generateMappingKey('UAPTypeConfig', typeId);
-        if (addresses.length === 0) {
-          dataKeys.push(typeConfigKey);
-          dataValues.push('0x');
-        } else {
-          dataKeys.push(typeConfigKey);
-          dataValues.push(customEncodeAddresses(addresses));
+          updatedTypeConfigAddresses[typeId] = addresses;
+
+          // Encode or clear
+          const typeConfigKey = generateMappingKey('UAPTypeConfig', typeId);
+          if (addresses.length === 0) {
+            dataKeys.push(typeConfigKey);
+            dataValues.push('0x');
+          } else {
+            dataKeys.push(typeConfigKey);
+            dataValues.push(customEncodeAddresses(addresses));
+          }
         }
       });
-
+      // todo what happens if it is already configured?
       const assistantSettingsKey = generateMappingKey(
         'UAPExecutiveConfig',
         assistantAddress
@@ -263,6 +308,26 @@ const SetupAssistant: React.FC<{
 
       dataKeys.push(assistantSettingsKey);
       dataValues.push(settingsValue);
+
+      if (donationConfig && isDonatingChecked && !donationCheckboxDisabled) {
+        // it only uses LSP0ValueReceived type
+        const donationAssistantSettingsKey = generateMappingKey(
+          'UAPExecutiveConfig',
+          donationConfig.donationAssistanAddress
+        );
+
+        const donationTypes = ['address', 'uint256'];
+        const donationValues = [
+          donationConfig.donationDestinationAddress,
+          donationConfig.donationPercentage.toString(),
+        ];
+        const donationSettingsValue = abiCoder.encode(
+          donationTypes,
+          donationValues
+        );
+        dataKeys.push(donationAssistantSettingsKey);
+        dataValues.push(donationSettingsValue);
+      }
 
       const tx = await upContract.setDataBatch(dataKeys, dataValues);
       await tx.wait();
@@ -440,7 +505,7 @@ const SetupAssistant: React.FC<{
   };
 
   // --------------------------------------------------------------------------
-  // Render
+  // Render the component
   // --------------------------------------------------------------------------
   return (
     <Flex p={6} flexDirection="column" gap={8}>
@@ -536,6 +601,24 @@ const SetupAssistant: React.FC<{
             />
           </Flex>
         ))}
+        {donationConfig && (
+          <Flex flexDirection={'row'} gap={4} maxWidth="550px">
+            <Text fontWeight="bold" fontSize="sm">
+              Donate 1% of the transactions value to the Year One Team
+            </Text>
+            <Checkbox
+              isChecked={isDonatingChecked}
+              onChange={() => setIsDonatingChecked(!isDonatingChecked)}
+              ml="10px"
+              isDisabled={donationCheckboxDisabled}
+            />
+            {donationCheckboxDisabled && (
+              <Text ml="10px" color="gray.600">
+                (Already Configured, go to the Donation Assistant to edit it.)
+              </Text>
+            )}
+          </Flex>
+        )}
       </Flex>
 
       <Flex gap={2}>
@@ -546,6 +629,7 @@ const SetupAssistant: React.FC<{
           onClick={handleUnsubscribeURD}
           isLoading={isLoadingTrans}
           isDisabled={isLoadingTrans}
+          // todo this is not unsubscribing assistants. they will be back in place if URD is reinstalled
         >
           Unsubscribe Assistants
         </Button>

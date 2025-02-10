@@ -28,7 +28,9 @@ const URDSetup: React.FC<URDSetupProps> = ({ extensionHasPermissions }) => {
   // State to track loading/transaction status for each action
   const [isUpdatingPermissions, setIsUpdatingPermissions] = useState(false);
   const [isInstallingProtocol, setIsInstallingProtocol] = useState(false);
-  const [hasExtensionPermissions, setHasExtensionPermissions] = useState(extensionHasPermissions);
+  const [hasExtensionPermissions, setHasExtensionPermissions] = useState(
+    extensionHasPermissions
+  );
 
   const handleUpdateBECPermissions = async () => {
     const upAddress = address as string;
