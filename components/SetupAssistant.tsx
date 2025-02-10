@@ -5,6 +5,7 @@ import {
   CheckboxGroup,
   Flex,
   Input,
+  Link,
   Text,
   useToast,
   VStack,
@@ -12,7 +13,12 @@ import {
 import TransactionTypeBlock, {
   transactionTypeMap,
 } from './TransactionTypeBlock';
-import { AbiCoder, BrowserProvider, Eip1193Provider } from 'ethers';
+import {
+  AbiCoder,
+  BrowserProvider,
+  Eip1193Provider,
+  JsonRpcSigner,
+} from 'ethers';
 import {
   customDecodeAddresses,
   customEncodeAddresses,
@@ -26,6 +32,7 @@ import {
 } from '@web3modal/ethers/react';
 import { useNetwork } from '@/contexts/NetworkContext';
 import { ExecutiveAssistant } from '@/constants/CustomTypes';
+import { formatAddress } from '@/utils/utils';
 
 const SetupAssistant: React.FC<{
   config: ExecutiveAssistant;
@@ -48,14 +55,21 @@ const SetupAssistant: React.FC<{
   const [selectedTransactions, setSelectedTransactions] = useState<string[]>(
     []
   );
+  const [isLoadingTrans, setIsLoadingTrans] = useState<boolean>(true);
   const [isUpSubscribedToAssistant, setIsUpSubscribedToAssistant] =
-    useState<boolean>(false); // todo needed?
+    useState<boolean>(false);
+  // === DONATION state ===
   // State to control the donation checkbox value
   const [isDonatingChecked, setIsDonatingChecked] = useState<boolean>(false);
   //if true, the donation checkbox is disabled (because a donation config already exists).
   const [donationCheckboxDisabled, setDonationCheckboxDisabled] =
     useState<boolean>(false);
-  const [isLoadingTrans, setIsLoadingTrans] = useState<boolean>(true);
+  const [
+    loadedDonationDestinationAddress,
+    setLoadedDonationDestinationAddress,
+  ] = useState<string>('');
+  const [loadedDonationPercentage, setLoadedDonationPercentage] =
+    useState<string>('');
 
   const toast = useToast({ position: 'bottom-left' });
   const { walletProvider } = useWeb3ModalProvider();
@@ -86,7 +100,6 @@ const SetupAssistant: React.FC<{
   // --------------------------------------------------------------------------
   useEffect(() => {
     if (!address) return;
-
     const loadExistingConfig = async () => {
       try {
         setIsLoadingTrans(true);
@@ -176,6 +189,12 @@ const SetupAssistant: React.FC<{
           if (donationActive) {
             setDonationCheckboxDisabled(true);
             setIsDonatingChecked(true);
+            // grab destination address and percentage, save it in variables
+            await grabDonationParameters(
+              donationAssistantAddress,
+              signer,
+              abiCoder
+            );
           } else {
             // if it is not in the array, enable the donation checkbox
             setDonationCheckboxDisabled(false);
@@ -197,6 +216,42 @@ const SetupAssistant: React.FC<{
 
     loadExistingConfig();
   }, [address, assistantAddress, configParams]);
+
+  const grabDonationParameters = async (
+    donationAssistantAddress: string,
+    signer: JsonRpcSigner,
+    abiCoder: AbiCoder
+  ) => {
+    if (!address) return;
+    // Generate the key for the donation assistant's settings:
+    const donationAssistantSettingsKey = generateMappingKey(
+      'UAPExecutiveConfig',
+      donationAssistantAddress
+    );
+    const upContract = ERC725__factory.connect(address, signer);
+
+    // Fetch the donation config data from the contract:
+    const donationAssistantData = await upContract.getData(
+      donationAssistantSettingsKey
+    );
+    if (donationAssistantData && donationAssistantData !== '0x') {
+      // Define the types to match your donation config parameters:
+      const donationTypes = ['address', 'uint256'];
+      // Decode the data using the ethers AbiCoder:
+      const donationDecoded = abiCoder.decode(
+        donationTypes,
+        donationAssistantData
+      );
+      const donationDestination = donationDecoded[0];
+      const donationPercentage = donationDecoded[1].toString();
+      setLoadedDonationDestinationAddress(donationDestination);
+      setLoadedDonationPercentage(donationPercentage);
+    } else {
+      console.warn(
+        'Donation config found in types but no donation settings saved yet.'
+      );
+    }
+  };
 
   // --------------------------------------------------------------------------
   // Save configuration
@@ -518,6 +573,14 @@ const SetupAssistant: React.FC<{
     }
   };
 
+  const buildAlreadyConfiguredDonation = () => {
+    // add link to donation assistant to view
+    return `Already Configured\n  ${formatAddress(
+      loadedDonationDestinationAddress
+    )} -> (${loadedDonationPercentage}%)
+    `;
+  };
+
   // --------------------------------------------------------------------------
   // Render the component
   // --------------------------------------------------------------------------
@@ -628,7 +691,13 @@ const SetupAssistant: React.FC<{
             />
             {donationCheckboxDisabled && (
               <Text ml="10px" color="gray.600">
-                (Already Configured, go to the Donation Assistant to edit it.)
+                {buildAlreadyConfiguredDonation()}
+                <Link
+                  fontWeight={'bold'}
+                  href={`/${network.urlName}/catalog/executive-assistants/${donationConfig.donationAssistanAddress}/configure`}
+                >
+                  View
+                </Link>
               </Text>
             )}
           </Flex>
@@ -643,7 +712,6 @@ const SetupAssistant: React.FC<{
           onClick={handleUnsubscribeURD}
           isLoading={isLoadingTrans}
           isDisabled={isLoadingTrans}
-          // todo this is not unsubscribing assistants. they will be back in place if URD is reinstalled
         >
           Unsubscribe Assistants
         </Button>
