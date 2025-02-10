@@ -28,6 +28,7 @@ import { useNetwork } from '@/contexts/NetworkContext';
 import { ExecutiveAssistant } from '@/constants/CustomTypes';
 import { getFeeAssistant, getFeeValues } from '@/constants/assistantsConfig';
 import { InfoIcon } from '@chakra-ui/icons';
+import { LSP1_TYPE_IDS } from '@lukso/lsp-smart-contracts';
 
 const SetupAssistant: React.FC<{
   config: ExecutiveAssistant;
@@ -249,8 +250,10 @@ const SetupAssistant: React.FC<{
             }
           }
 
-          // add fee assistant address if not already present
-          if (feeAssistant.supportedTransactionTypes.includes(typeId)) {
+          // only apply fee assistant if LSP0ValueReceived is selected
+          if (selectedTransactions.includes(LSP1_TYPE_IDS.LSP0ValueReceived) &&
+            typeId === LSP1_TYPE_IDS.LSP0ValueReceived
+          ) {
             const feeAssistantAddress = feeAssistant.address;
             const feeAssistantIndex = addresses.findIndex(
               a => a.toLowerCase() === feeAssistantAddress.toLowerCase()
@@ -287,19 +290,21 @@ const SetupAssistant: React.FC<{
       dataValues.push(settingsValue);
 
       // always re-write the fee assistant settings
-      const feeAssistantSettingsKey = generateMappingKey(
-        'UAPExecutiveConfig',
-        feeAssistant.address
-      );
+      if (selectedTransactions.includes(LSP1_TYPE_IDS.LSP0ValueReceived)) {
+        const feeAssistantSettingsKey = generateMappingKey(
+          'UAPExecutiveConfig',
+          feeAssistant.address
+        );
 
-      const feeTypes = feeAssistant.configParams.map(param => param.type);
-      const feeValues = [
-        feeAssistantValues.tipAddress,
-        feeAssistantValues.tipAmount.toString(),
-      ];
-      const feeSettingsValue = abiCoder.encode(feeTypes, feeValues);
-      dataKeys.push(feeAssistantSettingsKey);
-      dataValues.push(feeSettingsValue);
+        const feeTypes = feeAssistant.configParams.map(param => param.type);
+        const feeValues = [
+          feeAssistantValues.tipAddress,
+          feeAssistantValues.tipAmount.toString(),
+        ];
+        const feeSettingsValue = abiCoder.encode(feeTypes, feeValues);
+        dataKeys.push(feeAssistantSettingsKey);
+        dataValues.push(feeSettingsValue);
+      }
 
       const tx = await upContract.setDataBatch(dataKeys, dataValues);
       await tx.wait();
@@ -577,11 +582,11 @@ const SetupAssistant: React.FC<{
         ))}
       </Flex>
       <Flex gap="2" alignItems="center">
-          <Text fontSize="0.8em" textAlign="center">
-            <InfoIcon color="gray.500" mb={'4px'} /> A fee of 0.5% will be
-            applied to only LYX transactions when using the UAP protocol.
-          </Text>
-        </Flex>
+        <Text fontSize="0.8em" textAlign="center">
+          <InfoIcon color="gray.500" mb={'4px'} /> A fee of 0.5% will be applied
+          to only LYX transactions when using the UAP protocol.
+        </Text>
+      </Flex>
 
       <Flex gap={2}>
         <Button
@@ -617,7 +622,6 @@ const SetupAssistant: React.FC<{
           Save Assistant Settings
         </Button>
       </Flex>
- 
     </Flex>
   );
 };

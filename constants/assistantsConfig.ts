@@ -219,7 +219,7 @@ export const getFeeValues = (networkId: number) => {
   if (networkId === 42) {
     return {
       tipAddress: '',
-      tipAmount: 1, // todo change to 0.5 
+      tipAmount: 1, // todo change to 0.5
     };
   }
   if (networkId === 4201) {
