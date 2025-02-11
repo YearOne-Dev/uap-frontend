@@ -1,6 +1,6 @@
 'use client';
 import React, { useEffect } from 'react';
-import { Box, Button, Flex, Text, VStack } from '@chakra-ui/react';
+import { Box, Button, Flex, Spinner, Text, VStack } from "@chakra-ui/react";
 import AssistantInfo from '@/components/AssistantInfo';
 import URDSetup from '@/components/URDSetup';
 import {
@@ -41,6 +41,7 @@ export default function ExecutiveAssistantConfigurePage({
   const { walletProvider } = useWeb3ModalProvider();
   const { mainControllerData } = useProfile();
   const [isMissingPermissions, setIsMissingPermissions] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState<boolean>(true);
   const [isURDInstalled, setIsURDInstalled] = React.useState(false);
   const { network } = useNetwork();
   const {
@@ -50,23 +51,9 @@ export default function ExecutiveAssistantConfigurePage({
   } = useWeb3ModalAccount();
 
   useEffect(() => {
-    console.log('mainUPController', mainControllerData?.mainUPController);
-
-    if (!address || !mainControllerData?.mainUPController) {
+    if (!address) {
       return;
     }
-
-    const getMissingPermissions = async () => {
-      try {
-        const missingPermissions = await doesControllerHaveMissingPermissions(
-          mainControllerData.mainUPController,
-          address
-        );
-        setIsMissingPermissions(missingPermissions.length > 0);
-      } catch (error) {
-        console.error('Error checking permissions', error);
-      }
-    };
 
     const checkURDInstalled = async () => {
       console.log('checkURDInstalled called');
@@ -89,14 +76,39 @@ export default function ExecutiveAssistantConfigurePage({
     };
 
     checkURDInstalled();
+  }, [
+    address,
+    network.protocolAddress,
+    isConnected,
+    walletProvider,
+  ]);
+
+
+  useEffect(() => {
+    if (!address || !mainControllerData?.mainUPController) {
+      return;
+    }
+
+    const getMissingPermissions = async () => {
+      try {
+        const missingPermissions = await doesControllerHaveMissingPermissions(
+          mainControllerData.mainUPController,
+          address
+        );
+        console.log('missingPermissions', missingPermissions);
+        setIsMissingPermissions(missingPermissions.length > 0);
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Error checking permissions', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
     getMissingPermissions();
   }, [
     address,
     mainControllerData,
-    network.protocolAddress,
-    setIsMissingPermissions,
-    isConnected,
-    walletProvider,
   ]);
 
   // Now that all hooks have been called, conditionally render if assistantInfo is missing.
@@ -145,12 +157,14 @@ export default function ExecutiveAssistantConfigurePage({
       );
     }
 
-    if (
-      !mainControllerData?.mainUPController ||
+    if(isLoading) {
+      return <Spinner size={"xl"} alignSelf={"center"} />;
+    }
+
+    if ( !mainControllerData?.mainUPController ||
       isMissingPermissions ||
       !isURDInstalled
     ) {
-      // TODO: pass isMissingPermissions to URDSetup if needed
       return <URDSetup extensionHasPermissions={!isMissingPermissions} />;
     }
 
