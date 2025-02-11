@@ -24,7 +24,7 @@ interface ChainInfo {
   assistants: ExecutiveAssistant[];
   feesConfig: {
     feeAssistantAddress: string;
-    feeAssistantAmount: string;f
+    feeAssistantAmount: string;
     feeDestinationAddress: string;
   };
 }
