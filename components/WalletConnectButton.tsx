@@ -137,7 +137,7 @@ export default function WalletConnectButton() {
   const getProfileUrl = () => {
     if (!chainId || !address) return '/';
     const networkUrlName = getUrlNameByChainId(chainId);
-    return `/${networkUrlName}/profile/${address}`;
+    return `/${networkUrlName}/profiles/${address}/configure`;
   };
 
   // If user is signed/connected, show the menu; otherwise, show a connect button
@@ -162,7 +162,7 @@ export default function WalletConnectButton() {
         </MenuButton>
         <MenuList>
           <MenuItem as={Link} href={getProfileUrl()}>
-            View profile
+            Global Settings
           </MenuItem>
           <MenuDivider />
           <MenuGroup>

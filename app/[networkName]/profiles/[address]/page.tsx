@@ -5,8 +5,7 @@ import { formatAddress } from '@/utils/utils';
 import ReadConfiguredAssistants from '@/components/ReadConfiguredAssistants';
 import { getChainIdByUrlName } from '@/utils/universalProfile';
 import Breadcrumbs from '@/components/Breadcrumbs';
-
-export default function ProfileConfigurePage({
+export default function ProfilePage({
   params,
 }: {
   params: { address: string; networkName: string };
@@ -26,11 +25,7 @@ export default function ProfileConfigurePage({
   const breadCrumbs = Breadcrumbs({
     items: [
       { name: 'UP Assistants', href: '/' },
-      { name: 'Profile', href: `/${networkName}/profile/${address}` },
-      {
-        name: 'Configure',
-        href: `/${networkName}/profile/${address}/configure`,
-      },
+      { name: 'Profile', href: `/${networkName}/profiles/${address}` },
     ],
   });
 

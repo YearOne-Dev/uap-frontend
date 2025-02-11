@@ -70,7 +70,7 @@ const ReadConfiguredAssistants: React.FC<UPTypeConfigDisplayProps> = ({
   }
 
   if (Object.keys(typeConfigs).length === 0) {
-    return <Text>No UAP Type Configurations found.</Text>;
+    return <Text>No 🆙 assistant configurations found.</Text>;
   }
 
   return (
