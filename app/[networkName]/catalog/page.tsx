@@ -50,6 +50,7 @@ export default function CatalogPage({
                 borderRadius={10}
                 p={4}
                 key={assistant.address}
+                mb="20px"
               >
                 <AssistantInfo assistant={assistant} includeLink />
               </Box>

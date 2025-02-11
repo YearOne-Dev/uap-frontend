@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Badge, // <-- Import Badge
+  Badge,
   Button,
   Checkbox,
   CheckboxGroup,
@@ -18,7 +18,6 @@ import {
   customDecodeAddresses,
   customEncodeAddresses,
   generateMappingKey,
-  toggleUniveralAssistantsSubscribe,
 } from '@/utils/configDataKeyValueStore';
 import { ERC725__factory } from '@/types';
 import {
@@ -47,10 +46,9 @@ const SetupAssistant: React.FC<{
   const [selectedTransactions, setSelectedTransactions] = useState<string[]>(
     []
   );
+  const [isLoadingTrans, setIsLoadingTrans] = useState<boolean>(true);
   const [isUpSubscribedToAssistant, setIsUpSubscribedToAssistant] =
     useState<boolean>(false);
-  const [isLoadingTrans, setIsLoadingTrans] = useState<boolean>(true);
-
   const toast = useToast({ position: 'bottom-left' });
   const { walletProvider } = useWeb3ModalProvider();
   const { address } = useWeb3ModalAccount();
@@ -79,7 +77,6 @@ const SetupAssistant: React.FC<{
   // --------------------------------------------------------------------------
   useEffect(() => {
     if (!address) return;
-
     const loadExistingConfig = async () => {
       try {
         setIsLoadingTrans(true);
@@ -132,20 +129,23 @@ const SetupAssistant: React.FC<{
 
         setTypeConfigAddresses(newTypeConfigAddresses);
         setSelectedTransactions(newlySelectedTx);
-
-        // Decode assistant's config if present
-        if (assistantConfigValue && assistantConfigValue !== '0x') {
-          const types = configParams.map(param => param.type);
-          const decoded = abiCoder.decode(types, assistantConfigValue);
-          const newFieldValues: Record<string, string> = {};
-          configParams.forEach((param, index) => {
-            newFieldValues[param.name] = decoded[index].toString();
-          });
-          setFieldValues(newFieldValues);
-          setIsUpSubscribedToAssistant(true);
-        } else {
-          setIsUpSubscribedToAssistant(false);
-        }
+        // find if the assistant is already configured
+        Object.values(newTypeConfigAddresses).forEach(addresses => {
+          if (
+            addresses
+              .map(addr => addr.toLowerCase())
+              .includes(assistantAddress.toLowerCase())
+          ) {
+            const types = configParams.map(param => param.type);
+            const decoded = abiCoder.decode(types, assistantConfigValue);
+            const newFieldValues: Record<string, string> = {};
+            configParams.forEach((param, index) => {
+              newFieldValues[param.name] = decoded[index].toString();
+            });
+            setFieldValues(newFieldValues);
+            setIsUpSubscribedToAssistant(true);
+          }
+        });
       } catch (err) {
         console.error('Failed to load existing config:', err);
       } finally {
@@ -292,9 +292,6 @@ const SetupAssistant: React.FC<{
     }
   };
 
-  // --------------------------------------------------------------------------
-  // Unsubscribe *only* this Assistant from all transaction types
-  // --------------------------------------------------------------------------
   const handleUnsubscribeAssistant = async () => {
     if (!address) {
       toast({
@@ -337,7 +334,6 @@ const SetupAssistant: React.FC<{
         }
       );
 
-      // We do *not* remove the assistant's UAPExecutiveConfig here
       if (dataKeys.length === 0) {
         setIsLoadingTrans(false);
         toast({
@@ -390,7 +386,6 @@ const SetupAssistant: React.FC<{
   // --------------------------------------------------------------------------
   return (
     <Flex p={6} flexDirection="column" gap={8}>
-      {/* Heading + ACTIVE/INACTIVE label */}
       <Flex alignItems="center" gap={2}>
         <Text fontWeight="bold" fontSize="lg">
           Assistant Instructions
