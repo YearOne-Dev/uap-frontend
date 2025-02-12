@@ -45,10 +45,9 @@ const SetupAssistant: React.FC<{
     });
     return initial;
   });
-  const [selectedConfigTypes, setSelectedConfigTypes] = useState<string[]>(
-    []
-  );
-  const [isProcessingTransaction, setIsProcessingTransaction] = useState<boolean>(true);
+  const [selectedConfigTypes, setSelectedConfigTypes] = useState<string[]>([]);
+  const [isProcessingTransaction, setIsProcessingTransaction] =
+    useState<boolean>(true);
   const [isUPSubscribedToAssistant, setIsUPSubscribedToAssistant] =
     useState<boolean>(false);
   const toast = useToast({ position: 'bottom-left' });
@@ -82,8 +81,8 @@ const SetupAssistant: React.FC<{
         const upContract = ERC725__factory.connect(address, signer);
 
         // Build the keys for each supported transaction type.
-        const assistantTypesConfigKeys = assistantSupportedTransactionTypes.map(id =>
-          generateMappingKey('UAPTypeConfig', id)
+        const assistantTypesConfigKeys = assistantSupportedTransactionTypes.map(
+          id => generateMappingKey('UAPTypeConfig', id)
         );
 
         // Assistant's config key
@@ -96,8 +95,12 @@ const SetupAssistant: React.FC<{
           ...assistantTypesConfigKeys,
           assistantConfigKey,
         ]);
-        const typeConfigValues = configData.slice(0, assistantSupportedTransactionTypes.length);
-        const assistantConfigValue = configData[assistantSupportedTransactionTypes.length];
+        const typeConfigValues = configData.slice(
+          0,
+          assistantSupportedTransactionTypes.length
+        );
+        const assistantConfigValue =
+          configData[assistantSupportedTransactionTypes.length];
 
         const abiCoder = new AbiCoder();
         const previouslySelectedTypes: string[] = [];
@@ -213,7 +216,9 @@ const SetupAssistant: React.FC<{
 
       // ==== TYPES ====
       assistantSupportedTransactionTypes.forEach(typeId => {
-        let currentTypeAddresses = [...(updatedTypeConfigAddresses[typeId] || [])];
+        let currentTypeAddresses = [
+          ...(updatedTypeConfigAddresses[typeId] || []),
+        ];
         const currentAssistantIndex = currentTypeAddresses.findIndex(
           a => a.toLowerCase() === assistantAddress.toLowerCase()
         );
@@ -253,7 +258,6 @@ const SetupAssistant: React.FC<{
         }
       });
 
-      
       // ==== FIELDS ====
       const assistantConfigKey = generateMappingKey(
         'UAPExecutiveConfig',
@@ -386,7 +390,8 @@ const SetupAssistant: React.FC<{
   // Determine whether the assistant is considered "active"
   // (Has settings + at least one transaction type subscription)
   // --------------------------------------------------------------------------
-  const isAssistantActive = isUPSubscribedToAssistant && selectedConfigTypes.length > 0;
+  const isAssistantActive =
+    isUPSubscribedToAssistant && selectedConfigTypes.length > 0;
 
   // --------------------------------------------------------------------------
   // Render
@@ -424,7 +429,9 @@ const SetupAssistant: React.FC<{
               px={7}
             >
               {Object.entries(transactionTypeMap)
-                .filter(([_, { id }]) => assistantSupportedTransactionTypes.includes(id))
+                .filter(([_, { id }]) =>
+                  assistantSupportedTransactionTypes.includes(id)
+                )
                 .map(([key, { id, label, typeName, icon, iconPath }]) => (
                   <Checkbox key={key} value={id}>
                     <TransactionTypeBlock
