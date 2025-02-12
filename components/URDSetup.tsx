@@ -1,6 +1,14 @@
 'use client';
 import React, { useState } from 'react';
-import { Box, Button, HStack, Text, useToast, VStack } from '@chakra-ui/react';
+import {
+  Box,
+  Button,
+  Flex,
+  HStack,
+  Text,
+  useToast,
+  VStack,
+} from '@chakra-ui/react';
 import { BrowserProvider, Eip1193Provider } from 'ethers';
 import {
   toggleUniveralAssistantsSubscribe,
@@ -12,6 +20,7 @@ import {
 } from '@web3modal/ethers/react';
 import { useNetwork } from '@/contexts/NetworkContext';
 import { useProfile } from '@/contexts/ProfileContext';
+import { InfoIcon } from '@chakra-ui/icons';
 
 type URDSetupProps = {
   extensionHasPermissions: boolean;
