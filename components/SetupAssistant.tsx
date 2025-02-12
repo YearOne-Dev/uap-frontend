@@ -34,7 +34,7 @@ const SetupAssistant: React.FC<{
 }> = ({
   config: {
     address: assistantAddress,
-    supportedTransactionTypes,
+    supportedTransactionTypes: assistantSupportedTransactionTypes,
     configParams,
   },
 }) => {
@@ -45,11 +45,11 @@ const SetupAssistant: React.FC<{
     });
     return initial;
   });
-  const [selectedTransactions, setSelectedTransactions] = useState<string[]>(
+  const [selectedConfigTypes, setSelectedConfigTypes] = useState<string[]>(
     []
   );
-  const [isLoadingTrans, setIsLoadingTrans] = useState<boolean>(true);
-  const [isUpSubscribedToAssistant, setIsUpSubscribedToAssistant] =
+  const [isProcessingTransaction, setIsProcessingTransaction] = useState<boolean>(true);
+  const [isUPSubscribedToAssistant, setIsUPSubscribedToAssistant] =
     useState<boolean>(false);
   const toast = useToast({ position: 'bottom-left' });
   const { walletProvider } = useWeb3ModalProvider();
@@ -70,10 +70,6 @@ const SetupAssistant: React.FC<{
     return provider.getSigner(address);
   };
 
-  const convertAddressToBytes32 = (addr: string): string => {
-    return '0x' + '0'.repeat(24) + addr.slice(2);
-  };
-
   // --------------------------------------------------------------------------
   // On Page Load: fetch existing configuration
   // --------------------------------------------------------------------------
@@ -81,13 +77,12 @@ const SetupAssistant: React.FC<{
     if (!address) return;
     const loadExistingConfig = async () => {
       try {
-        setIsLoadingTrans(true);
+        setIsProcessingTransaction(true);
         const signer = await getSigner();
         const upContract = ERC725__factory.connect(address, signer);
 
-        // Build the keys for each transaction type.
-        const allTypeIds = supportedTransactionTypes;
-        const allTypeConfigKeys = allTypeIds.map(id =>
+        // Build the keys for each supported transaction type.
+        const assistantTypesConfigKeys = assistantSupportedTransactionTypes.map(id =>
           generateMappingKey('UAPTypeConfig', id)
         );
 
@@ -97,61 +92,56 @@ const SetupAssistant: React.FC<{
           assistantAddress
         );
 
-        // Fetch them all
-        const allData = await upContract.getDataBatch([
-          ...allTypeConfigKeys,
+        const configData = await upContract.getDataBatch([
+          ...assistantTypesConfigKeys,
           assistantConfigKey,
         ]);
-        const typeConfigValues = allData.slice(0, allTypeIds.length);
-        const assistantConfigValue = allData[allTypeIds.length];
+        const typeConfigValues = configData.slice(0, assistantSupportedTransactionTypes.length);
+        const assistantConfigValue = configData[assistantSupportedTransactionTypes.length];
 
         const abiCoder = new AbiCoder();
-        const newlySelectedTx: string[] = [];
-        const newTypeConfigAddresses: Record<string, string[]> = {};
+        const previouslySelectedTypes: string[] = [];
+        const previouslySavedTypeConfigAddresses: Record<string, string[]> = {};
 
         // Decode each transaction type's addresses
         typeConfigValues.forEach((encodedValue, index) => {
-          const typeId = allTypeIds[index];
+          const typeId = assistantSupportedTransactionTypes[index];
           if (!encodedValue || encodedValue === '0x') {
-            newTypeConfigAddresses[typeId] = [];
+            previouslySavedTypeConfigAddresses[typeId] = [];
             return;
           }
-          const storedAddresses = customDecodeAddresses(encodedValue);
-          newTypeConfigAddresses[typeId] = storedAddresses;
+          const storedAssistantAddresses = customDecodeAddresses(encodedValue);
+          previouslySavedTypeConfigAddresses[typeId] = storedAssistantAddresses;
 
           // If the assistant is in the array, mark this type as selected
           if (
-            storedAddresses
+            storedAssistantAddresses
               .map(addr => addr.toLowerCase())
               .includes(assistantAddress.toLowerCase())
           ) {
-            newlySelectedTx.push(typeId);
+            previouslySelectedTypes.push(typeId);
           }
         });
 
-        setTypeConfigAddresses(newTypeConfigAddresses);
-        setSelectedTransactions(newlySelectedTx);
+        setTypeConfigAddresses(previouslySavedTypeConfigAddresses);
+        setSelectedConfigTypes(previouslySelectedTypes);
+        if (previouslySelectedTypes.length > 0) {
+          setIsUPSubscribedToAssistant(true);
+        }
         // find if the assistant is already configured
-        Object.values(newTypeConfigAddresses).forEach(addresses => {
-          if (
-            addresses
-              .map(addr => addr.toLowerCase())
-              .includes(assistantAddress.toLowerCase())
-          ) {
-            const types = configParams.map(param => param.type);
-            const decoded = abiCoder.decode(types, assistantConfigValue);
-            const newFieldValues: Record<string, string> = {};
-            configParams.forEach((param, index) => {
-              newFieldValues[param.name] = decoded[index].toString();
-            });
-            setFieldValues(newFieldValues);
-            setIsUpSubscribedToAssistant(true);
-          }
-        });
+        if (assistantConfigValue !== '0x') {
+          const types = configParams.map(param => param.type);
+          const decoded = abiCoder.decode(types, assistantConfigValue);
+          const previouslySavedFieldValues: Record<string, string> = {};
+          configParams.forEach((param, index) => {
+            previouslySavedFieldValues[param.name] = decoded[index].toString();
+          });
+          setFieldValues(previouslySavedFieldValues);
+        }
       } catch (err) {
         console.error('Failed to load existing config:', err);
       } finally {
-        setIsLoadingTrans(false);
+        setIsProcessingTransaction(false);
       }
     };
 
@@ -161,7 +151,7 @@ const SetupAssistant: React.FC<{
   // --------------------------------------------------------------------------
   // Save configuration
   // --------------------------------------------------------------------------
-  const handleSubmitConfig = async () => {
+  const handleSaveAssistantConfig = async () => {
     if (!address) {
       toast({
         title: 'Not connected',
@@ -209,7 +199,7 @@ const SetupAssistant: React.FC<{
     }
 
     try {
-      setIsLoadingTrans(true);
+      setIsProcessingTransaction(true);
       const signer = await getSigner();
       const upContract = ERC725__factory.connect(address, signer);
 
@@ -217,72 +207,66 @@ const SetupAssistant: React.FC<{
       const dataValues: string[] = [];
       const abiCoder = new AbiCoder();
 
-      // Update addresses for every transaction type
-      const allTypeIds = supportedTransactionTypes
+      // TODO: refetch type config addresses to ensure we have the latest
       const updatedTypeConfigAddresses = { ...typeConfigAddresses };
       const feesConfig = network.feesConfig;
 
       // ==== TYPES ====
-      allTypeIds.forEach(typeId => {
-        let addresses = [...(updatedTypeConfigAddresses[typeId] || [])];
-
-        if (supportedTransactionTypes.includes(typeId)) {
-          const existingIndex = addresses.findIndex(
-            a => a.toLowerCase() === assistantAddress.toLowerCase()
-          );
-          // If user selected it, ensure the assistant is in the array
-          if (selectedTransactions.includes(typeId)) {
-            if (existingIndex === -1) {
-              addresses.unshift(assistantAddress);
-            }
-          } else {
-            // If user un-selected it, remove from the array
-            if (existingIndex !== -1) {
-              addresses.splice(existingIndex, 1);
-            }
+      assistantSupportedTransactionTypes.forEach(typeId => {
+        let currentTypeAddresses = [...(updatedTypeConfigAddresses[typeId] || [])];
+        const currentAssistantIndex = currentTypeAddresses.findIndex(
+          a => a.toLowerCase() === assistantAddress.toLowerCase()
+        );
+        if (selectedConfigTypes.includes(typeId)) {
+          if (currentAssistantIndex === -1) {
+            currentTypeAddresses.push(assistantAddress);
+          }
+        } else {
+          if (currentAssistantIndex !== -1) {
+            currentTypeAddresses.splice(currentAssistantIndex, 1);
           }
         }
-
         // only apply fee assistant if LSP0ValueReceived is selected
         if (
-          selectedTransactions.includes(LSP1_TYPE_IDS.LSP0ValueReceived) &&
-          typeId === LSP1_TYPE_IDS.LSP0ValueReceived
+          typeId === LSP1_TYPE_IDS.LSP0ValueReceived &&
+          selectedConfigTypes.includes(LSP1_TYPE_IDS.LSP0ValueReceived)
         ) {
-          const feeAssistantIndex = addresses.findIndex(
+          const feeAssistantIndex = currentTypeAddresses.findIndex(
             a =>
               a.toLowerCase() === feesConfig.feeAssistantAddress.toLowerCase()
           );
           if (feeAssistantIndex === -1) {
-            addresses.unshift(feesConfig.feeAssistantAddress);
+            currentTypeAddresses.push(feesConfig.feeAssistantAddress);
           }
         }
-        updatedTypeConfigAddresses[typeId] = addresses;
 
+        updatedTypeConfigAddresses[typeId] = currentTypeAddresses;
         // Encode or clear
         const typeConfigKey = generateMappingKey('UAPTypeConfig', typeId);
-        if (addresses.length === 0) {
+        // todo: only write new values if configuration has changed
+        if (currentTypeAddresses.length === 0) {
           dataKeys.push(typeConfigKey);
           dataValues.push('0x');
         } else {
           dataKeys.push(typeConfigKey);
-          dataValues.push(customEncodeAddresses(addresses));
+          dataValues.push(customEncodeAddresses(currentTypeAddresses));
         }
       });
-      // ==== FIELDS ====
 
-      const assistantSettingsKey = generateMappingKey(
+      
+      // ==== FIELDS ====
+      const assistantConfigKey = generateMappingKey(
         'UAPExecutiveConfig',
         assistantAddress
       );
       const types = configParams.map(param => param.type);
       const values = configParams.map(param => fieldValues[param.name]);
-      const settingsValue = abiCoder.encode(types, values);
-
-      dataKeys.push(assistantSettingsKey);
-      dataValues.push(settingsValue);
+      const assistantConfigValue = abiCoder.encode(types, values);
+      dataKeys.push(assistantConfigKey);
+      dataValues.push(assistantConfigValue);
 
       // always re-write the fee assistant settings
-      if (selectedTransactions.includes(LSP1_TYPE_IDS.LSP0ValueReceived)) {
+      if (selectedConfigTypes.includes(LSP1_TYPE_IDS.LSP0ValueReceived)) {
         const feeAssistantSettingsKey = generateMappingKey(
           'UAPExecutiveConfig',
           feesConfig.feeAssistantAddress
@@ -294,12 +278,13 @@ const SetupAssistant: React.FC<{
         dataKeys.push(feeAssistantSettingsKey);
         dataValues.push(feeSettingsValue);
       }
+      // todo: if updatedTypeConfigAddresses[LSP1_TYPE_IDS.LSP0ValueReceived] is empty, overwrite the fee assistant settings with 0x
 
       const tx = await upContract.setDataBatch(dataKeys, dataValues);
       await tx.wait();
 
       setTypeConfigAddresses(updatedTypeConfigAddresses);
-      setIsUpSubscribedToAssistant(true);
+      setIsUPSubscribedToAssistant(true);
 
       toast({
         title: 'Success',
@@ -308,9 +293,9 @@ const SetupAssistant: React.FC<{
         duration: 5000,
         isClosable: true,
       });
-      setIsLoadingTrans(false);
+      setIsProcessingTransaction(false);
     } catch (err: any) {
-      setIsLoadingTrans(false);
+      setIsProcessingTransaction(false);
       console.error('Error setting configuration', err);
       if (!err.message.includes('user rejected action')) {
         toast({
@@ -324,7 +309,7 @@ const SetupAssistant: React.FC<{
     }
   };
 
-  const handleUnsubscribeAssistant = async () => {
+  const handleDeactivateAssistant = async () => {
     if (!address) {
       toast({
         title: 'Not connected',
@@ -337,7 +322,7 @@ const SetupAssistant: React.FC<{
     }
 
     try {
-      setIsLoadingTrans(true);
+      setIsProcessingTransaction(true);
       const signer = await getSigner();
       const upContract = ERC725__factory.connect(address, signer);
 
@@ -347,11 +332,11 @@ const SetupAssistant: React.FC<{
 
       Object.entries(updatedTypeConfigAddresses).forEach(
         ([typeId, addresses]) => {
-          const idx = addresses.findIndex(
+          const currentAssistantIndex = addresses.findIndex(
             a => a.toLowerCase() === assistantAddress.toLowerCase()
           );
-          if (idx !== -1) {
-            addresses.splice(idx, 1);
+          if (currentAssistantIndex !== -1) {
+            addresses.splice(currentAssistantIndex, 1);
           }
 
           const typeConfigKey = generateMappingKey('UAPTypeConfig', typeId);
@@ -365,25 +350,15 @@ const SetupAssistant: React.FC<{
           }
         }
       );
-
-      if (dataKeys.length === 0) {
-        setIsLoadingTrans(false);
-        toast({
-          title: 'No Removal Needed',
-          description: 'Assistant was not found in any types to remove.',
-          status: 'info',
-          duration: 5000,
-          isClosable: true,
-        });
-        return;
-      }
+      // todo: if updatedTypeConfigAddresses[LSP1_TYPE_IDS.LSP0ValueReceived] is empty, overwrite the fee assistant settings with 0x
+      // todo: set the assistantConfigKey to 0x
 
       const tx = await upContract.setDataBatch(dataKeys, dataValues);
       await tx.wait();
 
       setTypeConfigAddresses(updatedTypeConfigAddresses);
-      setSelectedTransactions([]);
-      setIsLoadingTrans(false);
+      setSelectedConfigTypes([]);
+      setIsProcessingTransaction(false);
 
       toast({
         title: 'Success',
@@ -393,7 +368,7 @@ const SetupAssistant: React.FC<{
         isClosable: true,
       });
     } catch (err: any) {
-      setIsLoadingTrans(false);
+      setIsProcessingTransaction(false);
       console.error('Error unsubscribing this assistant', err);
       if (!err.message.includes('user rejected action')) {
         toast({
@@ -411,7 +386,7 @@ const SetupAssistant: React.FC<{
   // Determine whether the assistant is considered "active"
   // (Has settings + at least one transaction type subscription)
   // --------------------------------------------------------------------------
-  const isActive = isUpSubscribedToAssistant && selectedTransactions.length > 0;
+  const isAssistantActive = isUPSubscribedToAssistant && selectedConfigTypes.length > 0;
 
   // --------------------------------------------------------------------------
   // Render
@@ -422,7 +397,7 @@ const SetupAssistant: React.FC<{
         <Text fontWeight="bold" fontSize="lg">
           Assistant Instructions
         </Text>
-        {isActive ? (
+        {isAssistantActive ? (
           <Badge colorScheme="green">ASSISTANT IS ACTIVE</Badge>
         ) : (
           <Badge colorScheme="yellow">ASSISTANT IS NOT ACTIVE</Badge>
@@ -438,8 +413,8 @@ const SetupAssistant: React.FC<{
           </Text>
           <CheckboxGroup
             colorScheme="orange"
-            value={selectedTransactions}
-            onChange={(values: string[]) => setSelectedTransactions(values)}
+            value={selectedConfigTypes}
+            onChange={(values: string[]) => setSelectedConfigTypes(values)}
           >
             <VStack
               align="stretch"
@@ -449,7 +424,7 @@ const SetupAssistant: React.FC<{
               px={7}
             >
               {Object.entries(transactionTypeMap)
-                .filter(([_, { id }]) => supportedTransactionTypes.includes(id))
+                .filter(([_, { id }]) => assistantSupportedTransactionTypes.includes(id))
                 .map(([key, { id, label, typeName, icon, iconPath }]) => (
                   <Checkbox key={key} value={id}>
                     <TransactionTypeBlock
@@ -485,34 +460,6 @@ const SetupAssistant: React.FC<{
                   [param.name]: e.target.value,
                 })
               }
-              onBlur={() => {
-                // Auto-convert address => bytes32 if needed
-                const val = fieldValues[param.name];
-                if (
-                  param.type === 'bytes32' &&
-                  /^0x[0-9A-Fa-f]{40}$/.test(val)
-                ) {
-                  setFieldValues({
-                    ...fieldValues,
-                    [param.name]: convertAddressToBytes32(
-                      fieldValues[param.name]
-                    ),
-                  });
-                }
-              }}
-              onPaste={e => {
-                const pastedData = e.clipboardData.getData('text');
-                if (
-                  param.type === 'bytes32' &&
-                  /^0x[0-9A-Fa-f]{40}$/.test(pastedData)
-                ) {
-                  e.preventDefault();
-                  setFieldValues({
-                    ...fieldValues,
-                    [param.name]: convertAddressToBytes32(pastedData),
-                  });
-                }
-              }}
               w="70%"
             />
           </Flex>
@@ -530,11 +477,11 @@ const SetupAssistant: React.FC<{
           size="sm"
           variant="outline"
           colorScheme="orange"
-          onClick={handleUnsubscribeAssistant}
-          isLoading={isLoadingTrans}
-          isDisabled={isLoadingTrans || !isUpSubscribedToAssistant}
+          onClick={handleDeactivateAssistant}
+          isLoading={isProcessingTransaction}
+          isDisabled={isProcessingTransaction || !isUPSubscribedToAssistant}
         >
-          Inactivate Assistant
+          Deactivate Assistant
         </Button>
         <Button
           size="sm"
@@ -542,11 +489,11 @@ const SetupAssistant: React.FC<{
           color="white"
           _hover={{ bg: 'orange.600' }}
           _active={{ bg: 'orange.700' }}
-          onClick={handleSubmitConfig}
-          isLoading={isLoadingTrans}
-          isDisabled={isLoadingTrans}
+          onClick={handleSaveAssistantConfig}
+          isLoading={isProcessingTransaction}
+          isDisabled={isProcessingTransaction}
         >
-          Save Activation Settings
+          Save & Activate Assistant
         </Button>
       </Flex>
     </Flex>
