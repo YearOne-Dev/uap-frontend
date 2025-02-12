@@ -1,6 +1,6 @@
 'use client';
 import React, { useEffect } from 'react';
-import { Box, Button, Flex, Spinner, Text, VStack } from "@chakra-ui/react";
+import { Box, Button, Flex, Spinner, Text, VStack } from '@chakra-ui/react';
 import AssistantInfo from '@/components/AssistantInfo';
 import URDSetup from '@/components/URDSetup';
 import {
@@ -76,13 +76,7 @@ export default function ExecutiveAssistantConfigurePage({
     };
 
     checkURDInstalled();
-  }, [
-    address,
-    network.protocolAddress,
-    isConnected,
-    walletProvider,
-  ]);
-
+  }, [address, network.protocolAddress, isConnected, walletProvider]);
 
   useEffect(() => {
     if (!address || !mainControllerData?.mainUPController) {
@@ -106,10 +100,7 @@ export default function ExecutiveAssistantConfigurePage({
     };
 
     getMissingPermissions();
-  }, [
-    address,
-    mainControllerData,
-  ]);
+  }, [address, mainControllerData]);
 
   // Now that all hooks have been called, conditionally render if assistantInfo is missing.
   if (!assistantInfo) {
@@ -157,11 +148,12 @@ export default function ExecutiveAssistantConfigurePage({
       );
     }
 
-    if(isLoading) {
-      return <Spinner size={"xl"} alignSelf={"center"} />;
+    if (isLoading) {
+      return <Spinner size={'xl'} alignSelf={'center'} />;
     }
 
-    if ( !mainControllerData?.mainUPController ||
+    if (
+      !mainControllerData?.mainUPController ||
       isMissingPermissions ||
       !isURDInstalled
     ) {
