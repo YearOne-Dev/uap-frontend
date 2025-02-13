@@ -176,7 +176,7 @@ const SetupAssistant: React.FC<{
         return;
       }
       if (param.type.startsWith('uint') && isNaN(Number(value))) {
-        setError(`Invalid ${param.name}. Bot a valid number.`);
+        setError(`Invalid ${param.name}. Not a valid number.`);
         return;
       }
       // Custom validation: If a validate function is provided, use it.
