@@ -22,6 +22,8 @@ export type ExecutiveAssistant = AbstractAssistant & {
     defaultValue?: string;
     placeholder?: string;
     hidden?: boolean;
+    validate?: (value: any) => boolean;
+    validationMessage?: string;
   }[];
 };
 
