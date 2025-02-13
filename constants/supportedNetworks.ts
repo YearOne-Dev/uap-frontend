@@ -22,11 +22,6 @@ interface ChainInfo {
   universalEverything: string;
   luksoSiteName: string;
   assistants: ExecutiveAssistant[];
-  feesConfig: {
-    feeAssistantAddress: string;
-    feeAssistantAmount: string;
-    feeDestinationAddress: string;
-  };
 }
 
 export enum CHAINS {
@@ -52,11 +47,6 @@ export const supportedNetworks: { [key: string]: ChainInfo } = {
     universalEverything: 'https://universaleverything.io',
     luksoSiteName: 'mainnet',
     assistants: [burntPixRefinerMainnet],
-    feesConfig: {
-      feeAssistantAddress: '0x',
-      feeAssistantAmount: '0',
-      feeDestinationAddress: '0x',
-    },
   },
   '4201': {
     name: 'LUKSO Testnet',
@@ -75,11 +65,6 @@ export const supportedNetworks: { [key: string]: ChainInfo } = {
     universalEverything: 'https://universaleverything.io',
     luksoSiteName: 'testnet',
     assistants: [burntPixRefinerTestnet, tipAssistantTestnet],
-    feesConfig: {
-      feeAssistantAddress: '0x45aAfdD13B18477c0DC797d871AF32c40A5F0FCE',
-      feeAssistantAmount: '1',
-      feeDestinationAddress: '0x9b071Fe3d22EAd27E2CDFA1Afec7EAa3c3F32009',
-    },
   },
 };
 
