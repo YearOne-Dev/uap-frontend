@@ -24,8 +24,109 @@ import {
   useWeb3ModalAccount,
   useWeb3ModalProvider,
 } from '@web3modal/ethers/react';
-import { useNetwork } from '@/contexts/NetworkContext';
 import { ExecutiveAssistant } from '@/constants/CustomTypes';
+
+/**
+ * Fetches configuration data from the on-chain UP contract for a given Assistant.
+ * Returns the “type config addresses”, the “selected config types”, a boolean
+ * indicating if the Assistant is subscribed, and the field values for the
+ * Assistant’s configuration.
+ */
+interface IFullAssistantConfig {
+  typeConfigAddresses: Record<string, string[]>;
+  selectedConfigTypes: string[];
+  isUPSubscribedToAssistant: boolean;
+  fieldValues: Record<string, string>;
+}
+
+async function fetchAssistantConfig({
+  upAddress,
+  assistantAddress,
+  supportedTransactionTypes,
+  configParams,
+  signer,
+}: {
+  upAddress: string;
+  assistantAddress: string;
+  supportedTransactionTypes: string[];
+  configParams: { name: string; type: string }[];
+  signer: any; // e.g. ethers.Signer
+}): Promise<IFullAssistantConfig> {
+  const upContract = ERC725__factory.connect(upAddress, signer);
+
+  // Build the keys for each supported transaction type.
+  const assistantTypesConfigKeys = supportedTransactionTypes.map(id =>
+    generateMappingKey('UAPTypeConfig', id)
+  );
+
+  // Assistant's config key
+  const assistantConfigKey = generateMappingKey(
+    'UAPExecutiveConfig',
+    assistantAddress
+  );
+
+  const configData = await upContract.getDataBatch([
+    ...assistantTypesConfigKeys,
+    assistantConfigKey,
+  ]);
+
+  // The first N items in configData will be for type configurations
+  const typeConfigValues = configData.slice(
+    0,
+    supportedTransactionTypes.length
+  );
+  // The last item is the assistant’s own configuration
+  const assistantConfigValue = configData[supportedTransactionTypes.length];
+
+  const abiCoder = new AbiCoder();
+  const previouslySelectedTypes: string[] = [];
+  const previouslySavedTypeConfigAddresses: Record<string, string[]> = {};
+
+  // Decode each transaction type’s addresses
+  typeConfigValues.forEach((encodedValue, index) => {
+    const typeId = supportedTransactionTypes[index];
+    if (!encodedValue || encodedValue === '0x') {
+      previouslySavedTypeConfigAddresses[typeId] = [];
+      return;
+    }
+    const storedAssistantAddresses = customDecodeAddresses(encodedValue);
+    previouslySavedTypeConfigAddresses[typeId] = storedAssistantAddresses;
+
+    // If the assistant is in that array, mark this type as selected
+    if (
+      storedAssistantAddresses
+        .map(addr => addr.toLowerCase())
+        .includes(assistantAddress.toLowerCase())
+    ) {
+      previouslySelectedTypes.push(typeId);
+    }
+  });
+
+  // Determine if the assistant is subscribed to at least one type
+  const isUPSubscribedToAssistant = previouslySelectedTypes.length > 0;
+
+  // Decode the assistant’s own config for the custom fields
+  const fetchedFieldValues: Record<string, string> = {};
+  if (assistantConfigValue !== '0x') {
+    const types = configParams.map(param => param.type);
+    const decoded = abiCoder.decode(types, assistantConfigValue);
+    configParams.forEach((param, index) => {
+      fetchedFieldValues[param.name] = decoded[index].toString();
+    });
+  } else {
+    // If not stored on chain, fallback to empty/initial
+    configParams.forEach(param => {
+      fetchedFieldValues[param.name] = '';
+    });
+  }
+
+  return {
+    typeConfigAddresses: previouslySavedTypeConfigAddresses,
+    selectedConfigTypes: previouslySelectedTypes,
+    isUPSubscribedToAssistant,
+    fieldValues: fetchedFieldValues,
+  };
+}
 
 const SetupAssistant: React.FC<{
   config: ExecutiveAssistant;
@@ -54,11 +155,6 @@ const SetupAssistant: React.FC<{
   const toast = useToast({ position: 'bottom-left' });
   const { walletProvider } = useWeb3ModalProvider();
   const { address } = useWeb3ModalAccount();
-  const { network } = useNetwork();
-
-  const [typeConfigAddresses, setTypeConfigAddresses] = useState<
-    Record<string, string[]>
-  >({});
 
   // --------------------------------------------------------------------------
   // Helpers
@@ -75,73 +171,24 @@ const SetupAssistant: React.FC<{
   // --------------------------------------------------------------------------
   useEffect(() => {
     if (!address) return;
+
     const loadExistingConfig = async () => {
       try {
         setIsProcessingTransaction(true);
         const signer = await getSigner();
-        const upContract = ERC725__factory.connect(address, signer);
 
-        // Build the keys for each supported transaction type.
-        const assistantTypesConfigKeys = assistantSupportedTransactionTypes.map(
-          id => generateMappingKey('UAPTypeConfig', id)
-        );
-
-        // Assistant's config key
-        const assistantConfigKey = generateMappingKey(
-          'UAPExecutiveConfig',
-          assistantAddress
-        );
-
-        const configData = await upContract.getDataBatch([
-          ...assistantTypesConfigKeys,
-          assistantConfigKey,
-        ]);
-        const typeConfigValues = configData.slice(
-          0,
-          assistantSupportedTransactionTypes.length
-        );
-        const assistantConfigValue =
-          configData[assistantSupportedTransactionTypes.length];
-
-        const abiCoder = new AbiCoder();
-        const previouslySelectedTypes: string[] = [];
-        const previouslySavedTypeConfigAddresses: Record<string, string[]> = {};
-
-        // Decode each transaction type's addresses
-        typeConfigValues.forEach((encodedValue, index) => {
-          const typeId = assistantSupportedTransactionTypes[index];
-          if (!encodedValue || encodedValue === '0x') {
-            previouslySavedTypeConfigAddresses[typeId] = [];
-            return;
-          }
-          const storedAssistantAddresses = customDecodeAddresses(encodedValue);
-          previouslySavedTypeConfigAddresses[typeId] = storedAssistantAddresses;
-
-          // If the assistant is in the array, mark this type as selected
-          if (
-            storedAssistantAddresses
-              .map(addr => addr.toLowerCase())
-              .includes(assistantAddress.toLowerCase())
-          ) {
-            previouslySelectedTypes.push(typeId);
-          }
-        });
-
-        setTypeConfigAddresses(previouslySavedTypeConfigAddresses);
-        setSelectedConfigTypes(previouslySelectedTypes);
-        if (previouslySelectedTypes.length > 0) {
-          setIsUPSubscribedToAssistant(true);
-        }
-        // find if the assistant is already configured
-        if (assistantConfigValue !== '0x') {
-          const types = configParams.map(param => param.type);
-          const decoded = abiCoder.decode(types, assistantConfigValue);
-          const previouslySavedFieldValues: Record<string, string> = {};
-          configParams.forEach((param, index) => {
-            previouslySavedFieldValues[param.name] = decoded[index].toString();
+        const { selectedConfigTypes, isUPSubscribedToAssistant, fieldValues } =
+          await fetchAssistantConfig({
+            upAddress: address,
+            assistantAddress,
+            supportedTransactionTypes: assistantSupportedTransactionTypes,
+            configParams,
+            signer,
           });
-          setFieldValues(previouslySavedFieldValues);
-        }
+
+        setSelectedConfigTypes(selectedConfigTypes);
+        setIsUPSubscribedToAssistant(isUPSubscribedToAssistant);
+        setFieldValues(fieldValues);
       } catch (err) {
         console.error('Failed to load existing config:', err);
       } finally {
@@ -150,7 +197,12 @@ const SetupAssistant: React.FC<{
     };
 
     loadExistingConfig();
-  }, [address, assistantAddress, configParams]);
+  }, [
+    address,
+    assistantAddress,
+    assistantSupportedTransactionTypes,
+    configParams,
+  ]);
 
   // --------------------------------------------------------------------------
   // Save configuration
@@ -193,12 +245,20 @@ const SetupAssistant: React.FC<{
       const signer = await getSigner();
       const upContract = ERC725__factory.connect(address, signer);
 
+      const { typeConfigAddresses: fetchedTypeConfigAddresses } =
+        await fetchAssistantConfig({
+          upAddress: address,
+          assistantAddress,
+          supportedTransactionTypes: assistantSupportedTransactionTypes,
+          configParams,
+          signer,
+        });
+
+      const updatedTypeConfigAddresses = { ...fetchedTypeConfigAddresses };
+
       const dataKeys: string[] = [];
       const dataValues: string[] = [];
       const abiCoder = new AbiCoder();
-
-      // TODO: refetch type config addresses to ensure we have the latest
-      const updatedTypeConfigAddresses = { ...typeConfigAddresses };
 
       // ==== TYPES ====
       assistantSupportedTransactionTypes.forEach(typeId => {
@@ -219,9 +279,9 @@ const SetupAssistant: React.FC<{
         }
 
         updatedTypeConfigAddresses[typeId] = currentTypeAddresses;
+
         // Encode or clear
         const typeConfigKey = generateMappingKey('UAPTypeConfig', typeId);
-        // todo: only write new values if configuration has changed
         if (currentTypeAddresses.length === 0) {
           dataKeys.push(typeConfigKey);
           dataValues.push('0x');
@@ -231,7 +291,6 @@ const SetupAssistant: React.FC<{
         }
       });
 
-      // ==== FIELDS ====
       const assistantConfigKey = generateMappingKey(
         'UAPExecutiveConfig',
         assistantAddress
@@ -244,8 +303,6 @@ const SetupAssistant: React.FC<{
 
       const tx = await upContract.setDataBatch(dataKeys, dataValues);
       await tx.wait();
-
-      setTypeConfigAddresses(updatedTypeConfigAddresses);
       setIsUPSubscribedToAssistant(true);
 
       toast({
@@ -288,9 +345,19 @@ const SetupAssistant: React.FC<{
       const signer = await getSigner();
       const upContract = ERC725__factory.connect(address, signer);
 
+      const { typeConfigAddresses: fetchedTypeConfigAddresses } =
+        await fetchAssistantConfig({
+          upAddress: address,
+          assistantAddress,
+          supportedTransactionTypes: assistantSupportedTransactionTypes,
+          configParams,
+          signer,
+        });
+
+      const updatedTypeConfigAddresses = { ...fetchedTypeConfigAddresses };
+
       const dataKeys: string[] = [];
       const dataValues: string[] = [];
-      const updatedTypeConfigAddresses = { ...typeConfigAddresses };
 
       Object.entries(updatedTypeConfigAddresses).forEach(
         ([typeId, addresses]) => {
@@ -313,10 +380,16 @@ const SetupAssistant: React.FC<{
         }
       );
 
+      // Clear the assistant's own configuration
+      const assistantConfigKey = generateMappingKey(
+        'UAPExecutiveConfig',
+        assistantAddress
+      );
+      dataKeys.push(assistantConfigKey);
+      dataValues.push('0x');
+
       const tx = await upContract.setDataBatch(dataKeys, dataValues);
       await tx.wait();
-
-      setTypeConfigAddresses(updatedTypeConfigAddresses);
       setSelectedConfigTypes([]);
       setIsProcessingTransaction(false);
 
