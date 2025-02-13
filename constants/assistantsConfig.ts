@@ -34,7 +34,7 @@ export const tipAssistantTestnet: ExecutiveAssistant = {
 // TODO tipAssistantMainnet
 
 export const burntPixRefinerTestnet: ExecutiveAssistant = {
-  address: '0x8097f5E8236eFDCD743cd9615C6167685eD233ee',
+  address: '0x5E1741B3B3F3C9D741dB71D5fB2d59Fa13284575',
   name: 'BurntPix Refiner',
   description:
     'Make transactions directed at you contribute iterations to a BurntPix of your choice.',
