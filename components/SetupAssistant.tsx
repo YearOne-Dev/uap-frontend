@@ -26,7 +26,6 @@ import {
 } from '@web3modal/ethers/react';
 import { useNetwork } from '@/contexts/NetworkContext';
 import { ExecutiveAssistant } from '@/constants/CustomTypes';
-import { InfoIcon } from '@chakra-ui/icons';
 
 const SetupAssistant: React.FC<{
   config: ExecutiveAssistant;
@@ -439,12 +438,6 @@ const SetupAssistant: React.FC<{
             />
           </Flex>
         ))}
-      </Flex>
-      <Flex gap="2" alignItems="center">
-        <Text fontSize="0.8em" textAlign="center">
-          <InfoIcon color="gray.500" mb={'4px'} /> A fee of 0.5% will be applied
-          to only LYX transactions when using the UAP protocol.
-        </Text>
       </Flex>
 
       <Flex gap={2}>
