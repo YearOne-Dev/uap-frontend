@@ -170,15 +170,20 @@ const SetupAssistant: React.FC<{
         return;
       }
       if (param.type === 'bytes32' && !/^0x[0-9A-Fa-f]{64}$/.test(value)) {
-        setError(`Invalid ${param.name}. Must be 32-byte hex (0x + 64 characters).`);
+        setError(
+          `Invalid ${param.name}. Must be 32-byte hex (0x + 64 characters).`
+        );
         return;
       }
       if (param.type.startsWith('uint') && isNaN(Number(value))) {
+        setError(`Invalid ${param.name}. Bot a valid number.`);
         return;
       }
       // Custom validation: If a validate function is provided, use it.
       if (param.validate && !param.validate(value)) {
-        setError(`Invalid ${param.name} for "${param.description}". ${param.validationMessage ? param.validationMessage : ''}`);
+        setError(
+          `Invalid ${param.name} for "${param.description}". ${param.validationMessage ? param.validationMessage : ''}`
+        );
         return;
       }
     }
