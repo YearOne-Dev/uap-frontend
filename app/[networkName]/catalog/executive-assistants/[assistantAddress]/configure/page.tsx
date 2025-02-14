@@ -58,7 +58,6 @@ export default function ExecutiveAssistantConfigurePage({
     }
 
     const checkURDInstalled = async () => {
-      console.log('checkURDInstalled called');
       if (!isConnected) {
         alert('User disconnected');
         return;
@@ -70,7 +69,6 @@ export default function ExecutiveAssistantConfigurePage({
           address,
           network.protocolAddress
         );
-        console.log('urdInstalled', urdInstalled);
         setIsURDInstalled(urdInstalled);
       } catch (error) {
         console.error('Error checking assistant installation', error);
@@ -91,7 +89,6 @@ export default function ExecutiveAssistantConfigurePage({
           mainControllerData.mainUPController,
           address
         );
-        console.log('missingPermissions', missingPermissions);
         setIsMissingPermissions(missingPermissions.length > 0);
         setIsLoading(false);
       } catch (error) {
@@ -141,7 +138,9 @@ export default function ExecutiveAssistantConfigurePage({
         >
           <VStack>
             <Text>You’re connected to {getNetwork(walletNetworkId).name}.</Text>
-            <Text>Please change network</Text>
+            <Text>
+              Please change network to {getNetwork(networkUrlId).name}
+            </Text>
             <Button onClick={() => open({ view: 'Networks' })}>
               Change network
             </Button>

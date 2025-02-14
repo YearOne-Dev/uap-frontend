@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Badge,
   Button,
@@ -159,12 +159,12 @@ const SetupAssistant: React.FC<{
   // --------------------------------------------------------------------------
   // Helpers
   // --------------------------------------------------------------------------
-  const getSigner = async () => {
+  const getSigner = useCallback(async () => {
     if (!walletProvider || !address)
       throw new Error('No wallet/address found!');
     const provider = new BrowserProvider(walletProvider as Eip1193Provider);
     return provider.getSigner(address);
-  };
+  }, [walletProvider, address]);
 
   // --------------------------------------------------------------------------
   // On Page Load: fetch existing configuration
@@ -202,6 +202,7 @@ const SetupAssistant: React.FC<{
     assistantAddress,
     assistantSupportedTransactionTypes,
     configParams,
+    getSigner,
   ]);
 
   // --------------------------------------------------------------------------

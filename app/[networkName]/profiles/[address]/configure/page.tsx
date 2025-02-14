@@ -130,7 +130,7 @@ export default function ProfilePage({
       );
       toast({
         title: 'Success',
-        description: 'All assistants removed; reverted to default URD.',
+        description: 'All assistants removed and unusubscribed from protocol.',
         status: 'success',
         duration: 5000,
         isClosable: true,
@@ -192,7 +192,7 @@ export default function ProfilePage({
                   ml={1}
                 >
                   Visit our Assistant Catalog
-                </ChakraLink>
+                </ChakraLink>{' '}
                 to find a helpful friend!
               </Text>
             </Box>

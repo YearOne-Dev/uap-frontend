@@ -29,13 +29,10 @@ const ReadConfiguredAssistants: React.FC<UPTypeConfigDisplayProps> = ({
     const fetchTypeConfigs = async () => {
       try {
         const { rpcUrl, name } = supportedNetworks[networkId];
-        console.log('rpcUrl', rpcUrl);
-        console.log('networkId', networkId);
         const provider = new ethers.JsonRpcProvider(rpcUrl, {
           name: name,
           chainId: networkId,
         });
-        console.log('provider', provider);
         const newTypeConfigs: { [typeId: string]: string[] } = {};
 
         for (const typeIdValue of typeIdOrder) {

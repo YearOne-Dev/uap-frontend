@@ -209,14 +209,11 @@ export const updateBECPermissions = async (
 ) => {
   const signer = await provider.getSigner();
   // check if we need to update permissions
-  console.log('updateBECPermissions signer', signer);
   const missingPermissions = await doesControllerHaveMissingPermissions(
     mainUPController,
     account
   );
-  console.log('missingPermissions', missingPermissions);
   if (!missingPermissions.length) {
-    console.log('exiting updateBECPermissions');
     return;
   }
   const UP = ERC725__factory.connect(account, provider);
@@ -238,7 +235,6 @@ export const updateBECPermissions = async (
       value: newPermissions,
     },
   ]);
-  console.log('permissionsData', permissionsData);
 
   const setDataBatchTx = await UP.connect(signer).setDataBatch(
     permissionsData.keys,
@@ -272,13 +268,10 @@ export const getAddressPermissionsOnTarget = async (
     targetEntity,
     window.lukso
   );
-  console.log('targetEntity', targetEntity);
-  console.log('address', address);
   const addressPermission = await erc725.getData({
     keyName: 'AddressPermissions:Permissions:<address>',
     dynamicKeyParts: address,
   });
-  console.log('addressPermission', addressPermission);
 
   return erc725.decodePermissions(addressPermission.value as string);
 };
@@ -302,7 +295,6 @@ export const isDelegateAlreadySet = async (
   upAddress: string,
   expectedDelegate: string
 ): Promise<any> => {
-  console.log('isDelegateAlreadySet called');
   let UPURD: null | string = null;
   try {
     const UPContract = new ethers.Contract(
@@ -313,7 +305,6 @@ export const isDelegateAlreadySet = async (
     UPURD = await UPContract.getData(
       ERC725YDataKeys.LSP1.LSP1UniversalReceiverDelegate
     );
-    console.log('UPURD value', UPURD);
   } catch (err) {
     console.error(err);
     throw err;

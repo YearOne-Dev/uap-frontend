@@ -105,8 +105,6 @@ export default function WalletConnectButton() {
             mainUPController,
             upWallet: address as string,
           });
-
-          console.log('Signature:', signature);
         } catch (error: any) {
           console.error('Error signing the message:', error);
           if (!error.message.includes('user rejected action')) {
@@ -131,6 +129,8 @@ export default function WalletConnectButton() {
     address,
     walletProvider,
     setMainControllerData,
+    disconnect,
+    toast,
   ]);
 
   // Build dynamic profile link
