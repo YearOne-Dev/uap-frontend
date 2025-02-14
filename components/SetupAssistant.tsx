@@ -393,6 +393,7 @@ const SetupAssistant: React.FC<{
       await tx.wait();
       setSelectedConfigTypes([]);
       setIsProcessingTransaction(false);
+      setIsUPSubscribedToAssistant(false);
 
       toast({
         title: 'Success',
@@ -417,13 +418,6 @@ const SetupAssistant: React.FC<{
   };
 
   // --------------------------------------------------------------------------
-  // Determine whether the assistant is considered "active"
-  // (Has settings + at least one transaction type subscription)
-  // --------------------------------------------------------------------------
-  const isAssistantActive =
-    isUPSubscribedToAssistant && selectedConfigTypes.length > 0;
-
-  // --------------------------------------------------------------------------
   // Render
   // --------------------------------------------------------------------------
   return (
@@ -432,7 +426,7 @@ const SetupAssistant: React.FC<{
         <Text fontWeight="bold" fontSize="lg">
           Assistant Instructions
         </Text>
-        {isAssistantActive ? (
+        {isUPSubscribedToAssistant ? (
           <Badge colorScheme="green">ASSISTANT IS ACTIVE</Badge>
         ) : (
           <Badge colorScheme="yellow">ASSISTANT IS NOT ACTIVE</Badge>
