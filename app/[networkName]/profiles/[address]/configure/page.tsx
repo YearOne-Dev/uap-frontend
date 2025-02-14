@@ -10,7 +10,7 @@ import { BrowserProvider, Eip1193Provider } from 'ethers';
 import {
   customDecodeAddresses,
   generateMappingKey,
-  toggleUniveralAssistantsSubscribe,
+  unsubscribeFromUapURD,
 } from '@/utils/configDataKeyValueStore';
 import { ERC725__factory } from '@/types';
 
@@ -128,7 +128,7 @@ export default function ProfilePage({
   // --------------------------------------------------------------------------
   // Unsubscribe from all assistants
   // --------------------------------------------------------------------------
-  const handleUnsubscribeAllAssistants = async () => {
+  const handleProtocolUnsubscribe = async () => {
     if (!walletAddress || !profileAddress) {
       toast({
         title: 'Not connected',
@@ -142,63 +142,13 @@ export default function ProfilePage({
 
     try {
       setIsLoading(true);
-
       const provider = new BrowserProvider(walletProvider as Eip1193Provider);
-      const signer = await provider.getSigner(walletAddress);
-      const upContract = ERC725__factory.connect(profileAddress, signer);
-
-      const dataKeys: string[] = [];
-      const dataValues: string[] = [];
-
-      // 1) Remove *all* addresses from each transaction type
-      const allTypeIds = Object.values(transactionTypeMap).map(obj => obj.id);
-      const allKeys = allTypeIds.map(id =>
-        generateMappingKey('UAPTypeConfig', id)
-      );
-      const rawValues = await upContract.getDataBatch(allKeys);
-
-      // Collect all discovered assistant addresses across all types
-      const allDiscoveredAssistants = new Set<string>();
-
-      rawValues.forEach((encodedVal, index) => {
-        const typeKey = allKeys[index];
-        if (encodedVal && encodedVal !== '0x') {
-          const addresses = customDecodeAddresses(encodedVal);
-          addresses.forEach(addr =>
-            allDiscoveredAssistants.add(addr.toLowerCase())
-          );
-        }
-
-        dataKeys.push(typeKey);
-        // Empty array => '0x'
-        dataValues.push('0x');
-      });
-
-      // 2) Remove each assistant’s config
-      allDiscoveredAssistants.forEach(assistantLower => {
-        const assistantKey = generateMappingKey(
-          'UAPExecutiveConfig',
-          assistantLower
-        );
-        dataKeys.push(assistantKey);
-        dataValues.push('0x');
-      });
-
-      // 3) setDataBatch to remove addresses from type config
-      if (dataKeys.length > 0) {
-        const removeTx = await upContract.setDataBatch(dataKeys, dataValues);
-        await removeTx.wait();
-      }
-
-      // 4) Finally, revert to default URD => “uninstall” mode
-      await toggleUniveralAssistantsSubscribe(
+      await unsubscribeFromUapURD(
         provider,
         profileAddress,
         network.protocolAddress,
-        network.defaultURDUP,
-        true // 'true' means uninstall
+        network.defaultURDUP
       );
-
       toast({
         title: 'Success',
         description: 'All assistants removed; reverted to default URD.',
@@ -206,7 +156,6 @@ export default function ProfilePage({
         duration: 5000,
         isClosable: true,
       });
-
       setHasAnyAssistants(false);
     } catch (err: any) {
       console.error('Error unsubscribing from all:', err);
@@ -252,11 +201,11 @@ export default function ProfilePage({
             <Button
               size="sm"
               colorScheme="red"
-              onClick={handleUnsubscribeAllAssistants}
+              onClick={handleProtocolUnsubscribe}
               isLoading={isLoading}
               isDisabled={isReadOnly || !hasAnyAssistants || isLoading}
             >
-              Unsubscribe From All Assistants
+              Unsubscribe From All
             </Button>
           </Flex>
         </Box>

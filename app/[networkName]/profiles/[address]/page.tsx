@@ -12,7 +12,6 @@ export default function ProfilePage({
   const { address, networkName } = params;
   const network = getChainIdByUrlName(networkName);
 
-
   const breadCrumbs = Breadcrumbs({
     items: [
       { name: 'UP Assistants', href: '/' },

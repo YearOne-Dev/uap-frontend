@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Spinner, Text } from "@chakra-ui/react";
+import { Box, Spinner, Text } from '@chakra-ui/react';
 import { typeIdOptionsMap, typeIdOrder } from '@/constants/assistantTypes';
 import {
   customDecodeAddresses,
@@ -8,6 +8,7 @@ import {
 import { ERC725__factory } from '@/types';
 import { ethers } from 'ethers';
 import { supportedNetworks } from '@/constants/supportedNetworks';
+import { formatAddress } from '@/utils/utils';
 
 type UPTypeConfigDisplayProps = {
   upAddress: string;
@@ -91,11 +92,18 @@ const ReadConfiguredAssistants: React.FC<UPTypeConfigDisplayProps> = ({
           return (
             <Box key={typeIdValue} mb={4}>
               <Text fontWeight="bold">
-                Type: {option.label} - {option.description}
+                {option.label} - {option.description}
               </Text>
-              {typeConfigs[typeIdValue].map((address, index) => (
-                <Text key={index}>Assistant Address: {address}</Text>
-              ))}
+              {typeConfigs[typeIdValue].map((address, index) => {
+                const assistantName =
+                  supportedNetworks[networkId].assistants[address.toLowerCase()]
+                    ?.name;
+                return (
+                  <Text key={index}>
+                    {`${assistantName ? assistantName : 'Unknown'}`}: {address}
+                  </Text>
+                );
+              })}
             </Box>
           );
         }
