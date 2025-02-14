@@ -22,7 +22,6 @@ const AssistantSmallCard = ({
   assistant: ExecutiveAssistant | ScreenerAssistant;
   includeLink?: boolean;
 }) => {
-  console.log('executive info', assistant);
   const networkConfig = getNetwork(assistant.chainId);
   const [creatorName, setCreatorName] = useState<string>(
     formatAddress(assistant.creatorAddress)
@@ -32,7 +31,6 @@ const AssistantSmallCard = ({
   useEffect(() => {
     getProfileBasicInfo(assistant.chainId, assistant.creatorAddress).then(
       profileData => {
-        console.log('profile data', profileData);
         setCreatorName(
           profileData.upName || formatAddress(assistant.creatorAddress)
         );
@@ -44,7 +42,6 @@ const AssistantSmallCard = ({
   let link = '';
   if (includeLink) {
     const network = getNetwork(assistant.chainId);
-    console.log('network', network);
     link += '/' + network.urlName;
     link += '/catalog';
     link += `/${assistant.assistantType.toLowerCase()}-assistants`;

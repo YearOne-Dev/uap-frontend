@@ -11,7 +11,7 @@ import {
 } from '@chakra-ui/react';
 import { BrowserProvider, Eip1193Provider } from 'ethers';
 import {
-  toggleUniveralAssistantsSubscribe,
+  subscribeToUapURD,
   updateBECPermissions,
 } from '@/utils/configDataKeyValueStore';
 import {
@@ -114,13 +114,7 @@ const URDSetup: React.FC<URDSetupProps> = ({ extensionHasPermissions }) => {
     setIsInstallingProtocol(true);
     try {
       // Send the transaction to install the protocol
-      const tx = await toggleUniveralAssistantsSubscribe(
-        provider,
-        upAddress,
-        network.protocolAddress,
-        network.defaultURDUP,
-        false
-      );
+      await subscribeToUapURD(provider, upAddress, network.protocolAddress);
       toast({
         title: 'Transaction sent',
         description: 'Waiting for confirmation...',

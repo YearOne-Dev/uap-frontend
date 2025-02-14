@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Badge,
   Button,
@@ -159,12 +159,12 @@ const SetupAssistant: React.FC<{
   // --------------------------------------------------------------------------
   // Helpers
   // --------------------------------------------------------------------------
-  const getSigner = async () => {
+  const getSigner = useCallback(async () => {
     if (!walletProvider || !address)
       throw new Error('No wallet/address found!');
     const provider = new BrowserProvider(walletProvider as Eip1193Provider);
     return provider.getSigner(address);
-  };
+  }, [walletProvider, address]);
 
   // --------------------------------------------------------------------------
   // On Page Load: fetch existing configuration
@@ -202,6 +202,7 @@ const SetupAssistant: React.FC<{
     assistantAddress,
     assistantSupportedTransactionTypes,
     configParams,
+    getSigner,
   ]);
 
   // --------------------------------------------------------------------------
@@ -392,6 +393,7 @@ const SetupAssistant: React.FC<{
       await tx.wait();
       setSelectedConfigTypes([]);
       setIsProcessingTransaction(false);
+      setIsUPSubscribedToAssistant(false);
 
       toast({
         title: 'Success',
@@ -416,13 +418,6 @@ const SetupAssistant: React.FC<{
   };
 
   // --------------------------------------------------------------------------
-  // Determine whether the assistant is considered "active"
-  // (Has settings + at least one transaction type subscription)
-  // --------------------------------------------------------------------------
-  const isAssistantActive =
-    isUPSubscribedToAssistant && selectedConfigTypes.length > 0;
-
-  // --------------------------------------------------------------------------
   // Render
   // --------------------------------------------------------------------------
   return (
@@ -431,7 +426,7 @@ const SetupAssistant: React.FC<{
         <Text fontWeight="bold" fontSize="lg">
           Assistant Instructions
         </Text>
-        {isAssistantActive ? (
+        {isUPSubscribedToAssistant ? (
           <Badge colorScheme="green">ASSISTANT IS ACTIVE</Badge>
         ) : (
           <Badge colorScheme="yellow">ASSISTANT IS NOT ACTIVE</Badge>

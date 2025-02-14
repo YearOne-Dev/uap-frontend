@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Spinner, Text } from "@chakra-ui/react";
+import { Box, Spinner, Text } from '@chakra-ui/react';
 import { typeIdOptionsMap, typeIdOrder } from '@/constants/assistantTypes';
 import {
   customDecodeAddresses,
@@ -8,6 +8,7 @@ import {
 import { ERC725__factory } from '@/types';
 import { ethers } from 'ethers';
 import { supportedNetworks } from '@/constants/supportedNetworks';
+import { formatAddress } from '@/utils/utils';
 
 type UPTypeConfigDisplayProps = {
   upAddress: string;
@@ -28,13 +29,10 @@ const ReadConfiguredAssistants: React.FC<UPTypeConfigDisplayProps> = ({
     const fetchTypeConfigs = async () => {
       try {
         const { rpcUrl, name } = supportedNetworks[networkId];
-        console.log('rpcUrl', rpcUrl);
-        console.log('networkId', networkId);
         const provider = new ethers.JsonRpcProvider(rpcUrl, {
           name: name,
           chainId: networkId,
         });
-        console.log('provider', provider);
         const newTypeConfigs: { [typeId: string]: string[] } = {};
 
         for (const typeIdValue of typeIdOrder) {
@@ -82,20 +80,24 @@ const ReadConfiguredAssistants: React.FC<UPTypeConfigDisplayProps> = ({
 
   return (
     <Box mt={4}>
-      <Text fontSize="lg" fontWeight="bold" mb={4}>
-        Current Assistant Configurations
-      </Text>
       {typeIdOrder.map(typeIdValue => {
         if (typeConfigs[typeIdValue]) {
           const option = typeIdOptionsMap[typeIdValue];
           return (
             <Box key={typeIdValue} mb={4}>
               <Text fontWeight="bold">
-                Type: {option.label} - {option.description}
+                {option.label} - {option.description}
               </Text>
-              {typeConfigs[typeIdValue].map((address, index) => (
-                <Text key={index}>Assistant Address: {address}</Text>
-              ))}
+              {typeConfigs[typeIdValue].map((address, index) => {
+                const assistantName =
+                  supportedNetworks[networkId].assistants[address.toLowerCase()]
+                    ?.name;
+                return (
+                  <Text key={index}>
+                    {`${assistantName ? assistantName : 'Unknown'}`}: {address}
+                  </Text>
+                );
+              })}
             </Box>
           );
         }

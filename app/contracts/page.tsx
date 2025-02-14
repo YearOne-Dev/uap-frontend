@@ -8,9 +8,7 @@ import {
   Image,
   Link as ChakraLink,
 } from '@chakra-ui/react';
-import {
-  supportedNetworks,
-} from '@/constants/supportedNetworks';
+import { supportedNetworks } from '@/constants/supportedNetworks';
 import { FaExternalLinkAlt } from 'react-icons/fa';
 import Breadcrumbs from '@/components/Breadcrumbs';
 
