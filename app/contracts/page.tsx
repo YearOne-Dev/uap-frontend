@@ -9,24 +9,16 @@ import {
   Link as ChakraLink,
 } from '@chakra-ui/react';
 import {
-  CHAINS,
-  networkNameToIdMapping,
   supportedNetworks,
 } from '@/constants/supportedNetworks';
 import { FaExternalLinkAlt } from 'react-icons/fa';
 import Breadcrumbs from '@/components/Breadcrumbs';
-import { getNetwork } from '@/utils/utils';
 
-export default function Contracts({
-  params,
-}: {
-  params: { networkName: CHAINS };
-}) {
-  const network = getNetwork(networkNameToIdMapping[params.networkName]);
+export default function Contracts() {
   const breadCrumbs = Breadcrumbs({
     items: [
-      { name: 'UP Assistants', href: `/${params.networkName}` },
-      { name: 'Contracts', href: `/${params.networkName}/contracts` },
+      { name: 'UP Assistants', href: `/` },
+      { name: 'Contracts', href: `/contracts` },
     ],
   });
 

@@ -1,7 +1,7 @@
 'use client';
 import React from 'react';
 import { Box, Flex, Link, Text, Select } from '@chakra-ui/react';
-import { FaBookMedical, FaDatabase, FaSquareGithub } from 'react-icons/fa6';
+import { FaBookMedical, FaFileCode, FaSquareGithub } from 'react-icons/fa6';
 import { usePathname, useRouter } from 'next/navigation';
 
 export default function Footer() {
@@ -64,7 +64,7 @@ export default function Footer() {
             >
               <FaSquareGithub color="var(--chakra-colors-uap-grey)" />
             </Link>
-            <Link href={`/${currentNetwork}/contracts`}>
+            <Link href={`/contracts`}>
               <Text fontSize="md" fontWeight={400} letterSpacing={1.5}>
                 Contracts
               </Text>
@@ -85,8 +85,8 @@ export default function Footer() {
             >
               <FaSquareGithub color="var(--chakra-colors-uap-grey)" />
             </Link>
-            <Link href={`/${currentNetwork}/contracts`} fontSize="20px">
-              <FaDatabase color="var(--chakra-colors-uap-grey)" />
+            <Link href={`/contracts`} fontSize="20px">
+              <FaFileCode color="var(--chakra-colors-uap-grey)" />
             </Link>
             <Link
               isExternal
