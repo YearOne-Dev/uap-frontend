@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
-import { Box, Flex, Button, useToast, Text } from '@chakra-ui/react';
+import { Box, Flex, Button, useToast, Text, Avatar } from '@chakra-ui/react';
 import ReadConfiguredAssistants from '@/components/ReadConfiguredAssistants';
 import Breadcrumbs from '@/components/Breadcrumbs';
 
@@ -29,7 +28,6 @@ export default function ProfilePage({
 }: {
   params: { address: string; networkName: CHAINS };
 }) {
-  const router = useRouter();
   const { address: profileAddress, networkName } = params;
   const { network } = useNetwork();
   const chainId = networkNameToIdMapping[networkName];
@@ -181,6 +179,22 @@ export default function ProfilePage({
       {breadCrumbs}
       <Flex w="100%" flexDirection="column" gap={4} mt={4}>
         <Box w="100%" maxWidth="800px">
+          <Flex flexDirection={'row'} alignItems={'center'} gap={2}>
+            {profileAvatar && (
+              <Avatar
+                border="1px solid var(--chakra-colors-uap-grey)"
+                src={profileAvatar}
+                height="40px"
+                width="40px"
+              />
+            )}
+            <Text fontSize="lg" fontWeight="bold">
+              {profileName ? profileName : formatAddress(profileAddress)}
+            </Text>
+            <Text fontSize="lg" fontWeight="bold">
+              Assistants
+            </Text>
+          </Flex>
           <ReadConfiguredAssistants
             upAddress={profileAddress}
             networkId={network.chainId}

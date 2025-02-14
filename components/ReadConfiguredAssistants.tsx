@@ -83,9 +83,6 @@ const ReadConfiguredAssistants: React.FC<UPTypeConfigDisplayProps> = ({
 
   return (
     <Box mt={4}>
-      <Text fontSize="lg" fontWeight="bold" mb={4}>
-        Current Assistant Configurations
-      </Text>
       {typeIdOrder.map(typeIdValue => {
         if (typeConfigs[typeIdValue]) {
           const option = typeIdOptionsMap[typeIdValue];
