@@ -19,7 +19,7 @@ import {
   generateMappingKey,
   unsubscribeFromUapURD,
 } from '@/utils/configDataKeyValueStore';
-import { ERC725__factory } from '@/types';
+import { ERC725, ERC725__factory } from '@/types';
 import {
   useWeb3ModalAccount,
   useWeb3ModalProvider,
@@ -29,6 +29,7 @@ import { CHAINS, networkNameToIdMapping } from '@/constants/supportedNetworks';
 import { useNetwork } from '@/contexts/NetworkContext';
 import { formatAddress } from '@/utils/utils';
 import { getProfileBasicInfo } from '@/utils/universalProfile';
+import { ERC725YDataKeys } from '@lukso/lsp-smart-contracts';
 
 export default function ProfilePage({
   params,
@@ -42,6 +43,7 @@ export default function ProfilePage({
   const { address: walletAddress, isConnected } = useWeb3ModalAccount();
   const { walletProvider } = useWeb3ModalProvider();
 
+  const [isUAPInstalled, setIsUAPInstalled] = useState(false);
   const [hasAnyAssistants, setHasAnyAssistants] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [profileName, setProfileName] = useState(formatAddress(profileAddress));
@@ -82,13 +84,21 @@ export default function ProfilePage({
         setIsLoading(true);
         const provider = new BrowserProvider(walletProvider as Eip1193Provider);
         const signer = await provider.getSigner(walletAddress);
-        const upContract = ERC725__factory.connect(profileAddress, signer);
+        const upContract: ERC725 = ERC725__factory.connect(
+          profileAddress,
+          signer
+        );
         const allTypeIds = Object.values(transactionTypeMap).map(o => o.id);
         const allKeys = allTypeIds.map(id =>
           generateMappingKey('UAPTypeConfig', id)
         );
+        allKeys.push(ERC725YDataKeys.LSP1.LSP1UniversalReceiverDelegate);
         const rawValues = await upContract.getDataBatch(allKeys);
-        for (const encodedVal of rawValues) {
+        const isProtocolInstalled =
+          rawValues[allKeys.length - 1].toLowerCase() ===
+          network.protocolAddress.toLowerCase();
+        setIsUAPInstalled(isProtocolInstalled);
+        for (const encodedVal of [...rawValues.slice(0, allKeys.length - 1)]) {
           if (encodedVal && encodedVal !== '0x') {
             const addresses = customDecodeAddresses(encodedVal);
             if (addresses.length > 0) {
@@ -106,7 +116,7 @@ export default function ProfilePage({
       }
     };
     fetchAssistants();
-  }, [profileAddress, walletProvider, walletAddress]);
+  }, [profileAddress, walletProvider, walletAddress, network.protocolAddress]);
 
   const handleProtocolUnsubscribe = async () => {
     if (!walletAddress || !profileAddress) {
@@ -136,6 +146,7 @@ export default function ProfilePage({
         isClosable: true,
       });
       setHasAnyAssistants(false);
+      setIsUAPInstalled(false);
     } catch (err: any) {
       console.error('Error unsubscribing from all:', err);
       if (!err.message?.includes('user rejected action')) {
@@ -212,15 +223,19 @@ export default function ProfilePage({
             </Text>
           )}
           <Flex alignItems="center" gap={3} mt={8} flexWrap="wrap">
-            {hasAnyAssistants && (
+            {(hasAnyAssistants || isUAPInstalled) && (
               <Button
                 size="sm"
                 colorScheme="red"
                 onClick={handleProtocolUnsubscribe}
                 isLoading={isLoading}
-                isDisabled={isReadOnly || !hasAnyAssistants || isLoading}
+                isDisabled={
+                  isReadOnly ||
+                  !(hasAnyAssistants || isUAPInstalled) ||
+                  isLoading
+                }
               >
-                Unsubscribe From All
+                Unsubscribe From Protocol And All Assistants
               </Button>
             )}
           </Flex>

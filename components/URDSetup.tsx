@@ -68,7 +68,7 @@ const URDSetup: React.FC<URDSetupProps> = ({ extensionHasPermissions }) => {
     setIsUpdatingPermissions(true);
     try {
       // Send the transaction to update permissions
-      const tx = await updateBECPermissions(
+      await updateBECPermissions(
         provider,
         upAddress,
         mainControllerData.mainUPController
