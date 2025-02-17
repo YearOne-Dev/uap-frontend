@@ -25,8 +25,11 @@ import {
   useWeb3ModalProvider,
 } from '@web3modal/ethers/react';
 import { transactionTypeMap } from '@/components/TransactionTypeBlock';
-import { CHAINS, networkNameToIdMapping } from '@/constants/supportedNetworks';
-import { useNetwork } from '@/contexts/NetworkContext';
+import {
+  CHAINS,
+  networkNameToIdMapping,
+  supportedNetworks,
+} from '@/constants/supportedNetworks';
 import { formatAddress } from '@/utils/utils';
 import { getProfileBasicInfo } from '@/utils/universalProfile';
 import { ERC725YDataKeys } from '@lukso/lsp-smart-contracts';
@@ -37,7 +40,7 @@ export default function ProfilePage({
   params: { address: string; networkName: CHAINS };
 }) {
   const { address: profileAddress, networkName } = params;
-  const { network } = useNetwork();
+  const network = supportedNetworks[networkNameToIdMapping[networkName]];
   const chainId = networkNameToIdMapping[networkName];
   const toast = useToast({ position: 'bottom-left' });
   const { address: walletAddress, isConnected } = useWeb3ModalAccount();

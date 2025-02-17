@@ -11,7 +11,6 @@ import {
 import SignInBox from '@/components/SignInBox';
 import { getNetwork } from '@/utils/utils';
 import { getChainIdByUrlName } from '@/utils/universalProfile';
-import { useNetwork } from '@/contexts/NetworkContext';
 import {
   doesControllerHaveMissingPermissions,
   isUAPInstalled,
@@ -33,9 +32,9 @@ export default function ExecutiveAssistantConfigurePage({
   params: { networkName: CHAINS; assistantAddress: string };
 }) {
   const { networkName } = params;
-  const pageNetwork = supportedNetworks[networkNameToIdMapping[networkName]];
+  const network = supportedNetworks[networkNameToIdMapping[networkName]];
   const assistantInfo =
-    pageNetwork.assistants[params.assistantAddress.toLowerCase()];
+    network.assistants[params.assistantAddress.toLowerCase()];
 
   // Call all hooks unconditionally
   const networkUrlId = getChainIdByUrlName(params.networkName);
@@ -45,7 +44,6 @@ export default function ExecutiveAssistantConfigurePage({
   const [isMissingPermissions, setIsMissingPermissions] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState<boolean>(true);
   const [isURDInstalled, setIsURDInstalled] = React.useState(false);
-  const { network } = useNetwork();
   const {
     address,
     chainId: walletNetworkId,
@@ -158,7 +156,12 @@ export default function ExecutiveAssistantConfigurePage({
       isMissingPermissions ||
       !isURDInstalled
     ) {
-      return <URDSetup extensionHasPermissions={!isMissingPermissions} />;
+      return (
+        <URDSetup
+          extensionHasPermissions={!isMissingPermissions}
+          networkName={networkName}
+        />
+      );
     }
 
     return <SetupAssistant config={assistantInfo as ExecutiveAssistant} />;
