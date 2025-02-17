@@ -290,7 +290,7 @@ export const getMissingPermissions = (
   return missingPermissions;
 };
 
-export const isDelegateAlreadySet = async (
+export const isUAPInstalled = async (
   provider: any,
   upAddress: string,
   expectedDelegate: string

@@ -14,7 +14,7 @@ import { getChainIdByUrlName } from '@/utils/universalProfile';
 import { useNetwork } from '@/contexts/NetworkContext';
 import {
   doesControllerHaveMissingPermissions,
-  isDelegateAlreadySet,
+  isUAPInstalled,
 } from '@/utils/configDataKeyValueStore';
 import { useProfile } from '@/contexts/ProfileContext';
 import SetupAssistant from '@/components/SetupAssistant';
@@ -64,7 +64,7 @@ export default function ExecutiveAssistantConfigurePage({
       }
       try {
         const provider = new BrowserProvider(walletProvider as Eip1193Provider);
-        const urdInstalled = await isDelegateAlreadySet(
+        const urdInstalled = await isUAPInstalled(
           provider,
           address,
           network.protocolAddress
