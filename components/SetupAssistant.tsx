@@ -36,7 +36,7 @@ interface IFullAssistantConfig {
   typeConfigAddresses: Record<string, string[]>;
   selectedConfigTypes: string[];
   isUPSubscribedToAssistant: boolean;
-  fieldValues: Record<string, string>;
+  fieldValues?: Record<string, string>;
 }
 
 async function fetchAssistantConfig({
@@ -106,17 +106,13 @@ async function fetchAssistantConfig({
   const isUPSubscribedToAssistant = previouslySelectedTypes.length > 0;
 
   // Decode the assistant’s own config for the custom fields
-  const fetchedFieldValues: Record<string, string> = {};
+  let fetchedFieldValues: Record<string, string> | undefined = undefined;
   if (assistantConfigValue !== '0x') {
+    fetchedFieldValues = {};
     const types = configParams.map(param => param.type);
     const decoded = abiCoder.decode(types, assistantConfigValue);
     configParams.forEach((param, index) => {
-      fetchedFieldValues[param.name] = decoded[index].toString();
-    });
-  } else {
-    // If not stored on chain, fallback to empty/initial
-    configParams.forEach(param => {
-      fetchedFieldValues[param.name] = '';
+      fetchedFieldValues![param.name] = decoded[index].toString();
     });
   }
 
@@ -188,7 +184,9 @@ const SetupAssistant: React.FC<{
 
         setSelectedConfigTypes(selectedConfigTypes);
         setIsUPSubscribedToAssistant(isUPSubscribedToAssistant);
-        setFieldValues(fieldValues);
+        if(fieldValues) {
+          setFieldValues(fieldValues);
+        }
       } catch (err) {
         console.error('Failed to load existing config:', err);
       } finally {
