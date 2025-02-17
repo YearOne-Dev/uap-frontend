@@ -184,7 +184,7 @@ const SetupAssistant: React.FC<{
 
         setSelectedConfigTypes(selectedConfigTypes);
         setIsUPSubscribedToAssistant(isUPSubscribedToAssistant);
-        if(fieldValues) {
+        if (fieldValues) {
           setFieldValues(fieldValues);
         }
       } catch (err) {

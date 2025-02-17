@@ -1,14 +1,6 @@
 'use client';
 import React, { useState } from 'react';
-import {
-  Box,
-  Button,
-  Flex,
-  HStack,
-  Text,
-  useToast,
-  VStack,
-} from '@chakra-ui/react';
+import { Box, Button, HStack, Text, useToast, VStack } from '@chakra-ui/react';
 import { BrowserProvider, Eip1193Provider } from 'ethers';
 import {
   subscribeToUapURD,
@@ -18,21 +10,28 @@ import {
   useWeb3ModalAccount,
   useWeb3ModalProvider,
 } from '@web3modal/ethers/react';
-import { useNetwork } from '@/contexts/NetworkContext';
 import { useProfile } from '@/contexts/ProfileContext';
-import { InfoIcon } from '@chakra-ui/icons';
+import {
+  CHAINS,
+  networkNameToIdMapping,
+  supportedNetworks,
+} from '@/constants/supportedNetworks';
 
 type URDSetupProps = {
+  networkName: CHAINS;
   extensionHasPermissions: boolean;
 };
 
-const URDSetup: React.FC<URDSetupProps> = ({ extensionHasPermissions }) => {
+const URDSetup: React.FC<URDSetupProps> = ({
+  extensionHasPermissions,
+  networkName,
+}) => {
   const toast = useToast({ position: 'bottom-left' });
   const { walletProvider } = useWeb3ModalProvider();
   const { mainControllerData } = useProfile();
   const provider = new BrowserProvider(walletProvider as Eip1193Provider);
   const { address } = useWeb3ModalAccount();
-  const { network } = useNetwork();
+  const network = supportedNetworks[networkNameToIdMapping[networkName]];
 
   // State to track loading/transaction status for each action
   const [isUpdatingPermissions, setIsUpdatingPermissions] = useState(false);
