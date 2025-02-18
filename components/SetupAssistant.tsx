@@ -213,11 +213,16 @@ const SetupAssistant: React.FC<{
       return;
     }
 
+    if (selectedConfigTypes.length === 0) {
+      setError('Please select at least one transaction type.');
+      return;
+    }
+
     // Validate fields
     for (const param of configParams) {
       const value = fieldValues[param.name];
       if (!value) {
-        setError(`Please fill in ${param.name}.`);
+        setError(`Please fill in ${param.description}.`);
         return;
       }
       if (param.type === 'bytes32' && !/^0x[0-9A-Fa-f]{64}$/.test(value)) {
