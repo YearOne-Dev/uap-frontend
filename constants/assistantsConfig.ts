@@ -2,7 +2,7 @@ import { ExecutiveAssistant, ScreenerAssistant } from './CustomTypes';
 import { LSP1_TYPE_IDS } from '@lukso/lsp-smart-contracts';
 
 export const tipAssistantTestnet: ExecutiveAssistant = {
-  address: '0x9e59C0556150e16340F96A183d32704A775607B8',
+  address: '0xa5C44cC1875C89919f61d15D2a264a541C2e6805',
   name: 'Tip Assistant',
   description:
     'Tip LYX to an external wallet in every transaction that you sends you LYX.',
