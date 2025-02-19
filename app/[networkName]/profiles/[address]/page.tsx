@@ -13,7 +13,7 @@ import {
 import NextLink from 'next/link';
 import ReadConfiguredAssistants from '@/components/ReadConfiguredAssistants';
 import Breadcrumbs from '@/components/Breadcrumbs';
-import { BrowserProvider, Eip1193Provider } from 'ethers';
+import { BrowserProvider, Eip1193Provider, ethers } from 'ethers';
 import {
   customDecodeAddresses,
   generateMappingKey,
@@ -71,26 +71,25 @@ export default function ProfilePage({
       { name: 'UP Assistants', href: '/' },
       {
         name: 'Profiles',
-        href: `/${networkName}/profiles/${profileAddress}/configure`,
+        href: `#`,
       },
       {
         name: `${profileName}`,
-        href: `/${networkName}/profiles/${profileAddress}/configure`,
+        href: `/${networkName}/profiles/${profileAddress}`,
       },
     ],
   });
 
   useEffect(() => {
-    if (!profileAddress || !walletProvider || !walletAddress) return;
     const fetchAssistants = async () => {
       try {
         setIsLoading(true);
-        const provider = new BrowserProvider(walletProvider as Eip1193Provider);
-        const signer = await provider.getSigner(walletAddress);
+        const provider = new ethers.JsonRpcProvider(network.rpcUrl);
         const upContract: ERC725 = ERC725__factory.connect(
           profileAddress,
-          signer
+          provider
         );
+
         const allTypeIds = Object.values(transactionTypeMap).map(o => o.id);
         const allKeys = allTypeIds.map(id =>
           generateMappingKey('UAPTypeConfig', id)
@@ -101,7 +100,7 @@ export default function ProfilePage({
           rawValues[allKeys.length - 1].toLowerCase() ===
           network.protocolAddress.toLowerCase();
         setIsUAPInstalled(isProtocolInstalled);
-        for (const encodedVal of [...rawValues.slice(0, allKeys.length - 1)]) {
+        for (const encodedVal of rawValues.slice(0, allKeys.length - 1)) {
           if (encodedVal && encodedVal !== '0x') {
             const addresses = customDecodeAddresses(encodedVal);
             if (addresses.length > 0) {
@@ -119,7 +118,7 @@ export default function ProfilePage({
       }
     };
     fetchAssistants();
-  }, [profileAddress, walletProvider, walletAddress, network.protocolAddress]);
+  }, [profileAddress, network.protocolAddress, network.rpcUrl]);
 
   const handleProtocolUnsubscribe = async () => {
     if (!walletAddress || !profileAddress) {
