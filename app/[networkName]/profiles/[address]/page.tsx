@@ -13,7 +13,7 @@ import {
 import NextLink from 'next/link';
 import ReadConfiguredAssistants from '@/components/ReadConfiguredAssistants';
 import Breadcrumbs from '@/components/Breadcrumbs';
-import { BrowserProvider, Eip1193Provider, ethers } from "ethers";
+import { BrowserProvider, Eip1193Provider, ethers } from 'ethers';
 import {
   customDecodeAddresses,
   generateMappingKey,
@@ -85,10 +85,13 @@ export default function ProfilePage({
       try {
         setIsLoading(true);
         const provider = new ethers.JsonRpcProvider(network.rpcUrl);
-        const upContract: ERC725 = ERC725__factory.connect(profileAddress, provider);
+        const upContract: ERC725 = ERC725__factory.connect(
+          profileAddress,
+          provider
+        );
 
-        const allTypeIds = Object.values(transactionTypeMap).map((o) => o.id);
-        const allKeys = allTypeIds.map((id) =>
+        const allTypeIds = Object.values(transactionTypeMap).map(o => o.id);
+        const allKeys = allTypeIds.map(id =>
           generateMappingKey('UAPTypeConfig', id)
         );
         allKeys.push(ERC725YDataKeys.LSP1.LSP1UniversalReceiverDelegate);

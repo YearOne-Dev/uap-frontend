@@ -1,6 +1,9 @@
 import { supportedNetworks } from '@/constants/supportedNetworks';
 
 export const getNetwork = (chainId: number | string) => {
+  if (!chainId) {
+    throw new Error('Chain ID not provided');
+  }
   const network = supportedNetworks[chainId];
   if (!network) {
     throw new Error('Network not supported');

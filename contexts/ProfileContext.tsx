@@ -107,7 +107,12 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
   }, [address]);
 
   useEffect(() => {
-    if (profile && profile.profileImage && profile.profileImage.length > 0) {
+    if (
+      chainId &&
+      profile &&
+      profile.profileImage &&
+      profile.profileImage.length > 0
+    ) {
       getImageFromIPFS(profile.profileImage[0].url, chainId as number).then(
         imageUrl => {
           // @ts-ignore
