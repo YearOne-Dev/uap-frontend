@@ -2,6 +2,7 @@ import { ExecutiveAssistant } from '@/constants/CustomTypes';
 import {
   burntPixRefinerMainnet,
   burntPixRefinerTestnet,
+  tipAssistantMainnet,
   tipAssistantTestnet,
 } from '@/constants/assistantsConfig';
 
@@ -40,13 +41,16 @@ export const supportedNetworks: { [key: string]: ChainInfo } = {
     ipfsGateway: 'https://api.universalprofile.cloud/ipfs',
     explorer: 'https://explorer.execution.mainnet.lukso.network/',
     token: 'LYX',
-    protocolAddress: '',
+    protocolAddress: '0xdbdf20705491e524ebd77957eed2c41ec9d7e5dc',
     defaultURDUP: '0x7870C5B8BC9572A8001C3f96f7ff59961B23500D',
     hasUPSupport: true,
     icon: '/lyx_icon_mainnet.svg',
     universalEverything: 'https://universaleverything.io',
     luksoSiteName: 'mainnet',
-    assistants: {},
+    assistants: {
+      [burntPixRefinerMainnet.address.toLowerCase()]: burntPixRefinerMainnet,
+      [tipAssistantMainnet.address.toLowerCase()]: tipAssistantMainnet,
+    },
   },
   '4201': {
     name: 'LUKSO Testnet',
@@ -58,7 +62,7 @@ export const supportedNetworks: { [key: string]: ChainInfo } = {
     ipfsGateway: 'https://api.universalprofile.cloud/ipfs',
     explorer: 'https://explorer.execution.testnet.lukso.network/',
     token: 'LYXt',
-    protocolAddress: '0x8acAC55bDD2175EDAee675c9A736ba207079CE52',
+    protocolAddress: '0xcf44a050c9b1fc87141d77b646436443bdc05a2b',
     defaultURDUP: '0x7870C5B8BC9572A8001C3f96f7ff59961B23500D',
     hasUPSupport: true,
     icon: '/lyx_icon_testnet.svg',
