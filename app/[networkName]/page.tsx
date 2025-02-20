@@ -1,10 +1,9 @@
 import { Metadata } from 'next';
 import LandingBox from '@/components/LandingBox';
-import { CHAINS, networkNameToIdMapping } from '@/constants/supportedNetworks';
+import { CHAINS } from '@/constants/supportedNetworks';
 
 export const metadata: Metadata = {
   title: 'UP Assistants - 🆙 Assistants Catalog',
-  description: 'tbd',
 };
 
 export default function NetworkPage({
