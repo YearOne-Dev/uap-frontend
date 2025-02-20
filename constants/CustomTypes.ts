@@ -22,7 +22,7 @@ export type ExecutiveAssistant = AbstractAssistant & {
     defaultValue?: string;
     placeholder?: string;
     hidden?: boolean;
-    validate?: (value: any) => boolean;
+    validate?: (value: any, upAddress: string) => boolean;
     validationMessage?: string;
   }[];
 };

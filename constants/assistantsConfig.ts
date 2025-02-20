@@ -18,6 +18,10 @@ export const tipAssistantTestnet: ExecutiveAssistant = {
       hidden: false,
       description: 'The address you want to tip:',
       placeholder: 'Enter destination address',
+      validationMessage: 'Tip address cannot be your own address',
+      validate: (value: any, upAddress: string) => {
+        return value.toLowerCase() !== upAddress.toLowerCase();
+      },
     },
     {
       name: 'tipAmount',

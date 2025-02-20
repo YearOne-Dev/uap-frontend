@@ -236,7 +236,7 @@ const SetupAssistant: React.FC<{
         return;
       }
       // Custom validation: If a validate function is provided, use it.
-      if (param.validate && !param.validate(value)) {
+      if (param.validate && !param.validate(value, address)) {
         setError(
           `Invalid ${param.name} for "${param.description}". ${param.validationMessage ? param.validationMessage : ''}`
         );
