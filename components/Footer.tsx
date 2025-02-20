@@ -1,7 +1,7 @@
 'use client';
 import React from 'react';
 import { Box, Flex, Link, Text, Select } from '@chakra-ui/react';
-import { FaBookMedical, FaFileCode, FaSquareGithub } from 'react-icons/fa6';
+import { FaBookMedical, FaFileCode, FaSquareGithub, FaBook } from 'react-icons/fa6';
 import { usePathname, useRouter } from 'next/navigation';
 
 export default function Footer() {
@@ -74,6 +74,11 @@ export default function Footer() {
                 Docs
               </Text>
             </Link>
+            <Link href="/terms">
+              <Text fontSize="md" fontWeight={400} letterSpacing={1.5}>
+                Terms
+              </Text>
+            </Link>
           </Flex>
 
           {/* Mobile links */}
@@ -94,6 +99,10 @@ export default function Footer() {
               fontSize="20px"
             >
               <FaBookMedical color="var(--chakra-colors-uap-grey)" />
+            </Link>
+            <Link href="/terms" fontSize="20px"
+            >
+              <FaBook color="var(--chakra-colors-uap-grey)" />
             </Link>
           </Flex>
         </Flex>
