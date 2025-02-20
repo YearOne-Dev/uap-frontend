@@ -51,7 +51,7 @@ export default function Footer() {
             cursor={'pointer'}
             border={'1px solid chakra-colors-uap-grey'}
           >
-            <option value="lukso">LUKSO</option>
+            <option value="/">LUKSO</option>
             <option value="lukso-testnet">LUKSO Testnet</option>
           </Select>
 
