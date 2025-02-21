@@ -1,7 +1,7 @@
 'use client';
 import React from 'react';
 import { Box, Flex, Link, Text, Select } from '@chakra-ui/react';
-import { FaBookMedical, FaFileCode, FaSquareGithub } from 'react-icons/fa6';
+import { FaBookMedical, FaFileCode, FaSquareGithub, FaBook } from 'react-icons/fa6';
 import { usePathname, useRouter } from 'next/navigation';
 
 export default function Footer() {
@@ -18,7 +18,7 @@ export default function Footer() {
   const currentNetwork =
     networkNameFromUrl.toLowerCase() === 'lukso-testnet'
       ? 'lukso-testnet'
-      : 'lukso';
+      : '/';
 
   // When the network selection changes, redirect the user to the new network's home page.
   const handleNetworkChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -51,7 +51,7 @@ export default function Footer() {
             cursor={'pointer'}
             border={'1px solid chakra-colors-uap-grey'}
           >
-            <option value="lukso">LUKSO</option>
+            <option value="/">LUKSO</option>
             <option value="lukso-testnet">LUKSO Testnet</option>
           </Select>
 
@@ -74,6 +74,11 @@ export default function Footer() {
                 Docs
               </Text>
             </Link>
+            <Link href="/terms">
+              <Text fontSize="md" fontWeight={400} letterSpacing={1.5}>
+                Terms
+              </Text>
+            </Link>
           </Flex>
 
           {/* Mobile links */}
@@ -94,6 +99,10 @@ export default function Footer() {
               fontSize="20px"
             >
               <FaBookMedical color="var(--chakra-colors-uap-grey)" />
+            </Link>
+            <Link href="/terms" fontSize="20px"
+            >
+              <FaBook color="var(--chakra-colors-uap-grey)" />
             </Link>
           </Flex>
         </Flex>
