@@ -1,9 +1,12 @@
 'use client';
-import { createWeb3Modal, defaultConfig } from '@web3modal/ethers/react';
+import { createAppKit } from '@reown/appkit/react';
+import { EthersAdapter } from '@reown/appkit-adapter-ethers';
+import { lukso, luksoTestnet } from '@reown/appkit/networks';
 import { config } from '@/constants/config';
-import { supportedNetworks } from '@/constants/supportedNetworks';
 
-// Wallet Connect: Metadata Setup
+// Singleton to prevent multiple initializations
+let isAppKitInitialized = false;
+
 const metadata = {
   name: config.metadata.title,
   description: config.metadata.description,
@@ -11,36 +14,22 @@ const metadata = {
   icons: [config.metadata.icon],
 };
 
-// Wallet Connect: Configuration Element
-const ethersConfig = defaultConfig({
-  metadata,
-});
+if (!isAppKitInitialized) {
+  createAppKit({
+    adapters: [new EthersAdapter()],
+    networks: [lukso, luksoTestnet],
+    defaultNetwork: luksoTestnet,
+    metadata,
+    projectId:
+      config.walletTools.walletConnectProjectID ||
+      'cd59de0360dceb28a232003dd4ff3b29', // Replace with your actual ID
+    features: {
+      analytics: true,
+    },
+  });
+  isAppKitInitialized = true;
+}
 
-// Wallet Connect: Chain Data
-const chains = Object.values(supportedNetworks).map(network => ({
-  chainId: network.chainId,
-  name: network.name,
-  currency: network.token,
-  explorerUrl: network.explorer,
-  rpcUrl: network.rpcUrl,
-}));
-
-// Wallet Connect: Chain Images
-const walletConnectChainImages: Record<number, string> = {};
-Object.values(supportedNetworks).forEach(network => {
-  walletConnectChainImages[network.chainId] = network.icon;
-});
-
-// WalletConnect: Web3 Modal Instance
-createWeb3Modal({
-  ethersConfig,
-  chains,
-  projectId: config.walletTools.walletConnectProjectID || '1',
-  chainImages: walletConnectChainImages,
-  featuredWalletIds: ['NONE'],
-  themeMode: 'light',
-});
-
-export function AppKit({ children }: any) {
+export function AppKit({ children }: { children: React.ReactNode }) {
   return children;
 }

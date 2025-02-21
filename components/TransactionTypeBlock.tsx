@@ -1,4 +1,4 @@
-import { Flex, Image, Text, VStack } from '@chakra-ui/react';
+import { Flex, Image, Text } from '@chakra-ui/react';
 import React from 'react';
 import { LSP1_TYPE_IDS } from '@lukso/lsp-smart-contracts';
 

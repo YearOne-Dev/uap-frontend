@@ -8,7 +8,6 @@ import {
 import { ERC725__factory } from '@/types';
 import { ethers } from 'ethers';
 import { supportedNetworks } from '@/constants/supportedNetworks';
-import { formatAddress } from '@/utils/utils';
 
 type UPTypeConfigDisplayProps = {
   upAddress: string;

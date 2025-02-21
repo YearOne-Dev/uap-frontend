@@ -20,10 +20,7 @@ import {
   unsubscribeFromUapURD,
 } from '@/utils/configDataKeyValueStore';
 import { ERC725, ERC725__factory } from '@/types';
-import {
-  useWeb3ModalAccount,
-  useWeb3ModalProvider,
-} from '@web3modal/ethers/react';
+import { useAppKitAccount, useAppKitProvider } from '@reown/appkit/react';
 import { transactionTypeMap } from '@/components/TransactionTypeBlock';
 import {
   CHAINS,
@@ -43,8 +40,8 @@ export default function ProfilePage({
   const network = supportedNetworks[networkNameToIdMapping[networkName]];
   const chainId = networkNameToIdMapping[networkName];
   const toast = useToast({ position: 'bottom-left' });
-  const { address: walletAddress, isConnected } = useWeb3ModalAccount();
-  const { walletProvider } = useWeb3ModalProvider();
+  const { address: walletAddress, isConnected } = useAppKitAccount();
+  const { walletProvider } = useAppKitProvider<Eip1193Provider>('eip155');
 
   const [isUAPInstalled, setIsUAPInstalled] = useState(false);
   const [hasAnyAssistants, setHasAnyAssistants] = useState(false);

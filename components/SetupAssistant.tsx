@@ -20,10 +20,7 @@ import {
   generateMappingKey,
 } from '@/utils/configDataKeyValueStore';
 import { ERC725__factory } from '@/types';
-import {
-  useWeb3ModalAccount,
-  useWeb3ModalProvider,
-} from '@web3modal/ethers/react';
+import { useAppKitAccount, useAppKitProvider } from '@reown/appkit/react';
 import { ExecutiveAssistant } from '@/constants/CustomTypes';
 
 /**
@@ -149,8 +146,8 @@ const SetupAssistant: React.FC<{
   const [isUPSubscribedToAssistant, setIsUPSubscribedToAssistant] =
     useState<boolean>(false);
   const toast = useToast({ position: 'bottom-left' });
-  const { walletProvider } = useWeb3ModalProvider();
-  const { address } = useWeb3ModalAccount();
+  const { walletProvider } = useAppKitProvider<Eip1193Provider>('eip155');
+  const { address } = useAppKitAccount();
 
   // --------------------------------------------------------------------------
   // Helpers

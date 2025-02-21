@@ -7,13 +7,21 @@ import React, {
   useState,
 } from 'react';
 import {
-  useWeb3ModalAccount,
-  useWeb3ModalProvider,
-} from '@web3modal/ethers/react';
+  useAppKitAccount,
+  useAppKitProvider,
+  useAppKitNetwork,
+} from '@reown/appkit/react';
 import { getImageFromIPFS } from '@/utils/ipfs';
 import { supportedNetworks } from '@/constants/supportedNetworks';
-import lsp3ProfileSchema from '@erc725/erc725.js/schemas/LSP3ProfileMetadata.json' assert { type: 'json' };
+import lsp3ProfileSchema from '@erc725/erc725.js/schemas/LSP3ProfileMetadata.json';
 import { ERC725, ERC725JSONSchema } from '@erc725/erc725.js';
+import { Eip1193Provider } from 'ethers';
+
+interface ExtendedEip1193Provider extends Eip1193Provider {
+  on(event: string, listener: (...args: any[]) => void): this;
+  removeListener?(event: string, listener: (...args: any[]) => void): this;
+  off?(event: string, listener: (...args: any[]) => void): this;
+}
 
 interface Profile {
   name: string;
@@ -24,12 +32,10 @@ interface Profile {
   backgroundImage: Image[];
   mainImage: string | undefined;
 }
-
 interface Link {
   title: string;
   url: string;
 }
-
 interface Image {
   width: number;
   height: number;
@@ -37,7 +43,6 @@ interface Image {
   hash: string;
   url: string;
 }
-
 interface MainControllerData {
   mainUPController: string;
   upWallet: string;
@@ -52,6 +57,7 @@ interface ProfileContextType {
   setMainControllerData: React.Dispatch<
     React.SetStateAction<MainControllerData | null>
   >;
+  error: string | null;
 }
 
 const initialProfileContextValue: ProfileContextType = {
@@ -61,6 +67,7 @@ const initialProfileContextValue: ProfileContextType = {
   setIssuedAssets: () => {},
   mainControllerData: null,
   setMainControllerData: () => {},
+  error: null,
 };
 
 const ProfileContext = createContext<ProfileContextType>(
@@ -72,72 +79,72 @@ export function useProfile() {
 }
 
 export function ProfileProvider({ children }: { children: React.ReactNode }) {
-  const { address, chainId } = useWeb3ModalAccount();
-  const { walletProvider } = useWeb3ModalProvider();
+  const { address, isConnected } = useAppKitAccount();
+  const { walletProvider } =
+    useAppKitProvider<ExtendedEip1193Provider>('eip155');
+  const { chainId } = useAppKitNetwork();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [issuedAssets, setIssuedAssets] = useState<string[]>([]);
   const [mainControllerData, setMainControllerData] =
     useState<MainControllerData | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const loadProfileFromLocalStorage = () => {
-      const storedProfileData = localStorage.getItem('profileData');
-      return storedProfileData ? JSON.parse(storedProfileData) : null;
-    };
-
-    const storedProfile = loadProfileFromLocalStorage();
-    if (storedProfile && storedProfile.account === address) {
+    const storedProfileData = localStorage.getItem('profileData');
+    const storedProfile = storedProfileData
+      ? JSON.parse(storedProfileData)
+      : null;
+    if (storedProfile && storedProfile.address === address) {
       setProfile(storedProfile.data);
-    } else {
-      // Reset profile if account has changed
+    } else if (!isConnected) {
       setProfile(null);
     }
 
     const storedControllerData = localStorage.getItem('mainControllerData');
     if (storedControllerData) {
-      const parsedController = JSON.parse(storedControllerData);
-      if (address && parsedController.upWallet === address) {
+      const parsedController: MainControllerData =
+        JSON.parse(storedControllerData);
+      if (isConnected && address && parsedController.upWallet === address) {
         setMainControllerData(parsedController);
-      } else {
-        setMainControllerData(parsedController);
+      } else if (!isConnected) {
+        setMainControllerData(null);
       }
-    } else {
-      setMainControllerData(null);
     }
-  }, [address]);
+  }, [address, isConnected]);
 
+  const profileImageMemo = useMemo(
+    () => profile?.profileImage,
+    [profile?.profileImage]
+  );
   useEffect(() => {
     if (
-      chainId &&
-      profile &&
-      profile.profileImage &&
-      profile.profileImage.length > 0
+      !chainId ||
+      !profileImageMemo ||
+      profileImageMemo.length === 0 ||
+      profile?.mainImage
     ) {
-      getImageFromIPFS(profile.profileImage[0].url, chainId as number).then(
-        imageUrl => {
-          // @ts-ignore
-          setProfile(prevProfile => {
-            return {
-              ...prevProfile,
-              mainImage: imageUrl,
-            };
-          });
-        }
-      );
+      return;
     }
-  }, [profile?.profileImage, chainId]);
+    getImageFromIPFS(profileImageMemo[0].url, Number(chainId)).then(
+      imageUrl => {
+        setProfile(prev => (prev ? { ...prev, mainImage: imageUrl } : null));
+      },
+      err => {
+        console.error('Failed to fetch IPFS image:', err);
+        setError('Failed to load profile image');
+      }
+    );
+  }, [profileImageMemo, chainId]);
 
-  // Save profile to local storage whenever it changes
   useEffect(() => {
-    if (profile) {
+    if (profile && address) {
       localStorage.setItem(
         'profileData',
         JSON.stringify({ address, data: profile })
       );
     }
-  }, [profile, address, chainId]);
+  }, [profile, address]);
 
-  // Save `mainControllerData` to local storage when it changes
   useEffect(() => {
     if (mainControllerData) {
       localStorage.setItem(
@@ -147,28 +154,20 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
     }
   }, [mainControllerData]);
 
-  // Fetch and update profile data from blockchain
   useEffect(() => {
     const fetchProfileData = async () => {
-      if (
-        !address ||
-        !chainId ||
-        // @ts-ignore
-        (walletProvider && !walletProvider.isUniversalProfileExtension)
-      ) {
-        setProfile(null);
+      if (!address || !chainId || !isConnected || !walletProvider) {
         return;
       }
 
-      // Get the current network properties from the list of supported networks
-      const currentNetwork = supportedNetworks[chainId];
-
+      const chainIdNum = Number(chainId);
+      const currentNetwork = supportedNetworks[chainIdNum];
       if (!currentNetwork || currentNetwork.hasUPSupport === false) {
         setProfile(null);
+        setError('Network not supported');
         return;
       }
 
-      // Instanciate the LSP3-based smart contract
       const erc725js = new ERC725(
         lsp3ProfileSchema as ERC725JSONSchema[],
         address,
@@ -177,53 +176,48 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
       );
 
       try {
-        // Download and verify the full profile metadata
+        setError(null);
         const profileMetaData = await erc725js.fetchData('LSP3Profile');
         const lsp12IssuedAssets = await erc725js.fetchData(
           'LSP12IssuedAssets[]'
         );
 
-        if (
-          profileMetaData.value &&
-          typeof profileMetaData.value === 'object' &&
-          'LSP3Profile' in profileMetaData.value
-        ) {
-          // Update the profile state
+        if (profileMetaData.value && 'LSP3Profile' in profileMetaData.value) {
           setProfile(profileMetaData.value.LSP3Profile);
+        } else {
+          setProfile(null);
         }
 
         if (lsp12IssuedAssets.value && Array.isArray(lsp12IssuedAssets.value)) {
-          // Update the issued assets state
           setIssuedAssets(lsp12IssuedAssets.value);
+        } else {
+          setIssuedAssets([]);
         }
       } catch (error) {
-        console.log('Can not fetch profile data: ', error);
+        console.error('Cannot fetch profile data:', error);
+        setError('Failed to fetch profile data');
       }
     };
 
     fetchProfileData();
-  }, [address, chainId, walletProvider]);
+  }, [address, chainId, walletProvider, isConnected]);
 
-  // Detect account and network changes
   useEffect(() => {
     if (!walletProvider) return;
 
-    // Reload the current page or force refresh state
-    // We need to update because switching networks can change the profile data like the address
-    // the current modal doesn't change the address when switching networks
     const handleChainChanged = () => {
-      window.location.reload();
+      setProfile(null);
+      setIssuedAssets([]);
     };
 
-    // Add event listeners
-    (walletProvider as any).on('chainChanged', handleChainChanged);
+    walletProvider.on('chainChanged', handleChainChanged);
 
-    // Cleanup event listeners on component unmount
     return () => {
-      (walletProvider as any).removeListener(
-        'chainChanged',
-        handleChainChanged
-      );
+      if (walletProvider.removeListener) {
+        walletProvider.removeListener('chainChanged', handleChainChanged);
+      } else if (walletProvider.off) {
+        walletProvider.off('chainChanged', handleChainChanged);
+      }
     };
   }, [walletProvider]);
 
@@ -235,8 +229,9 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
       issuedAssets,
       mainControllerData,
       setMainControllerData,
+      error,
     }),
-    [profile, issuedAssets, mainControllerData]
+    [profile, issuedAssets, mainControllerData, error]
   );
 
   return (

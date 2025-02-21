@@ -1,13 +1,14 @@
 'use client';
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { Box, Button, Flex, Spinner, Text, VStack } from '@chakra-ui/react';
 import AssistantInfo from '@/components/AssistantInfo';
 import URDSetup from '@/components/URDSetup';
 import {
-  useWeb3Modal,
-  useWeb3ModalAccount,
-  useWeb3ModalProvider,
-} from '@web3modal/ethers/react';
+  useAppKit,
+  useAppKitAccount,
+  useAppKitProvider,
+  useAppKitNetwork,
+} from '@reown/appkit/react';
 import SignInBox from '@/components/SignInBox';
 import { getNetwork } from '@/utils/utils';
 import { getChainIdByUrlName } from '@/utils/universalProfile';
@@ -38,59 +39,57 @@ export default function ExecutiveAssistantConfigurePage({
 
   // Call all hooks unconditionally
   const networkUrlId = getChainIdByUrlName(params.networkName);
-  const { open } = useWeb3Modal();
-  const { walletProvider } = useWeb3ModalProvider();
+  const { open } = useAppKit();
+  const { walletProvider } = useAppKitProvider<Eip1193Provider>('eip155');
   const { mainControllerData } = useProfile();
   const [isMissingPermissions, setIsMissingPermissions] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState<boolean>(true);
   const [isURDInstalled, setIsURDInstalled] = React.useState(false);
-  const {
-    address,
-    chainId: walletNetworkId,
-    isConnected,
-  } = useWeb3ModalAccount();
+  const [error, setError] = React.useState<string | null>(null);
+  const { address, isConnected } = useAppKitAccount();
+  const { chainId: walletNetworkId } = useAppKitNetwork();
 
-  useEffect(() => {
-    if (!address) {
+  const checkURDInstalled = useCallback(async () => {
+    if (!isConnected || !walletProvider || !address) {
+      setError('User disconnected or wallet not available');
       return;
     }
-
-    const checkURDInstalled = async () => {
-      if (!isConnected) {
-        alert('User disconnected');
-        return;
-      }
-      try {
-        const provider = new BrowserProvider(walletProvider as Eip1193Provider);
-        const urdInstalled = await isUAPInstalled(
-          provider,
-          address,
-          network.protocolAddress
-        );
-        setIsURDInstalled(urdInstalled);
-      } catch (error) {
-        console.error('Error checking assistant installation', error);
-      }
-    };
-
-    checkURDInstalled();
+    try {
+      const provider = new BrowserProvider(walletProvider);
+      const urdInstalled = await isUAPInstalled(
+        provider,
+        address,
+        network.protocolAddress
+      );
+      setIsURDInstalled(urdInstalled);
+    } catch (error) {
+      console.error('Error checking assistant installation', error);
+      setError('Failed to check assistant installation');
+    }
   }, [address, network.protocolAddress, isConnected, walletProvider]);
 
   useEffect(() => {
+    if (!address) return;
+    checkURDInstalled();
+  }, [address, checkURDInstalled]);
+
+  useEffect(() => {
     if (!address || !mainControllerData?.mainUPController) {
+      setIsLoading(false);
       return;
     }
 
     const getMissingPermissions = async () => {
       try {
+        setError(null);
         const missingPermissions = await doesControllerHaveMissingPermissions(
           mainControllerData.mainUPController,
           address
         );
         setIsMissingPermissions(missingPermissions.length > 0);
-        setIsLoading(false);
       } catch (error) {
         console.error('Error checking permissions', error);
+        setError('Failed to check permissions');
       } finally {
         setIsLoading(false);
       }
@@ -99,10 +98,13 @@ export default function ExecutiveAssistantConfigurePage({
     getMissingPermissions();
   }, [address, mainControllerData]);
 
-  // Now that all hooks have been called, conditionally render if assistantInfo is missing.
   if (!assistantInfo) {
     return <Text>Assistant not found</Text>;
   }
+
+  const isExecutiveAssistant = (info: any): info is ExecutiveAssistant => {
+    return info && 'name' in info;
+  };
 
   const breadCrumbs = Breadcrumbs({
     items: [
@@ -151,6 +153,10 @@ export default function ExecutiveAssistantConfigurePage({
       return <Spinner size={'xl'} alignSelf={'center'} />;
     }
 
+    if (error) {
+      return <Text color="red.500">{error}</Text>;
+    }
+
     if (
       !mainControllerData?.mainUPController ||
       isMissingPermissions ||
@@ -164,7 +170,11 @@ export default function ExecutiveAssistantConfigurePage({
       );
     }
 
-    return <SetupAssistant config={assistantInfo as ExecutiveAssistant} />;
+    return isExecutiveAssistant(assistantInfo) ? (
+      <SetupAssistant config={assistantInfo} />
+    ) : (
+      <Text>Invalid assistant configuration</Text>
+    );
   };
 
   return (

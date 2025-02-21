@@ -6,10 +6,7 @@ import {
   subscribeToUapURD,
   updateBECPermissions,
 } from '@/utils/configDataKeyValueStore';
-import {
-  useWeb3ModalAccount,
-  useWeb3ModalProvider,
-} from '@web3modal/ethers/react';
+import { useAppKitAccount, useAppKitProvider } from '@reown/appkit/react';
 import { useProfile } from '@/contexts/ProfileContext';
 import {
   CHAINS,
@@ -27,10 +24,10 @@ const URDSetup: React.FC<URDSetupProps> = ({
   networkName,
 }) => {
   const toast = useToast({ position: 'bottom-left' });
-  const { walletProvider } = useWeb3ModalProvider();
+  const { walletProvider } = useAppKitProvider<Eip1193Provider>('eip155');
   const { mainControllerData } = useProfile();
   const provider = new BrowserProvider(walletProvider as Eip1193Provider);
-  const { address } = useWeb3ModalAccount();
+  const { address } = useAppKitAccount();
   const network = supportedNetworks[networkNameToIdMapping[networkName]];
 
   // State to track loading/transaction status for each action

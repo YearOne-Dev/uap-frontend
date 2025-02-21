@@ -8,7 +8,6 @@ import {
   Button,
   Flex,
   Image,
-  Link,
   Text,
 } from '@chakra-ui/react';
 

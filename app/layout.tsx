@@ -6,7 +6,8 @@ import './globals.css';
 import { Flex } from '@chakra-ui/react';
 
 const title = 'UP Assistants - 🆙';
-const description = "Universal Assistant Protocol (UAP) is a rule engine catalog that enables Universal Profiles to automate on-chain actions, particularly when receiving LYX, LSP7 or LSP8 assets.";
+const description =
+  'Universal Assistant Protocol (UAP) is a rule engine catalog that enables Universal Profiles to automate on-chain actions, particularly when receiving LYX, LSP7 or LSP8 assets.';
 
 export const metadata: Metadata = {
   title: title,
