@@ -1,3 +1,4 @@
+'use client';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   Badge,
@@ -13,15 +14,15 @@ import {
 import TransactionTypeBlock, {
   transactionTypeMap,
 } from './TransactionTypeBlock';
-import { AbiCoder, BrowserProvider, Eip1193Provider } from 'ethers';
+import { AbiCoder, BrowserProvider } from 'ethers';
 import {
   customDecodeAddresses,
   customEncodeAddresses,
   generateMappingKey,
 } from '@/utils/configDataKeyValueStore';
 import { ERC725__factory } from '@/types';
-import { useAppKitAccount, useAppKitProvider } from '@reown/appkit/react';
 import { ExecutiveAssistant } from '@/constants/CustomTypes';
+import { useProfile } from '@/contexts/ProfileProvider';
 
 /**
  * Fetches configuration data from the on-chain UP contract for a given Assistant.
@@ -140,24 +141,24 @@ const SetupAssistant: React.FC<{
   const [selectedConfigTypes, setSelectedConfigTypes] = useState<string[]>([]);
   const [isProcessingTransaction, setIsProcessingTransaction] =
     useState<boolean>(true);
-
   const [error, setError] = useState<string>('');
-
   const [isUPSubscribedToAssistant, setIsUPSubscribedToAssistant] =
     useState<boolean>(false);
+
   const toast = useToast({ position: 'bottom-left' });
-  const { walletProvider } = useAppKitProvider<Eip1193Provider>('eip155');
-  const { address } = useAppKitAccount();
+  const { profileDetailsData, isConnected } = useProfile();
+  const address = profileDetailsData?.upWallet;
 
   // --------------------------------------------------------------------------
   // Helpers
   // --------------------------------------------------------------------------
   const getSigner = useCallback(async () => {
-    if (!walletProvider || !address)
+    if (!window.lukso || !address) {
       throw new Error('No wallet/address found!');
-    const provider = new BrowserProvider(walletProvider as Eip1193Provider);
+    }
+    const provider = new BrowserProvider(window.lukso);
     return provider.getSigner(address);
-  }, [walletProvider, address]);
+  }, [address]);
 
   // --------------------------------------------------------------------------
   // On Page Load: fetch existing configuration
@@ -232,7 +233,6 @@ const SetupAssistant: React.FC<{
         setError(`Invalid ${param.name}. Not a valid number.`);
         return;
       }
-      // Custom validation: If a validate function is provided, use it.
       if (param.validate && !param.validate(value, address)) {
         setError(
           `Invalid ${param.name} for "${param.description}". ${param.validationMessage ? param.validationMessage : ''}`
@@ -281,7 +281,6 @@ const SetupAssistant: React.FC<{
 
         updatedTypeConfigAddresses[typeId] = currentTypeAddresses;
 
-        // Encode or clear
         const typeConfigKey = generateMappingKey('UAPTypeConfig', typeId);
         if (currentTypeAddresses.length === 0) {
           dataKeys.push(typeConfigKey);
@@ -313,9 +312,7 @@ const SetupAssistant: React.FC<{
         duration: 5000,
         isClosable: true,
       });
-      setIsProcessingTransaction(false);
     } catch (err: any) {
-      setIsProcessingTransaction(false);
       console.error('Error setting configuration', err);
       if (!err.message.includes('user rejected action')) {
         toast({
@@ -326,6 +323,8 @@ const SetupAssistant: React.FC<{
           isClosable: true,
         });
       }
+    } finally {
+      setIsProcessingTransaction(false);
     }
   };
 
@@ -371,7 +370,6 @@ const SetupAssistant: React.FC<{
 
           const typeConfigKey = generateMappingKey('UAPTypeConfig', typeId);
           if (addresses.length === 0) {
-            // If empty, set value to '0x'
             dataKeys.push(typeConfigKey);
             dataValues.push('0x');
           } else {
@@ -381,7 +379,6 @@ const SetupAssistant: React.FC<{
         }
       );
 
-      // Clear the assistant's own configuration
       const assistantConfigKey = generateMappingKey(
         'UAPExecutiveConfig',
         assistantAddress
@@ -392,7 +389,6 @@ const SetupAssistant: React.FC<{
       const tx = await upContract.setDataBatch(dataKeys, dataValues);
       await tx.wait();
       setSelectedConfigTypes([]);
-      setIsProcessingTransaction(false);
       setIsUPSubscribedToAssistant(false);
 
       toast({
@@ -403,7 +399,6 @@ const SetupAssistant: React.FC<{
         isClosable: true,
       });
     } catch (err: any) {
-      setIsProcessingTransaction(false);
       console.error('Error unsubscribing this assistant', err);
       if (!err.message.includes('user rejected action')) {
         toast({
@@ -414,6 +409,8 @@ const SetupAssistant: React.FC<{
           isClosable: true,
         });
       }
+    } finally {
+      setIsProcessingTransaction(false);
     }
   };
 
@@ -438,7 +435,6 @@ const SetupAssistant: React.FC<{
         </Text>
       )}
       <Flex gap={4} flexDirection="column">
-        {/* Transaction Type Selection */}
         <Flex flexDirection="row" gap={4} maxWidth="550px">
           <Text fontWeight="bold" fontSize="sm">
             Select the transaction types that you will activate this assistant
@@ -473,7 +469,6 @@ const SetupAssistant: React.FC<{
             </VStack>
           </CheckboxGroup>
         </Flex>
-        {/* Dynamically render each configuration field */}
         {configParams.map(param => (
           <Flex
             key={param.name}

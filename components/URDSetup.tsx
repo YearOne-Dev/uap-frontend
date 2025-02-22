@@ -1,18 +1,17 @@
 'use client';
 import React, { useState } from 'react';
 import { Box, Button, HStack, Text, useToast, VStack } from '@chakra-ui/react';
-import { BrowserProvider, Eip1193Provider } from 'ethers';
+import { BrowserProvider } from 'ethers';
 import {
   subscribeToUapURD,
   updateBECPermissions,
 } from '@/utils/configDataKeyValueStore';
-import { useAppKitAccount, useAppKitProvider } from '@reown/appkit/react';
-import { useProfile } from '@/contexts/ProfileContext';
 import {
   CHAINS,
   networkNameToIdMapping,
   supportedNetworks,
 } from '@/constants/supportedNetworks';
+import { useProfile } from '@/contexts/ProfileProvider';
 
 type URDSetupProps = {
   networkName: CHAINS;
@@ -24,11 +23,10 @@ const URDSetup: React.FC<URDSetupProps> = ({
   networkName,
 }) => {
   const toast = useToast({ position: 'bottom-left' });
-  const { walletProvider } = useAppKitProvider<Eip1193Provider>('eip155');
-  const { mainControllerData } = useProfile();
-  const provider = new BrowserProvider(walletProvider as Eip1193Provider);
-  const { address } = useAppKitAccount();
+  const { profileDetailsData, isConnected } = useProfile();
   const network = supportedNetworks[networkNameToIdMapping[networkName]];
+
+  const address = profileDetailsData?.upWallet;
 
   // State to track loading/transaction status for each action
   const [isUpdatingPermissions, setIsUpdatingPermissions] = useState(false);
@@ -38,8 +36,7 @@ const URDSetup: React.FC<URDSetupProps> = ({
   );
 
   const handleUpdateBECPermissions = async () => {
-    const upAddress = address as string;
-    if (!upAddress) {
+    if (!isConnected || !address) {
       toast({
         title: 'Error',
         description: 'No wallet address found',
@@ -50,7 +47,7 @@ const URDSetup: React.FC<URDSetupProps> = ({
       return;
     }
 
-    if (mainControllerData?.mainUPController === undefined) {
+    if (!profileDetailsData?.mainUPController) {
       toast({
         title: 'Error',
         description: 'No UP Extension main controller found',
@@ -63,11 +60,11 @@ const URDSetup: React.FC<URDSetupProps> = ({
 
     setIsUpdatingPermissions(true);
     try {
-      // Send the transaction to update permissions
+      const provider = new BrowserProvider(window.lukso);
       await updateBECPermissions(
         provider,
-        upAddress,
-        mainControllerData.mainUPController
+        address,
+        profileDetailsData.mainUPController
       );
 
       toast({
@@ -80,7 +77,7 @@ const URDSetup: React.FC<URDSetupProps> = ({
       setHasExtensionPermissions(true);
     } catch (error: any) {
       console.error('Error updating permissions', error);
-      if (!error.message.includes('user rejected action')) {
+      if (!error.message?.includes('user rejected action')) {
         toast({
           title: 'Error',
           description: `Error giving UP Extension permissions: ${error.message}`,
@@ -95,8 +92,7 @@ const URDSetup: React.FC<URDSetupProps> = ({
   };
 
   const handleInstallUAP = async () => {
-    const upAddress = address as string;
-    if (!upAddress) {
+    if (!isConnected || !address) {
       toast({
         title: 'Error',
         description: 'No wallet address found',
@@ -109,8 +105,8 @@ const URDSetup: React.FC<URDSetupProps> = ({
 
     setIsInstallingProtocol(true);
     try {
-      // Send the transaction to install the protocol
-      await subscribeToUapURD(provider, upAddress, network.protocolAddress);
+      const provider = new BrowserProvider(window.lukso);
+      await subscribeToUapURD(provider, address, network.protocolAddress);
       toast({
         title: 'Transaction sent',
         description: 'Waiting for confirmation...',
@@ -127,17 +123,16 @@ const URDSetup: React.FC<URDSetupProps> = ({
         isClosable: true,
       });
 
-      // Refresh the page after the protocol subscription tx is confirmed
-      window.location.reload();
+      window.location.reload(); // Refresh page after confirmation
     } catch (error: any) {
       console.error(
         'Error subscribing to UAP Universal Receiver Delegate',
         error
       );
-      if (!error.message.includes('user rejected action')) {
+      if (!error.message?.includes('user rejected action')) {
         toast({
           title: 'Error',
-          description: `EError subscribing to UAP Universal Receiver Delegate: ${error.message}`,
+          description: `Error subscribing to UAP Universal Receiver Delegate: ${error.message}`,
           status: 'error',
           duration: null,
           isClosable: true,
@@ -170,7 +165,7 @@ const URDSetup: React.FC<URDSetupProps> = ({
             _hover={{ bg: 'orange.600' }}
             _active={{ bg: 'orange.700' }}
             onClick={handleUpdateBECPermissions}
-            isDisabled={hasExtensionPermissions}
+            isDisabled={hasExtensionPermissions || !isConnected}
             isLoading={isUpdatingPermissions}
           >
             Give Permissions
@@ -191,6 +186,7 @@ const URDSetup: React.FC<URDSetupProps> = ({
             _active={{ bg: 'orange.700' }}
             onClick={handleInstallUAP}
             isLoading={isInstallingProtocol}
+            isDisabled={!isConnected || !hasExtensionPermissions}
           >
             Install Protocol
           </Button>

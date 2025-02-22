@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import {
   Avatar,
   Box,
@@ -14,201 +14,183 @@ import {
   MenuList,
   useToast,
 } from '@chakra-ui/react';
-import {
-  useDisconnect,
-  useAppKit,
-  useAppKitAccount,
-  useAppKitProvider,
-  useAppKitNetwork,
-} from '@reown/appkit/react';
 import Link from 'next/link';
-import { SiweMessage } from 'siwe';
-import { BrowserProvider, Eip1193Provider, verifyMessage } from 'ethers';
+import { usePathname } from 'next/navigation';
 import { formatAddress, getNetwork } from '@/utils/utils';
 import { getUrlNameByChainId } from '@/utils/universalProfile';
-import { useProfile } from '@/contexts/ProfileContext';
+import { useProfile } from '@/contexts/ProfileProvider';
+import { getImageFromIPFS } from '@/utils/ipfs';
 
 export default function WalletConnectButton() {
-  const { open } = useAppKit();
-  const { disconnect } = useDisconnect();
-  const { address, isConnected } = useAppKitAccount();
-  const { chainId } = useAppKitNetwork();
-  const { walletProvider } = useAppKitProvider<Eip1193Provider>('eip155');
+  const {
+    profileDetailsData,
+    isConnected,
+    chainId,
+    connectAndSign,
+    disconnect,
+    switchNetwork,
+  } = useProfile();
+  const [mainImage, setMainImage] = React.useState<string | null>(null);
+  const [appChainId, setAppChainId] = React.useState<number | null>(null);
   const toast = useToast({ position: 'bottom-left' });
+  const pathname = usePathname();
 
-  const { profile, mainControllerData, setMainControllerData } = useProfile();
-
+  const address = profileDetailsData?.upWallet;
   const isSigned =
-    isConnected &&
-    !!mainControllerData &&
-    mainControllerData.upWallet === address;
-  const connectTriggeredRef = useRef(false);
+    isConnected && !!profileDetailsData && !!profileDetailsData.profile;
 
-  const buttonText = isConnected
-    ? profile?.name || formatAddress(address ?? '')
-    : 'Sign In';
-  const buttonStyles = isConnected
-    ? { bg: '#DB7C3D', color: '#fff' }
-    : { bg: '#FFF8DD', color: '#053241' };
-  const profileImage: React.ReactNode =
-    isConnected && profile?.mainImage ? (
+  const buttonText =
+    isSigned && profileDetailsData.profile
+      ? profileDetailsData.profile.name || formatAddress(address ?? '')
+      : 'Sign In';
+  const buttonStyles =
+    isSigned && profileDetailsData.profile
+      ? { bg: '#DB7C3D', color: '#fff' }
+      : { bg: '#FFF8DD', color: '#053241' };
+  const profileImage =
+    isSigned && profileDetailsData.profile && mainImage ? (
       <Avatar
         size="sm"
         border="1px solid #053241"
-        name={profile.name}
-        src={profile.mainImage}
+        name={profileDetailsData.profile.name}
+        src={mainImage} // Assuming IPFS hash
+        onError={() => console.log('Failed to load profile image')}
       />
     ) : null;
 
-  const currentNetwork = chainId ? getNetwork(Number(chainId)) : undefined;
+  const currentNetwork = chainId ? getNetwork(chainId) : undefined;
   const networkIcon = currentNetwork?.icon;
   const networkName = currentNetwork?.name;
 
   useEffect(() => {
-    if (!isConnected) {
-      connectTriggeredRef.current = false;
-      return;
-    }
+    setAppChainId(pathname.includes('/lukso-testnet') ? 4201 : 42);
+  }, [pathname]);
 
+  // fetch main image whenever profile
+  useEffect(() => {
     if (
-      isSigned ||
-      connectTriggeredRef.current ||
-      !address ||
-      !walletProvider ||
+      !profileDetailsData ||
+      !profileDetailsData.profile ||
+      !profileDetailsData.profile.profileImage ||
       !chainId
     ) {
+      setMainImage(null);
       return;
     }
-
-    connectTriggeredRef.current = true;
-    (async () => {
-      try {
-        const provider = new BrowserProvider(walletProvider);
-        const siweMessage = new SiweMessage({
-          domain: window.location.host,
-          uri: window.location.origin,
-          address,
-          statement:
-            'Signing this message will enable the Universal Assistants Catalog to read your UP Browser Extension to manage Assistant configurations.',
-          version: '1',
-          chainId: Number(chainId),
-          resources: [`${window.location.origin}/terms`],
-        }).prepareMessage();
-
-        // Try reusing session first, only prompt if necessary
-        let signature: string;
-        try {
-          signature = await provider.send('personal_sign', [
-            siweMessage,
-            address,
-          ]);
-        } catch (err) {
-          if (
-            err.code === 'METHOD_NOT_FOUND' ||
-            err.message.includes('not supported')
-          ) {
-            const signer = await provider.getSigner();
-            signature = await signer.signMessage(siweMessage);
-          } else {
-            throw err;
-          }
-        }
-
-        const mainUPController = verifyMessage(siweMessage, signature);
-        setMainControllerData({ mainUPController, upWallet: address });
-        toast({
-          title: 'Success',
-          description: 'Successfully signed in',
-          status: 'success',
-          duration: 3000,
-          isClosable: true,
-        });
-      } catch (error: any) {
-        console.error('Error signing the message:', error);
-        if (
-          error.code === 'ACTION_REJECTED' ||
-          error.message.includes('user rejected')
-        ) {
-          toast({
-            title: 'Sign In Cancelled',
-            description: 'You cancelled the sign-in request.',
-            status: 'info',
-            duration: 3000,
-            isClosable: true,
-          });
-        } else {
-          toast({
-            title: 'Error',
-            description: `Failed to sign in: ${error.message}`,
-            status: 'error',
-            duration: null,
-            isClosable: true,
-          });
-          disconnect();
-          connectTriggeredRef.current = false;
-        }
-      }
-    })();
-  }, [
-    isConnected,
-    isSigned,
-    chainId,
-    address,
-    walletProvider,
-    setMainControllerData,
-    disconnect,
-    toast,
-  ]);
+    const profileMainImage = profileDetailsData.profile.profileImage[0].url;
+    getImageFromIPFS(profileMainImage, Number(chainId)).then(image => {
+      setMainImage(image);
+    });
+  }, [profileDetailsData, chainId]);
 
   const getProfileUrl = () => {
     if (!chainId || !address) return '/';
-    const networkUrlName = getUrlNameByChainId(Number(chainId));
+    const networkUrlName = getUrlNameByChainId(chainId);
     return `/${networkUrlName}/profiles/${address}`;
   };
 
+  const handleNetworkSwitch = async () => {
+    try {
+      const targetChainId = chainId === 42 ? 4201 : 42; // Toggle between Mainnet and Testnet
+      await switchNetwork(targetChainId);
+      toast({
+        title: 'Network Changed',
+        description: `Switched to ${targetChainId === 42 ? 'Lukso Mainnet' : 'Lukso Testnet'}`,
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Network Switch Failed',
+        description: error.message,
+        status: 'error',
+        duration: null,
+        isClosable: true,
+      });
+    }
+  };
+
+  const handleConnect = async () => {
+    try {
+      await connectAndSign();
+      toast({
+        title: 'Success',
+        description: 'Successfully signed in',
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: `Failed to sign in: ${error.message}`,
+        status: 'error',
+        duration: null,
+        isClosable: true,
+      });
+    }
+  };
+
+  if (isSigned && chainId !== appChainId) {
+    return (
+      <Button
+        fontFamily="Montserrat"
+        fontWeight={600}
+        border="1px solid #053241"
+        borderRadius={10}
+        {...buttonStyles}
+        onClick={handleNetworkSwitch}
+        size="md"
+      >
+        {`Switch to ${Number(appChainId) === 42 ? 'LUKSO' : 'LUKSO Testnet'}`}
+      </Button>
+    );
+  }
+
   if (isSigned) {
     return (
-      <Menu>
-        <MenuButton
-          as={Button}
-          fontFamily="Montserrat"
-          fontWeight={600}
-          border="1px solid #053241"
-          borderRadius={10}
-          {...buttonStyles}
-          size="md"
-        >
-          <Flex gap={2} alignItems="center" justifyContent="center">
-            {profileImage}
-            {buttonText}
-          </Flex>
-        </MenuButton>
-        <MenuList>
-          <MenuItem as={Link} href={getProfileUrl()}>
-            Global Settings
-          </MenuItem>
-          <MenuDivider />
-          <MenuGroup>
-            <Flex
-              mx={4}
-              my={2}
-              fontWeight={600}
-              flexDirection="row"
-              gap={2}
-              alignItems="center"
-            >
-              <Box>Network:</Box>
-              {networkIcon && (
-                <Image height="20px" src={networkIcon} alt={networkName} />
-              )}
+      <>
+        <Menu>
+          <MenuButton
+            as={Button}
+            fontFamily="Montserrat"
+            fontWeight={600}
+            border="1px solid #053241"
+            borderRadius={10}
+            {...buttonStyles}
+            size="md"
+          >
+            <Flex gap={2} alignItems="center" justifyContent="center">
+              {profileImage}
+              {buttonText}
             </Flex>
-            <MenuItem onClick={() => open({ view: 'Networks' })}>
-              Change network
+          </MenuButton>
+          <MenuList>
+            <MenuItem as={Link} href={getProfileUrl()}>
+              Global Settings
             </MenuItem>
-            <MenuItem onClick={() => disconnect()}>Sign out</MenuItem>
-          </MenuGroup>
-        </MenuList>
-      </Menu>
+            <MenuDivider />
+            <MenuGroup>
+              <Flex
+                mx={4}
+                my={2}
+                fontWeight={600}
+                flexDirection="row"
+                gap={2}
+                alignItems="center"
+              >
+                <Box>Network:</Box>
+                {networkIcon && (
+                  <Image height="20px" src={networkIcon} alt={networkName} />
+                )}
+              </Flex>
+              <MenuItem onClick={handleNetworkSwitch}>Change network</MenuItem>
+              <MenuItem onClick={disconnect}>Sign out</MenuItem>
+            </MenuGroup>
+          </MenuList>
+        </Menu>
+      </>
     );
   }
 
@@ -219,7 +201,7 @@ export default function WalletConnectButton() {
       border="1px solid #053241"
       borderRadius={10}
       {...buttonStyles}
-      onClick={() => open()}
+      onClick={handleConnect}
       size="md"
     >
       {buttonText}

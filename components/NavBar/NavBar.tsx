@@ -3,24 +3,12 @@ import React from 'react';
 import Link from 'next/link';
 import { Box, Button, Flex, Text } from '@chakra-ui/react';
 import WalletConnectButton from '@/components/WalletConnectButton';
-import { useAppKitAccount, useAppKitNetwork } from '@reown/appkit/react';
 import { getUrlNameByChainId } from '@/utils/universalProfile';
-import { usePathname } from 'next/navigation';
+import { useProfile } from '@/contexts/ProfileProvider';
 
 const NavBar = () => {
-  const pathname = usePathname();
-  const pathSegments = pathname.split('/').filter(seg => seg.length > 0);
-  const networkNameFromUrl = pathSegments[0] || '';
-
-  // Use useAppKitNetwork for chainId
-  const { isConnected } = useAppKitAccount();
-  const { chainId } = useAppKitNetwork();
-  const chainIdNum = chainId ? Number(chainId) : 42; // Default to 42 (Lukso Mainnet) if not connected
-  const networkNameFromChain = getUrlNameByChainId(
-    isConnected && chainId ? chainIdNum : 42
-  );
-
-  const networkName = networkNameFromUrl || networkNameFromChain;
+  const { chainId } = useProfile();
+  const networkName = chainId ? getUrlNameByChainId(chainId) : 'lukso-testnet';
 
   return (
     <nav className="uap-topbar">
@@ -30,7 +18,7 @@ const NavBar = () => {
         py="20px"
         px={{ base: '20px', md: '50px' }}
         borderBottom="2px solid"
-        borderColor="var(--chakra-colors-uap-grey)"
+        borderColor="gray.200"
         height="85px"
       >
         <Box>
@@ -49,13 +37,13 @@ const NavBar = () => {
         <Flex alignItems="center" gap={4}>
           <Button
             display={{ base: 'none', md: 'inline-flex' }}
-            color="uap.grey"
+            color="gray.600"
             borderRadius="10px"
             border="1px solid"
-            borderColor="var(--chakra-colors-uap-grey)"
+            borderColor="gray.400"
             fontFamily="Montserrat"
             fontWeight={500}
-            backgroundColor="uap.yellow"
+            bg="yellow.100"
             as={Link}
             href={`/${networkName}/catalog`}
           >

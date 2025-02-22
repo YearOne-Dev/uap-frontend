@@ -1,5 +1,4 @@
 'use client';
-
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
@@ -13,14 +12,13 @@ import {
 import NextLink from 'next/link';
 import ReadConfiguredAssistants from '@/components/ReadConfiguredAssistants';
 import Breadcrumbs from '@/components/Breadcrumbs';
-import { BrowserProvider, Eip1193Provider, ethers } from 'ethers';
+import { BrowserProvider, ethers } from 'ethers';
 import {
   customDecodeAddresses,
   generateMappingKey,
   unsubscribeFromUapURD,
 } from '@/utils/configDataKeyValueStore';
 import { ERC725, ERC725__factory } from '@/types';
-import { useAppKitAccount, useAppKitProvider } from '@reown/appkit/react';
 import { transactionTypeMap } from '@/components/TransactionTypeBlock';
 import {
   CHAINS,
@@ -30,6 +28,7 @@ import {
 import { formatAddress } from '@/utils/utils';
 import { getProfileBasicInfo } from '@/utils/universalProfile';
 import { ERC725YDataKeys } from '@lukso/lsp-smart-contracts';
+import { useProfile } from '@/contexts/ProfileProvider';
 
 export default function ProfilePage({
   params,
@@ -40,8 +39,7 @@ export default function ProfilePage({
   const network = supportedNetworks[networkNameToIdMapping[networkName]];
   const chainId = networkNameToIdMapping[networkName];
   const toast = useToast({ position: 'bottom-left' });
-  const { address: walletAddress, isConnected } = useAppKitAccount();
-  const { walletProvider } = useAppKitProvider<Eip1193Provider>('eip155');
+  const { profileDetailsData, isConnected } = useProfile();
 
   const [isUAPInstalled, setIsUAPInstalled] = useState(false);
   const [hasAnyAssistants, setHasAnyAssistants] = useState(false);
@@ -49,6 +47,7 @@ export default function ProfilePage({
   const [profileName, setProfileName] = useState(formatAddress(profileAddress));
   const [profileAvatar, setProfileAvatar] = useState<string | null>(null);
 
+  const walletAddress = profileDetailsData?.upWallet;
   const isReadOnly = useMemo(
     () =>
       !isConnected ||
@@ -118,7 +117,7 @@ export default function ProfilePage({
   }, [profileAddress, network.protocolAddress, network.rpcUrl]);
 
   const handleProtocolUnsubscribe = async () => {
-    if (!walletAddress || !profileAddress) {
+    if (!walletAddress || !profileAddress || !window.lukso) {
       toast({
         title: 'Not connected',
         description: 'Please connect your wallet first.',
@@ -130,7 +129,7 @@ export default function ProfilePage({
     }
     try {
       setIsLoading(true);
-      const provider = new BrowserProvider(walletProvider as Eip1193Provider);
+      const provider = new BrowserProvider(window.lukso);
       await unsubscribeFromUapURD(
         provider,
         profileAddress,
@@ -139,7 +138,7 @@ export default function ProfilePage({
       );
       toast({
         title: 'Success',
-        description: 'All assistants removed and unusubscribed from protocol.',
+        description: 'All assistants removed and unsubscribed from protocol.',
         status: 'success',
         duration: 5000,
         isClosable: true,
