@@ -20,8 +20,8 @@ interface Profile {
   description: string;
   tags: string[];
   links: Link[];
-  profileImage: Image[];
-  backgroundImage: Image[];
+  profileImage: Image[] | undefined; // Allow undefined to handle missing data
+  backgroundImage: Image[] | undefined; // Allow undefined to handle missing data
   mainImage: string | undefined;
 }
 
@@ -72,12 +72,12 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
   const providerRef = useRef<BrowserProvider | null>(null);
   const connectingRef = useRef(false);
 
-  // fetches profile details from the blockchain upon user first connecting and signing siwe message
   const connectAndSign = async () => {
     if (connectingRef.current) {
       console.log('ProfileProvider: Connect skipped, in progress');
       return;
     }
+
     try {
       connectingRef.current = true;
       if (!window.lukso) {
@@ -85,6 +85,8 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
           'No wallet provider detected. Please install UP Browser Extension.'
         );
       }
+
+      console.log('ProfileProvider: Attempting connection');
       const provider = new BrowserProvider(window.lukso);
       providerRef.current = provider;
       const accounts = await provider.send('eth_requestAccounts', []);
@@ -136,45 +138,6 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  /*
-  const sendSiweMessageGetControllerAndFetchProfile = async (upWallet: string) => {
-    try {
-      if (!window.lukso) {
-        throw new Error('No wallet provider detected. Please install UP Browser Extension.');
-      }
-      const provider = new BrowserProvider(window.lukso);
-      providerRef.current = provider;
-      const currentChainId = Number(await provider.send('eth_chainId', []));
-      setChainId(currentChainId);
-      setIsConnected(true);
-
-      const siweMessage = new SiweMessage({
-        domain: window.location.host,
-        uri: window.location.origin,
-        address: upWallet,
-        statement: 'Sign in to Universal Assistants Catalog',
-        version: '1',
-        chainId: currentChainId,
-        resources: [`${window.location.origin}/terms`],
-      }).prepareMessage();
-
-      const signature = await provider.send('personal_sign', [siweMessage, upWallet]);
-      const mainUPController = verifyMessage(siweMessage, signature);
-      const { profile, issuedAssets } = await fetchProfileData(upWallet, true);
-      const newProfileData: IProfileDetailsData = { mainUPController, upWallet, profile, issuedAssets };
-      localStorage.setItem('profileDetailsData', JSON.stringify(newProfileData));
-      setProfileDetailsData(newProfileData);
-    } catch (error: any) {
-      console.error('ProfileProvider: Error', error);
-      setIsConnected(false);
-      setProfileDetailsData(null);
-      setIssuedAssets([]);
-      setError(error.message);
-      providerRef.current = null;
-    }
-  };
-  */
-
   const disconnect = () => {
     setProfileDetailsData(null);
     setIsConnected(false);
@@ -206,7 +169,9 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
       });
       return { profile: null, issuedAssets: [] };
     }
-    const currentNetwork = supportedNetworks[Number(currentChainId)];
+
+    const chainIdNum = Number(currentChainId);
+    const currentNetwork = supportedNetworks[chainIdNum];
     if (!currentNetwork || currentNetwork.hasUPSupport === false) {
       setError('Network not supported');
       return { profile: null, issuedAssets: [] };
@@ -218,6 +183,7 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
       currentNetwork.rpcUrl,
       { ipfsGateway: currentNetwork.ipfsGateway }
     );
+
     try {
       setError(null);
       console.log('ProfileProvider: Fetching profile for', {
@@ -226,7 +192,7 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
       });
       const profileMetaData = await erc725js.fetchData('LSP3Profile');
       const lsp12IssuedAssets = await erc725js.fetchData('LSP12IssuedAssets[]');
-      let newProfile = null;
+      let newProfile: Profile | null = null;
       let newIssuedAssets: string[] = [];
 
       if (
@@ -234,19 +200,47 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
         typeof profileMetaData.value === 'object' &&
         'LSP3Profile' in profileMetaData.value
       ) {
-        newProfile = profileMetaData.value.LSP3Profile as Profile;
-        const mainImageIpfsPath = newProfile.profileImage[0].url;
-        const mainImage = await getImageFromIPFS(
-          mainImageIpfsPath,
-          currentChainId
-        );
-        newProfile.mainImage = mainImage;
+        const lsp3Profile = profileMetaData.value.LSP3Profile as Profile;
+        // Safely handle profileImage, assuming it might be undefined or empty
+        const profileImage = lsp3Profile.profileImage || [];
+        newProfile = {
+          name: lsp3Profile.name || '',
+          description: lsp3Profile.description || '',
+          tags: lsp3Profile.tags || [],
+          links: lsp3Profile.links || [],
+          profileImage: profileImage, // Could be empty or undefined, handled later
+          backgroundImage: lsp3Profile.backgroundImage || [],
+          mainImage: undefined, // Will be updated if profileImage exists
+        };
+
+        // Fetch mainImage from IPFS if profileImage exists and has a valid URL
+        if (profileImage.length > 0 && profileImage[0]?.url) {
+          try {
+            const mainImage = await getImageFromIPFS(
+              profileImage[0].url,
+              chainIdNum
+            );
+            newProfile.mainImage = mainImage;
+          } catch (ipfsError) {
+            console.error(
+              'ProfileProvider: Failed to fetch mainImage from IPFS:',
+              ipfsError
+            );
+            newProfile.mainImage = undefined; // Fallback to undefined if IPFS fetch fails
+          }
+        } else {
+          console.log('ProfileProvider: No valid profile image URL found', {
+            profileImage,
+          });
+        }
       } else {
         console.log('ProfileProvider: No profile data found');
       }
+
       if (lsp12IssuedAssets.value && Array.isArray(lsp12IssuedAssets.value)) {
         newIssuedAssets = lsp12IssuedAssets.value as string[];
       }
+
       return { profile: newProfile, issuedAssets: newIssuedAssets };
     } catch (error) {
       console.error('ProfileProvider: Cannot fetch profile data:', error);
@@ -265,7 +259,7 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
       ]);
       setChainId(newChainId);
       console.log('ProfileProvider: Switched network', { newChainId });
-      await connectAndSign();
+      await connectAndSign(); // Re-fetch profile data after switching
     } catch (error: any) {
       console.error('ProfileProvider: Switch network error', error);
       if (error.code === 4902 && providerRef.current) {
