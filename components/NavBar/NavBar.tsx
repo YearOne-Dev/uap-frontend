@@ -5,10 +5,13 @@ import { Box, Button, Flex, Text } from '@chakra-ui/react';
 import WalletConnectButton from '@/components/WalletConnectButton';
 import { getUrlNameByChainId } from '@/utils/universalProfile';
 import { useProfile } from '@/contexts/ProfileProvider';
+import { supportedNetworks } from '@/constants/supportedNetworks';
 
 const NavBar = () => {
   const { chainId } = useProfile();
-  const networkName = chainId ? getUrlNameByChainId(chainId) : 'lukso-testnet';
+  const networkName = chainId
+    ? getUrlNameByChainId(chainId)
+    : supportedNetworks['42'].urlName;
 
   return (
     <nav className="uap-topbar">

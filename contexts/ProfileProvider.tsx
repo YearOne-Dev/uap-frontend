@@ -262,22 +262,22 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
       await connectAndSign(); // Re-fetch profile data after switching
     } catch (error: any) {
       console.error('ProfileProvider: Switch network error', error);
-      if (error.code === 4902 && providerRef.current) {
+      if (
+        error.code === 4902 &&
+        providerRef.current &&
+        supportedNetworks[newChainId]
+      ) {
         await providerRef.current.send('wallet_addEthereumChain', [
           {
             chainId: `0x${newChainId.toString(16)}`,
-            chainName: newChainId === 42 ? 'Lukso Mainnet' : 'Lukso Testnet',
-            rpcUrls: [
-              newChainId === 42
-                ? 'https://rpc.lukso.network'
-                : 'https://rpc.testnet.lukso.network',
-            ],
-            nativeCurrency: { name: 'LYX', symbol: 'LYX', decimals: 18 },
-            blockExplorerUrls: [
-              newChainId === 42
-                ? 'https://explorer.lukso.network'
-                : 'https://explorer.testnet.lukso.network',
-            ],
+            chainName: supportedNetworks[newChainId].displayName,
+            rpcUrls: [supportedNetworks[newChainId].rpcUrl],
+            nativeCurrency: {
+              name: supportedNetworks[newChainId].token,
+              symbol: supportedNetworks[newChainId].token,
+              decimals: 18,
+            },
+            blockExplorerUrls: [supportedNetworks[newChainId].explorer],
           },
         ]);
         setChainId(newChainId);

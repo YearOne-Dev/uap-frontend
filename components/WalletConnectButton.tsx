@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Avatar,
   Box,
@@ -13,13 +13,21 @@ import {
   MenuItem,
   MenuList,
   useToast,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalCloseButton,
+  Text,
 } from '@chakra-ui/react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { formatAddress, getNetwork } from '@/utils/utils';
 import { getUrlNameByChainId } from '@/utils/universalProfile';
 import { useProfile } from '@/contexts/ProfileProvider';
-import { getImageFromIPFS } from '@/utils/ipfs';
+import { getImageFromIPFS } from '@/utils/ipfs'; // Assuming this utility exists
+import { supportedNetworks } from '@/constants/supportedNetworks';
 
 export default function WalletConnectButton() {
   const {
@@ -30,58 +38,102 @@ export default function WalletConnectButton() {
     disconnect,
     switchNetwork,
   } = useProfile();
-  const [mainImage, setMainImage] = React.useState<string | null>(null);
-  const [appChainId, setAppChainId] = React.useState<number | null>(null);
   const toast = useToast({ position: 'bottom-left' });
+  const connectTriggeredRef = useRef(false);
   const pathname = usePathname();
+  const [isNetworkModalOpen, setIsNetworkModalOpen] = useState(false);
+  const [mainImage, setMainImage] = useState<string | undefined>(undefined); // State for the main image
 
   const address = profileDetailsData?.upWallet;
-  const isSigned =
-    isConnected && !!profileDetailsData && !!profileDetailsData.profile;
+  const profile = profileDetailsData?.profile;
+  const isSigned = isConnected && !!profileDetailsData && !!profile;
 
   const buttonText =
-    isSigned && profileDetailsData.profile
-      ? profileDetailsData.profile.name || formatAddress(address ?? '')
+    isSigned && profile
+      ? profile.name || formatAddress(address ?? '')
       : 'Sign In';
   const buttonStyles =
-    isSigned && profileDetailsData.profile
+    isSigned && profile
       ? { bg: '#DB7C3D', color: '#fff' }
       : { bg: '#FFF8DD', color: '#053241' };
-  const profileImage =
-    isSigned && profileDetailsData.profile && mainImage ? (
-      <Avatar
-        size="sm"
-        border="1px solid #053241"
-        name={profileDetailsData.profile.name}
-        src={mainImage} // Assuming IPFS hash
-        onError={() => console.log('Failed to load profile image')}
-      />
-    ) : null;
+
+  // Safely handle profile image (fetch only if needed)
+  useEffect(() => {
+    if (
+      !isSigned ||
+      !profile ||
+      !profile.profileImage ||
+      profile.profileImage.length === 0
+    ) {
+      setMainImage(undefined); // Reset if no profile image
+      return;
+    }
+
+    const firstImage = profile.profileImage[0];
+    if (!firstImage || !firstImage.url) {
+      console.log('WalletConnectButton: No valid profile image URL found', {
+        profileImage: profile.profileImage,
+      });
+      setMainImage(undefined);
+      return;
+    }
+
+    const profileMainImage = firstImage.url;
+    getImageFromIPFS(profileMainImage, Number(chainId))
+      .then(image => {
+        setMainImage(image);
+      })
+      .catch(err => {
+        console.error(
+          'WalletConnectButton: Failed to fetch mainImage from IPFS:',
+          err
+        );
+        setMainImage(undefined);
+      });
+  }, [isSigned, profile, chainId]); // Depend on profile and chainId to trigger re-fetch
+
+  const profileImage = mainImage ? (
+    <Avatar
+      size="sm"
+      border="1px solid #053241"
+      name={profile?.name || ''}
+      src={mainImage}
+    />
+  ) : null;
 
   const currentNetwork = chainId ? getNetwork(chainId) : undefined;
   const networkIcon = currentNetwork?.icon;
   const networkName = currentNetwork?.name;
 
-  useEffect(() => {
-    setAppChainId(pathname.includes('/lukso-testnet') ? 4201 : 42);
-  }, [pathname]);
+  const appChainId = pathname.includes(supportedNetworks['4201'].urlName)
+    ? 4201
+    : supportedNetworks['42'].urlName || pathname === '/'
+      ? 42
+      : 4201;
 
-  // fetch main image whenever profile
   useEffect(() => {
-    if (
-      !profileDetailsData ||
-      !profileDetailsData.profile ||
-      !profileDetailsData.profile.profileImage ||
-      !chainId
-    ) {
-      setMainImage(null);
+    if (!isConnected || !chainId || !profileDetailsData) {
+      connectTriggeredRef.current = false;
+      setIsNetworkModalOpen(false);
       return;
     }
-    const profileMainImage = profileDetailsData.profile.profileImage[0].url;
-    getImageFromIPFS(profileMainImage, Number(chainId)).then(image => {
-      setMainImage(image);
+    console.log('WalletConnectButton: Checking network mismatch', {
+      chainId,
+      appChainId,
     });
-  }, [profileDetailsData, chainId]);
+
+    if (chainId !== appChainId) {
+      setIsNetworkModalOpen(true);
+    } else {
+      setIsNetworkModalOpen(false);
+    }
+
+    if (isSigned || connectTriggeredRef.current || !address) {
+      return;
+    }
+
+    connectTriggeredRef.current = true;
+  }, [isConnected, chainId, address, isSigned, profileDetailsData, appChainId]);
 
   const getProfileUrl = () => {
     if (!chainId || !address) return '/';
@@ -95,7 +147,29 @@ export default function WalletConnectButton() {
       await switchNetwork(targetChainId);
       toast({
         title: 'Network Changed',
-        description: `Switched to ${targetChainId === 42 ? 'Lukso Mainnet' : 'Lukso Testnet'}`,
+        description: `Switched to ${supportedNetworks[targetChainId].displayName}`,
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Network Switch Failed',
+        description: error.message,
+        status: 'error',
+        duration: null,
+        isClosable: true,
+      });
+    }
+  };
+
+  const handleSwitchToAppNetwork = async () => {
+    try {
+      await switchNetwork(appChainId);
+      setIsNetworkModalOpen(false);
+      toast({
+        title: 'Network Changed',
+        description: `Switched to ${supportedNetworks[appChainId].displayName}`,
         status: 'success',
         duration: 3000,
         isClosable: true,
@@ -131,22 +205,6 @@ export default function WalletConnectButton() {
       });
     }
   };
-
-  if (isSigned && chainId !== appChainId) {
-    return (
-      <Button
-        fontFamily="Montserrat"
-        fontWeight={600}
-        border="1px solid #053241"
-        borderRadius={10}
-        {...buttonStyles}
-        onClick={handleNetworkSwitch}
-        size="md"
-      >
-        {`Switch to ${Number(appChainId) === 42 ? 'LUKSO' : 'LUKSO Testnet'}`}
-      </Button>
-    );
-  }
 
   if (isSigned) {
     return (
@@ -190,6 +248,28 @@ export default function WalletConnectButton() {
             </MenuGroup>
           </MenuList>
         </Menu>
+        <Modal
+          isOpen={isNetworkModalOpen}
+          onClose={() => setIsNetworkModalOpen(false)}
+        >
+          <ModalOverlay />
+          <ModalContent>
+            <ModalHeader>Network Mismatch</ModalHeader>
+            <ModalCloseButton />
+            <ModalBody>
+              <Text mb={4}>
+                Your wallet is connected to{' '}
+                {supportedNetworks[Number(chainId)]?.displayName} (Chain ID:{' '}
+                {chainId}), but the app is on{' '}
+                {supportedNetworks[Number(appChainId)]?.displayName} (Chain ID:{' '}
+                {appChainId}). Please switch your wallet network to continue.
+              </Text>
+              <Button colorScheme="blue" onClick={handleSwitchToAppNetwork}>
+                Switch to {supportedNetworks[Number(appChainId)]?.displayName}
+              </Button>
+            </ModalBody>
+          </ModalContent>
+        </Modal>
       </>
     );
   }
