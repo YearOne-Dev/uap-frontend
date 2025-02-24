@@ -18,7 +18,6 @@ import {
   networkNameToIdMapping,
   supportedNetworks,
 } from '@/constants/supportedNetworks';
-import { ExecutiveAssistant } from '@/constants/CustomTypes';
 import { useProfile } from '@/contexts/ProfileProvider';
 
 export default function ExecutiveAssistantConfigurePage({
@@ -97,10 +96,6 @@ export default function ExecutiveAssistantConfigurePage({
     return <Text>Assistant not found</Text>;
   }
 
-  const isExecutiveAssistant = (info: any): info is ExecutiveAssistant => {
-    return info && 'name' in info;
-  };
-
   const breadCrumbs = Breadcrumbs({
     items: [
       { name: 'UP Assistants', href: '/' },
@@ -165,11 +160,7 @@ export default function ExecutiveAssistantConfigurePage({
       );
     }
 
-    return isExecutiveAssistant(assistantInfo) ? (
-      <SetupAssistant config={assistantInfo} />
-    ) : (
-      <Text>Invalid assistant configuration</Text>
-    );
+    <SetupAssistant config={assistantInfo} />;
   };
 
   return (
