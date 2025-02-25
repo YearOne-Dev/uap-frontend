@@ -1,10 +1,10 @@
 import { ExecutiveAssistant } from '@/constants/CustomTypes';
 import {
   burntPixRefinerMainnet,
-  burntPixRefinerTestnet,
+  burntPixRefinerTestnet, forwarderAssistantMainnet, forwarderAssistantTestnet,
   tipAssistantMainnet,
-  tipAssistantTestnet,
-} from '@/constants/assistantsConfig';
+  tipAssistantTestnet
+} from "@/constants/assistantsConfig";
 
 interface ChainInfo {
   name: string;
@@ -50,6 +50,7 @@ export const supportedNetworks: { [key: string]: ChainInfo } = {
     assistants: {
       [burntPixRefinerMainnet.address.toLowerCase()]: burntPixRefinerMainnet,
       [tipAssistantMainnet.address.toLowerCase()]: tipAssistantMainnet,
+      [forwarderAssistantMainnet.address.toLowerCase()]: forwarderAssistantMainnet,
     },
   },
   '4201': {
@@ -71,6 +72,7 @@ export const supportedNetworks: { [key: string]: ChainInfo } = {
     assistants: {
       [burntPixRefinerTestnet.address.toLowerCase()]: burntPixRefinerTestnet,
       [tipAssistantTestnet.address.toLowerCase()]: tipAssistantTestnet,
+      [forwarderAssistantTestnet.address.toLowerCase()]: forwarderAssistantTestnet,
     },
   },
 };
