@@ -187,14 +187,25 @@ export default function WalletConnectButton() {
 
   const handleConnect = async () => {
     try {
-      await connectAndSign();
-      toast({
-        title: 'Success',
-        description: 'Successfully signed in',
-        status: 'success',
-        duration: 3000,
-        isClosable: true,
-      });
+      const isComplete: boolean = await connectAndSign();
+      if (isComplete) {
+        toast({
+          title: 'Success',
+          description: 'Successfully signed in',
+          status: 'success',
+          duration: 3000,
+          isClosable: true,
+        });
+      } else {
+        toast({
+          title: 'Error',
+          description:
+            'Failed to sign in; Check signature requests in UP! Extension.',
+          status: 'warning',
+          duration: null,
+          isClosable: true,
+        });
+      }
     } catch (error: any) {
       toast({
         title: 'Error',

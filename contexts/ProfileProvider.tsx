@@ -55,7 +55,7 @@ interface ProfileContextType {
   error: string | null;
   isConnected: boolean;
   chainId: number | null;
-  connectAndSign: () => Promise<void>;
+  connectAndSign: () => Promise<boolean>;
   disconnect: () => void;
   switchNetwork: (chainId: number) => Promise<void>;
 }
@@ -72,17 +72,17 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
   const providerRef = useRef<BrowserProvider | null>(null);
   const connectingRef = useRef(false);
 
-  const connectAndSign = async () => {
+  const connectAndSign = async (): Promise<boolean> => {
     if (connectingRef.current) {
-      console.log('ProfileProvider: Connect skipped, in progress');
-      return;
+      console.log('ProfileProvider: Already connecting, skipping');
+      return false;
     }
 
     try {
       connectingRef.current = true;
       if (!window.lukso) {
         throw new Error(
-          'No wallet provider detected. Please install UP Browser Extension.'
+          'No wallet provider detected. Please install the UP Browser Extension.'
         );
       }
 
@@ -126,6 +126,8 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
         JSON.stringify(newProfileData)
       );
       setProfileDetailsData(newProfileData);
+      connectingRef.current = false;
+      return true;
     } catch (error: any) {
       console.error('ProfileProvider: Error', error);
       setIsConnected(false);
@@ -133,8 +135,8 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
       setIssuedAssets([]);
       setError(error.message);
       providerRef.current = null;
-    } finally {
       connectingRef.current = false;
+      throw error;
     }
   };
 

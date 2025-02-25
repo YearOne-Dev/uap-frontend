@@ -131,7 +131,10 @@ const URDSetup: React.FC<URDSetupProps> = ({
       );
       if (!error.message.includes('user rejected action')) {
         //extract truncated error message if too long
-        const errorSubstring = error.message.length > 100 ? `${error.message.substring(0, 100)}...` : error.message;
+        const errorSubstring =
+          error.message.length > 100
+            ? `${error.message.substring(0, 100)}...`
+            : error.message;
         toast({
           title: 'Error',
           description: `Error subscribing to UAP Universal Receiver Delegate: ${errorSubstring}`,
@@ -187,7 +190,6 @@ const URDSetup: React.FC<URDSetupProps> = ({
             _hover={{ bg: 'orange.600' }}
             _active={{ bg: 'orange.700' }}
             onClick={handleInstallUAP}
-            isDisabled={!hasExtensionPermissions}
             isLoading={isInstallingProtocol}
             isDisabled={!isConnected || !hasExtensionPermissions}
           >

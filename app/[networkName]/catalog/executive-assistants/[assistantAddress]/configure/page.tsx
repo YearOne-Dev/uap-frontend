@@ -147,6 +147,11 @@ export default function ExecutiveAssistantConfigurePage({
       return <Text color="red.500">{error}</Text>;
     }
 
+    console.log(
+      !profileDetailsData?.mainUPController,
+      isMissingPermissions,
+      !isURDInstalled
+    );
     if (
       !profileDetailsData?.mainUPController ||
       isMissingPermissions ||
@@ -160,7 +165,7 @@ export default function ExecutiveAssistantConfigurePage({
       );
     }
 
-    <SetupAssistant config={assistantInfo} />;
+    return <SetupAssistant config={assistantInfo} />;
   };
 
   return (
