@@ -96,13 +96,8 @@ export default function ExecutiveAssistantConfigurePage({
     items: [
       { name: 'UP Assistants', href: '/' },
       { name: 'Catalog', href: `/${networkName}/catalog` },
-      { name: 'Executives', href: `/${networkName}/catalog` },
       {
-        name: `${assistantInfo.name}`,
-        href: `/${networkName}/catalog/executive-assistants/${params.assistantAddress}`,
-      },
-      {
-        name: 'Configure',
+        name: `${assistantInfo.name} Configuration `,
         href: `/${networkName}/catalog/executive-assistants/${params.assistantAddress}/configure`,
       },
     ],
