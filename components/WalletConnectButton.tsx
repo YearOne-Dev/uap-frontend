@@ -142,10 +142,6 @@ export default function WalletConnectButton() {
     return `/${networkUrlName}/profiles/${address}`;
   };
 
-  useEffect(() => {
-    setIsNoWalletModalOpen(window.lukso ? false : true);
-  }, []);
-
   const handleNetworkSwitch = async () => {
     try {
       const targetChainId = chainId === 42 ? 4201 : 42; // Toggle between Mainnet and Testnet

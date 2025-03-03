@@ -1,4 +1,5 @@
 'use client';
+
 import React, { useCallback, useEffect, useState } from 'react';
 import { Box, Button, Flex, Spinner, Text, VStack } from '@chakra-ui/react';
 import AssistantInfo from '@/components/AssistantInfo';
@@ -20,17 +21,19 @@ import {
 } from '@/constants/supportedNetworks';
 import { useProfile } from '@/contexts/ProfileProvider';
 
-export default function ExecutiveAssistantConfigurePage({
-  params,
+export default function ExecutiveAssistantConfigureClient({
+  networkName,
+  assistantAddress,
 }: {
-  params: { networkName: CHAINS; assistantAddress: string };
+  networkName: string;
+  assistantAddress: string;
 }) {
-  const { networkName } = params;
-  const network = supportedNetworks[networkNameToIdMapping[networkName]];
+  const network = supportedNetworks[networkNameToIdMapping[networkName]] || {
+    assistants: {},
+  }; // Fallback to avoid undefined
   const assistantInfo =
-    network.assistants[params.assistantAddress.toLowerCase()];
-
-  const networkUrlId = getChainIdByUrlName(params.networkName);
+    network.assistants[assistantAddress.toLowerCase()] || null;
+  const networkUrlId = getChainIdByUrlName(networkName);
   const { profileDetailsData, isConnected, chainId, switchNetwork } =
     useProfile();
   const [isMissingPermissions, setIsMissingPermissions] = useState(true);
@@ -88,22 +91,13 @@ export default function ExecutiveAssistantConfigurePage({
     checkURDInstalled();
   }, [checkPermissions, checkURDInstalled]);
 
-  if (!assistantInfo) {
-    return <Text>Assistant not found</Text>;
-  }
-
   const breadCrumbs = Breadcrumbs({
     items: [
       { name: 'UP Assistants', href: '/' },
       { name: 'Catalog', href: `/${networkName}/catalog` },
-      { name: 'Executives', href: `/${networkName}/catalog` },
       {
-        name: `${assistantInfo.name}`,
-        href: `/${networkName}/catalog/executive-assistants/${params.assistantAddress}`,
-      },
-      {
-        name: 'Configure',
-        href: `/${networkName}/catalog/executive-assistants/${params.assistantAddress}/configure`,
+        name: `${assistantInfo.name} Configuration`,
+        href: `/${networkName}/catalog/executive-assistants/${assistantAddress}`,
       },
     ],
   });
@@ -151,13 +145,17 @@ export default function ExecutiveAssistantConfigurePage({
       return (
         <URDSetup
           extensionHasPermissions={!isMissingPermissions}
-          networkName={networkName}
+          networkName={networkName as CHAINS}
         />
       );
     }
 
     return <SetupAssistant config={assistantInfo} />;
   };
+
+  if (!assistantInfo) {
+    return <div>Assistant not found</div>; // Basic fallback
+  }
 
   return (
     <Box p={4} w="100%">

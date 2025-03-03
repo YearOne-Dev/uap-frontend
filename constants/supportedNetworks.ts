@@ -50,10 +50,10 @@ export const supportedNetworks: { [key: string]: ChainInfo } = {
     universalEverything: 'https://universaleverything.io',
     luksoSiteName: 'mainnet',
     assistants: {
-      [burntPixRefinerMainnet.address.toLowerCase()]: burntPixRefinerMainnet,
       [tipAssistantMainnet.address.toLowerCase()]: tipAssistantMainnet,
       [forwarderAssistantMainnet.address.toLowerCase()]:
         forwarderAssistantMainnet,
+      [burntPixRefinerMainnet.address.toLowerCase()]: burntPixRefinerMainnet,
     },
   },
   '4201': {
@@ -73,10 +73,10 @@ export const supportedNetworks: { [key: string]: ChainInfo } = {
     universalEverything: 'https://universaleverything.io',
     luksoSiteName: 'testnet',
     assistants: {
-      [burntPixRefinerTestnet.address.toLowerCase()]: burntPixRefinerTestnet,
       [tipAssistantTestnet.address.toLowerCase()]: tipAssistantTestnet,
       [forwarderAssistantTestnet.address.toLowerCase()]:
         forwarderAssistantTestnet,
+      [burntPixRefinerTestnet.address.toLowerCase()]: burntPixRefinerTestnet,
     },
   },
 };

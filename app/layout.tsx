@@ -4,14 +4,15 @@ import Footer from '@/components/Footer';
 import { Providers } from './providers';
 import './globals.css';
 import { Flex } from '@chakra-ui/react';
+import { appMetadata } from '@/constants/appMetadata';
 
-const title = 'UP Assistants - 🆙';
-const description =
-  'Universal Assistant Protocol (UAP) is a rule engine catalog that enables Universal Profiles to automate on-chain actions, particularly when receiving LYX, LSP7 or LSP8 assets.';
-
+const { title, description, icons, twitter, openGraph } = appMetadata;
 export const metadata: Metadata = {
-  title: title,
-  description: description,
+  title,
+  description,
+  icons,
+  openGraph,
+  twitter,
 };
 
 export default function RootLayout({

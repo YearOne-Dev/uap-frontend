@@ -1,63 +1,31 @@
-'use client';
 import React from 'react';
-import { Box, Flex } from '@chakra-ui/react';
-import Breadcrumbs from '@/components/Breadcrumbs';
-import AssistantInfo from '@/components/AssistantInfo';
-import {
-  networkNameToIdMapping,
-  supportedNetworks,
-} from '@/constants/supportedNetworks';
+import { Metadata } from 'next';
+import { appMetadata } from '@/constants/appMetadata';
+import CatalogClient from '@/components/CatalogClient';
+
+const { title, openGraph, twitter } = appMetadata;
+const description =
+  'Engage your personal digital assistant for Web3 transactions.';
+
+export const metadata: Metadata = {
+  title: `${title} - Catalog`,
+  description,
+  openGraph: {
+    ...openGraph,
+    title: `${title} - Catalog`,
+    description,
+  },
+  twitter: {
+    ...twitter,
+    title: `${title} - Catalog`,
+    description,
+  },
+};
 
 export default function CatalogPage({
   params,
 }: {
   params: { networkName: string };
 }) {
-  const networkConfig =
-    supportedNetworks[networkNameToIdMapping[params.networkName]];
-  const breadCrumbs = Breadcrumbs({
-    items: [
-      { name: 'UP Assistants', href: `/${params.networkName}` },
-      { name: 'Catalog', href: `/${params.networkName}/catalog` },
-    ],
-  });
-
-  return (
-    <>
-      {breadCrumbs}
-      <Flex display="flex" w="100%" flexDirection="column" flexWrap="wrap">
-        <Flex
-          gap={[4, 8, 20]} // Adjust gap based on screen size
-          flex="1"
-          w="100%"
-          flexDirection={['column', 'column', 'row']} // Stack on smaller screens
-          maxWidth="1400px"
-        >
-          <Box flex="1">
-            <Box
-              color="uap.font"
-              fontFamily="Montserrat"
-              fontSize={['lg', 'xl', '2xl']} // Responsive font size
-              fontWeight={700}
-              mb={4}
-            >
-              Executive Assistants
-            </Box>
-            {Object.values(networkConfig.assistants).map(assistant => (
-              <Box
-                border="1px solid"
-                borderColor="uap.font"
-                borderRadius={10}
-                p={4}
-                key={assistant.address}
-                mb="20px"
-              >
-                <AssistantInfo assistant={assistant} includeLink />
-              </Box>
-            ))}
-          </Box>
-        </Flex>
-      </Flex>
-    </>
-  );
+  return <CatalogClient networkName={params.networkName} />;
 }

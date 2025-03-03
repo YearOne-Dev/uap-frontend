@@ -11,6 +11,9 @@ import {
 
 const LandingBox = ({ networkName }: { networkName: CHAINS }) => {
   const networkConfig = supportedNetworks[networkNameToIdMapping[networkName]];
+  if (!networkConfig) {
+    return <div>Network not supported</div>;
+  }
   return (
     <Flex
       minHeight="inherit"

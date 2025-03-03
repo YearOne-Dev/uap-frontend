@@ -49,7 +49,7 @@ const AssistantInfo = ({
     link += '/' + networkConfig.urlName;
     link += '/catalog';
     link += `/${assistant.assistantType.toLowerCase()}-assistants`;
-    link += `/${assistant.address}/configure`;
+    link += `/${assistant.address}`;
   }
 
   return (

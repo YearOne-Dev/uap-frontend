@@ -33,9 +33,9 @@ import { useProfile } from '@/contexts/ProfileProvider';
 export default function ProfilePage({
   params,
 }: {
-  params: { address: string; networkName: CHAINS };
+  params: { profileAddress: string; networkName: CHAINS };
 }) {
-  const { address: profileAddress, networkName } = params;
+  const { profileAddress, networkName } = params;
   const network = supportedNetworks[networkNameToIdMapping[networkName]];
   const chainId = networkNameToIdMapping[networkName];
   const toast = useToast({ position: 'bottom-left' });

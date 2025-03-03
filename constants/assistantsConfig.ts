@@ -5,7 +5,7 @@ export const tipAssistantTestnet: ExecutiveAssistant = {
   address: '0xf24c39a4d55994e70059443622fc166f05b5ff14',
   name: 'Tip Assistant',
   description:
-    'Tip LYX to an external wallet in every transaction that you sends you LYX.',
+    'Tip LYX to an external wallet with every incoming LYX transaction.',
   iconPath: '/assistants/donations.jpg',
   links: [{ name: 'X', url: 'https://x.com/yearone_io' }],
   assistantType: 'Executive',
@@ -118,7 +118,7 @@ export const tipAssistantMainnet: ExecutiveAssistant = {
   address: '0x0c3dc7ea7521c79b99a667f2024d76714d33def2',
   name: 'Tip Assistant',
   description:
-    'Tip LYX to an external wallet in every transaction that you sends you LYX.',
+    'Tip LYX to an external wallet with every incoming LYX transaction.',
   iconPath: '/assistants/donations.jpg',
   links: [{ name: 'X', url: 'https://x.com/yearone_io' }],
   assistantType: 'Executive',
