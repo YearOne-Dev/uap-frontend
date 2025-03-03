@@ -33,7 +33,7 @@ export async function generateMetadata({
     const title = `${appTitle} - ${assistantInfo.name}`;
     const description = assistantInfo.description;
     const imageUrl = `${url}${assistantInfo.iconPath}`;
-    const assistantUrl = `${url}/${params.networkName}/catalog/executive-assistants/${params.assistantAddress}/configure`;
+    const assistantUrl = `${url}/${params.networkName}/catalog/executive-assistants/${params.assistantAddress}`;
 
     return {
       title,

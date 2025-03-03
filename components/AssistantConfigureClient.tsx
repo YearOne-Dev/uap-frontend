@@ -100,7 +100,7 @@ export default function ExecutiveAssistantConfigureClient({
       { name: 'Catalog', href: `/${networkName}/catalog` },
       {
         name: `${assistantInfo.name} Configuration`,
-        href: `/${networkName}/catalog/executive-assistants/${assistantAddress}/configure`,
+        href: `/${networkName}/catalog/executive-assistants/${assistantAddress}`,
       },
     ],
   });
