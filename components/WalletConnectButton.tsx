@@ -42,6 +42,7 @@ export default function WalletConnectButton() {
   const connectTriggeredRef = useRef(false);
   const pathname = usePathname();
   const [isNetworkModalOpen, setIsNetworkModalOpen] = useState(false);
+  const [isNoWalletModalOpen, setIsNoWalletModalOpen] = useState(false);
   const [mainImage, setMainImage] = useState<string | undefined>(undefined); // State for the main image
 
   const address = profileDetailsData?.upWallet;
@@ -141,6 +142,10 @@ export default function WalletConnectButton() {
     return `/${networkUrlName}/profiles/${address}`;
   };
 
+  useEffect(() => {
+    setIsNoWalletModalOpen(window.lukso ? false : true);
+  }, []);
+
   const handleNetworkSwitch = async () => {
     try {
       const targetChainId = chainId === 42 ? 4201 : 42; // Toggle between Mainnet and Testnet
@@ -187,6 +192,10 @@ export default function WalletConnectButton() {
 
   const handleConnect = async () => {
     try {
+      if (!window.lukso) {
+        setIsNoWalletModalOpen(true);
+        return;
+      }
       if (chainId !== appChainId) {
         switchNetwork(appChainId);
         return;
@@ -220,6 +229,35 @@ export default function WalletConnectButton() {
       });
     }
   };
+
+  const noLuksoWalletModal = (
+    <Modal
+      isOpen={isNoWalletModalOpen}
+      onClose={() => setIsNoWalletModalOpen(false)}
+    >
+      <ModalOverlay />
+      <ModalContent>
+        <ModalHeader>No Lukso Wallet Detected</ModalHeader>
+        <ModalCloseButton />
+        <ModalBody>
+          <Text mb={4}>
+            You need to install and create a LUKSO Universal Profile on your
+            browser to use this application. Please visit:{' '}
+            <Link href="https://my.universalprofile.cloud/" target="_blank">
+              https://my.universalprofile.cloud/
+            </Link>{' '}
+            for more details.
+          </Text>
+          <Button
+            colorScheme="blue"
+            onClick={() => setIsNoWalletModalOpen(false)}
+          >
+            Close
+          </Button>
+        </ModalBody>
+      </ModalContent>
+    </Modal>
+  );
 
   if (isSigned) {
     return (
@@ -285,21 +323,25 @@ export default function WalletConnectButton() {
             </ModalBody>
           </ModalContent>
         </Modal>
+        {noLuksoWalletModal}
       </>
     );
   }
 
   return (
-    <Button
-      fontFamily="Montserrat"
-      fontWeight={600}
-      border="1px solid #053241"
-      borderRadius={10}
-      {...buttonStyles}
-      onClick={handleConnect}
-      size="md"
-    >
-      {buttonText}
-    </Button>
+    <>
+      <Button
+        fontFamily="Montserrat"
+        fontWeight={600}
+        border="1px solid #053241"
+        borderRadius={10}
+        {...buttonStyles}
+        onClick={handleConnect}
+        size="md"
+      >
+        {buttonText}
+      </Button>
+      {noLuksoWalletModal}
+    </>
   );
 }
