@@ -42,7 +42,7 @@ export const tipAssistantTestnet: ExecutiveAssistant = {
 };
 
 export const forwarderAssistantTestnet: ExecutiveAssistant = {
-  address: '0x67cc9c63af02f743c413182379e0f41ed3807801',
+  address: '0xc7ac1d785a3d67c6194daca801822f377fd93569',
   name: 'Forwarder Assistant',
   description: 'Forward incoming assets to an external address.',
   iconPath: '/assistants/forwarder.jpg',
@@ -155,7 +155,7 @@ export const tipAssistantMainnet: ExecutiveAssistant = {
 };
 
 export const forwarderAssistantMainnet: ExecutiveAssistant = {
-  address: '0xf958412f67085b616ce741e7432ab6acac08b5d0',
+  address: '0x3cb70b7553d4aff2c0062d54a72ef99cfe228020',
   name: 'Forwarder Assistant',
   description: 'Forward incoming assets to an external address.',
   iconPath: '/assistants/forwarder.jpg',
