@@ -16,28 +16,30 @@ import TransactionTypeBlock, {
 } from './TransactionTypeBlock';
 import { AbiCoder, BrowserProvider } from 'ethers';
 import {
-  customDecodeAddresses,
-  customEncodeAddresses,
-  generateMappingKey,
+  createUAPERC725Instance,
+  setExecutiveAssistantConfig,
+  fetchExecutiveAssistantConfig,
+  removeExecutiveAssistantConfig,
 } from '@/utils/configDataKeyValueStore';
-import { ERC725__factory } from '@/types';
+import { LSP0ERC725Account__factory } from '@/types';
 import { ExecutiveAssistant } from '@/constants/CustomTypes';
 import { useProfile } from '@/contexts/ProfileProvider';
 
 /**
- * Fetches configuration data from the on-chain UP contract for a given Assistant.
- * Returns the “type config addresses”, the “selected config types”, a boolean
- * indicating if the Assistant is subscribed, and the field values for the
- * Assistant’s configuration.
+ * Updated interface for assistant configuration using the new UAP format
  */
 interface IFullAssistantConfig {
-  typeConfigAddresses: Record<string, string[]>;
-  selectedConfigTypes: string[];
+  configuredTypes: string[];
+  executionOrders: { [typeId: string]: number };
+  configData: { [typeId: string]: string };
   isUPSubscribedToAssistant: boolean;
   fieldValues?: Record<string, string>;
 }
 
-async function fetchAssistantConfig({
+/**
+ * Fetch assistant configuration using the new UAP format
+ */
+async function fetchAssistantConfigNew({
   upAddress,
   assistantAddress,
   supportedTransactionTypes,
@@ -48,77 +50,39 @@ async function fetchAssistantConfig({
   assistantAddress: string;
   supportedTransactionTypes: string[];
   configParams: { name: string; type: string }[];
-  signer: any; // e.g. ethers.Signer
+  signer: any;
 }): Promise<IFullAssistantConfig> {
-  const upContract = ERC725__factory.connect(upAddress, signer);
+  const upContract = LSP0ERC725Account__factory.connect(upAddress, signer);
+  const erc725UAP = createUAPERC725Instance(upAddress, signer.provider);
 
-  // Build the keys for each supported transaction type.
-  const assistantTypesConfigKeys = supportedTransactionTypes.map(id =>
-    generateMappingKey('UAPTypeConfig', id)
+  // Fetch configuration using new UAP format
+  const { configuredTypes, executionOrders, configData } = await fetchExecutiveAssistantConfig(
+    erc725UAP,
+    upContract,
+    assistantAddress,
+    supportedTransactionTypes
   );
 
-  // Assistant's config key
-  const assistantConfigKey = generateMappingKey(
-    'UAPExecutiveConfig',
-    assistantAddress
-  );
+  const isUPSubscribedToAssistant = configuredTypes.length > 0;
 
-  const configData = await upContract.getDataBatch([
-    ...assistantTypesConfigKeys,
-    assistantConfigKey,
-  ]);
-
-  // The first N items in configData will be for type configurations
-  const typeConfigValues = configData.slice(
-    0,
-    supportedTransactionTypes.length
-  );
-  // The last item is the assistant’s own configuration
-  const assistantConfigValue = configData[supportedTransactionTypes.length];
-
-  const abiCoder = new AbiCoder();
-  const previouslySelectedTypes: string[] = [];
-  const previouslySavedTypeConfigAddresses: Record<string, string[]> = {};
-
-  // Decode each transaction type’s addresses
-  typeConfigValues.forEach((encodedValue, index) => {
-    const typeId = supportedTransactionTypes[index];
-    if (!encodedValue || encodedValue === '0x') {
-      previouslySavedTypeConfigAddresses[typeId] = [];
-      return;
-    }
-    const storedAssistantAddresses = customDecodeAddresses(encodedValue);
-    previouslySavedTypeConfigAddresses[typeId] = storedAssistantAddresses;
-
-    // If the assistant is in that array, mark this type as selected
-    if (
-      storedAssistantAddresses
-        .map(addr => addr.toLowerCase())
-        .includes(assistantAddress.toLowerCase())
-    ) {
-      previouslySelectedTypes.push(typeId);
-    }
-  });
-
-  // Determine if the assistant is subscribed to at least one type
-  const isUPSubscribedToAssistant = previouslySelectedTypes.length > 0;
-
-  // Decode the assistant’s own config for the custom fields
-  let fetchedFieldValues: Record<string, string> | undefined = undefined;
-  if (assistantConfigValue !== '0x') {
-    fetchedFieldValues = {};
+  // Decode field values from the first configured type (all types should have same config)
+  let fieldValues: Record<string, string> | undefined = undefined;
+  if (configuredTypes.length > 0 && configData[configuredTypes[0]] && configData[configuredTypes[0]] !== '0x') {
+    fieldValues = {};
+    const abiCoder = new AbiCoder();
     const types = configParams.map(param => param.type);
-    const decoded = abiCoder.decode(types, assistantConfigValue);
+    const decoded = abiCoder.decode(types, configData[configuredTypes[0]]);
     configParams.forEach((param, index) => {
-      fetchedFieldValues![param.name] = decoded[index].toString();
+      fieldValues![param.name] = decoded[index].toString();
     });
   }
 
   return {
-    typeConfigAddresses: previouslySavedTypeConfigAddresses,
-    selectedConfigTypes: previouslySelectedTypes,
+    configuredTypes,
+    executionOrders,
+    configData,
     isUPSubscribedToAssistant,
-    fieldValues: fetchedFieldValues,
+    fieldValues,
   };
 }
 
@@ -139,11 +103,10 @@ const SetupAssistant: React.FC<{
     return initial;
   });
   const [selectedConfigTypes, setSelectedConfigTypes] = useState<string[]>([]);
-  const [isProcessingTransaction, setIsProcessingTransaction] =
-    useState<boolean>(true);
+  const [isProcessingTransaction, setIsProcessingTransaction] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
-  const [isUPSubscribedToAssistant, setIsUPSubscribedToAssistant] =
-    useState<boolean>(false);
+  const [isUPSubscribedToAssistant, setIsUPSubscribedToAssistant] = useState<boolean>(false);
+  const [executionOrders, setExecutionOrders] = useState<{ [typeId: string]: number }>({});
 
   const toast = useToast({ position: 'bottom-left' });
   const { profileDetailsData } = useProfile();
@@ -171,8 +134,8 @@ const SetupAssistant: React.FC<{
         setIsProcessingTransaction(true);
         const signer = await getSigner();
 
-        const { selectedConfigTypes, isUPSubscribedToAssistant, fieldValues } =
-          await fetchAssistantConfig({
+        const { configuredTypes, executionOrders, isUPSubscribedToAssistant, fieldValues } =
+          await fetchAssistantConfigNew({
             upAddress: address,
             assistantAddress,
             supportedTransactionTypes: assistantSupportedTransactionTypes,
@@ -180,7 +143,8 @@ const SetupAssistant: React.FC<{
             signer,
           });
 
-        setSelectedConfigTypes(selectedConfigTypes);
+        setSelectedConfigTypes(configuredTypes);
+        setExecutionOrders(executionOrders);
         setIsUPSubscribedToAssistant(isUPSubscribedToAssistant);
         if (fieldValues) {
           setFieldValues(fieldValues);
@@ -202,7 +166,7 @@ const SetupAssistant: React.FC<{
   ]);
 
   // --------------------------------------------------------------------------
-  // Save configuration
+  // Save configuration using new UAP format
   // --------------------------------------------------------------------------
   const handleSaveAssistantConfig = async () => {
     setError('');
@@ -244,66 +208,60 @@ const SetupAssistant: React.FC<{
     try {
       setIsProcessingTransaction(true);
       const signer = await getSigner();
-      const upContract = ERC725__factory.connect(address, signer);
+      const upContract = LSP0ERC725Account__factory.connect(address, signer);
+      const erc725UAP = createUAPERC725Instance(address, signer.provider);
 
-      const { typeConfigAddresses: fetchedTypeConfigAddresses } =
-        await fetchAssistantConfig({
-          upAddress: address,
-          assistantAddress,
-          supportedTransactionTypes: assistantSupportedTransactionTypes,
-          configParams,
-          signer,
-        });
-
-      const updatedTypeConfigAddresses = { ...fetchedTypeConfigAddresses };
-
-      const dataKeys: string[] = [];
-      const dataValues: string[] = [];
+      // Encode configuration data
       const abiCoder = new AbiCoder();
-
-      // ==== TYPES ====
-      assistantSupportedTransactionTypes.forEach(typeId => {
-        let currentTypeAddresses = [
-          ...(updatedTypeConfigAddresses[typeId] || []),
-        ];
-        const currentAssistantIndex = currentTypeAddresses.findIndex(
-          a => a.toLowerCase() === assistantAddress.toLowerCase()
-        );
-        if (selectedConfigTypes.includes(typeId)) {
-          if (currentAssistantIndex === -1) {
-            currentTypeAddresses.push(assistantAddress);
-          }
-        } else {
-          if (currentAssistantIndex !== -1) {
-            currentTypeAddresses.splice(currentAssistantIndex, 1);
-          }
-        }
-
-        updatedTypeConfigAddresses[typeId] = currentTypeAddresses;
-
-        const typeConfigKey = generateMappingKey('UAPTypeConfig', typeId);
-        if (currentTypeAddresses.length === 0) {
-          dataKeys.push(typeConfigKey);
-          dataValues.push('0x');
-        } else {
-          dataKeys.push(typeConfigKey);
-          dataValues.push(customEncodeAddresses(currentTypeAddresses));
-        }
-      });
-
-      const assistantConfigKey = generateMappingKey(
-        'UAPExecutiveConfig',
-        assistantAddress
-      );
       const types = configParams.map(param => param.type);
       const values = configParams.map(param => fieldValues[param.name]);
-      const assistantConfigValue = abiCoder.encode(types, values);
-      dataKeys.push(assistantConfigKey);
-      dataValues.push(assistantConfigValue);
+      const assistantConfigData = abiCoder.encode(types, values);
 
-      const tx = await upContract.setDataBatch(dataKeys, dataValues);
-      await tx.wait();
-      setIsUPSubscribedToAssistant(true);
+      const allKeys: string[] = [];
+      const allValues: string[] = [];
+
+      // Configure each selected transaction type
+      for (let i = 0; i < selectedConfigTypes.length; i++) {
+        const typeId = selectedConfigTypes[i];
+        
+        const { keys, values, executionOrder } = await setExecutiveAssistantConfig(
+          erc725UAP,
+          upContract,
+          assistantAddress,
+          typeId,
+          assistantConfigData,
+          true // Update type config to include this assistant
+        );
+        
+        allKeys.push(...keys);
+        allValues.push(...values);
+      }
+
+      // Remove from types that are no longer selected
+      const previouslyConfiguredTypes = Object.keys(executionOrders);
+      const typesToRemove = previouslyConfiguredTypes.filter(
+        typeId => !selectedConfigTypes.includes(typeId)
+      );
+
+      if (typesToRemove.length > 0) {
+        const { keys: removeKeys, values: removeValues } = await removeExecutiveAssistantConfig(
+          erc725UAP,
+          upContract,
+          assistantAddress,
+          typesToRemove
+        );
+        
+        allKeys.push(...removeKeys);
+        allValues.push(...removeValues);
+      }
+
+      // Execute all updates in a single batch transaction
+      if (allKeys.length > 0) {
+        const tx = await upContract.setDataBatch(allKeys, allValues);
+        await tx.wait();
+      }
+
+      setIsUPSubscribedToAssistant(selectedConfigTypes.length > 0);
 
       toast({
         title: 'Success',
@@ -328,6 +286,9 @@ const SetupAssistant: React.FC<{
     }
   };
 
+  // --------------------------------------------------------------------------
+  // Deactivate assistant using new UAP format
+  // --------------------------------------------------------------------------
   const handleDeactivateAssistant = async () => {
     if (!address) {
       toast({
@@ -343,52 +304,25 @@ const SetupAssistant: React.FC<{
     try {
       setIsProcessingTransaction(true);
       const signer = await getSigner();
-      const upContract = ERC725__factory.connect(address, signer);
+      const upContract = LSP0ERC725Account__factory.connect(address, signer);
+      const erc725UAP = createUAPERC725Instance(address, signer.provider);
 
-      const { typeConfigAddresses: fetchedTypeConfigAddresses } =
-        await fetchAssistantConfig({
-          upAddress: address,
-          assistantAddress,
-          supportedTransactionTypes: assistantSupportedTransactionTypes,
-          configParams,
-          signer,
-        });
-
-      const updatedTypeConfigAddresses = { ...fetchedTypeConfigAddresses };
-
-      const dataKeys: string[] = [];
-      const dataValues: string[] = [];
-
-      Object.entries(updatedTypeConfigAddresses).forEach(
-        ([typeId, addresses]) => {
-          const currentAssistantIndex = addresses.findIndex(
-            a => a.toLowerCase() === assistantAddress.toLowerCase()
-          );
-          if (currentAssistantIndex !== -1) {
-            addresses.splice(currentAssistantIndex, 1);
-          }
-
-          const typeConfigKey = generateMappingKey('UAPTypeConfig', typeId);
-          if (addresses.length === 0) {
-            dataKeys.push(typeConfigKey);
-            dataValues.push('0x');
-          } else {
-            dataKeys.push(typeConfigKey);
-            dataValues.push(customEncodeAddresses(addresses));
-          }
-        }
+      // Remove assistant from all configured types
+      const typesToRemove = Object.keys(executionOrders);
+      const { keys, values } = await removeExecutiveAssistantConfig(
+        erc725UAP,
+        upContract,
+        assistantAddress,
+        typesToRemove
       );
 
-      const assistantConfigKey = generateMappingKey(
-        'UAPExecutiveConfig',
-        assistantAddress
-      );
-      dataKeys.push(assistantConfigKey);
-      dataValues.push('0x');
+      if (keys.length > 0) {
+        const tx = await upContract.setDataBatch(keys, values);
+        await tx.wait();
+      }
 
-      const tx = await upContract.setDataBatch(dataKeys, dataValues);
-      await tx.wait();
       setSelectedConfigTypes([]);
+      setExecutionOrders({});
       setIsUPSubscribedToAssistant(false);
 
       toast({
@@ -437,8 +371,7 @@ const SetupAssistant: React.FC<{
       <Flex gap={4} flexDirection="column">
         <Flex flexDirection="row" gap={4} maxWidth="550px">
           <Text fontWeight="bold" fontSize="sm">
-            Select the transaction types that you will activate this assistant
-            for:
+            Select the transaction types that you will activate this assistant for:
           </Text>
           <CheckboxGroup
             colorScheme="orange"
@@ -464,6 +397,11 @@ const SetupAssistant: React.FC<{
                       icon={icon}
                       iconPath={iconPath}
                     />
+                    {executionOrders[id] !== undefined && (
+                      <Text fontSize="xs" color="gray.500" ml={2}>
+                        (Execution Order: {executionOrders[id]})
+                      </Text>
+                    )}
                   </Checkbox>
                 ))}
             </VStack>

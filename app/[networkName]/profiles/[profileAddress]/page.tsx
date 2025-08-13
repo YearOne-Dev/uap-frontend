@@ -14,11 +14,11 @@ import ReadConfiguredAssistants from '@/components/ReadConfiguredAssistants';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import { BrowserProvider, ethers } from 'ethers';
 import {
-  customDecodeAddresses,
-  generateMappingKey,
+  createUAPERC725Instance,
+  generateUAPTypeConfigKey,
   unsubscribeFromUapURD,
 } from '@/utils/configDataKeyValueStore';
-import { ERC725, ERC725__factory } from '@/types';
+import { LSP0ERC725Account, LSP0ERC725Account__factory } from '@/types';
 import { transactionTypeMap } from '@/components/TransactionTypeBlock';
 import {
   CHAINS,
@@ -81,29 +81,33 @@ export default function ProfilePage({
       try {
         setIsLoading(true);
         const provider = new ethers.JsonRpcProvider(network.rpcUrl);
-        const upContract: ERC725 = ERC725__factory.connect(
-          profileAddress,
-          provider
-        );
+        const upContract: LSP0ERC725Account =
+          LSP0ERC725Account__factory.connect(profileAddress, provider);
 
-        const allTypeIds = Object.values(transactionTypeMap).map(o => o.id);
-        const allKeys = allTypeIds.map(id =>
-          generateMappingKey('UAPTypeConfig', id)
-        );
-        allKeys.push(ERC725YDataKeys.LSP1.LSP1UniversalReceiverDelegate);
-        const rawValues = await upContract.getDataBatch(allKeys);
-        const isProtocolInstalled =
-          rawValues[allKeys.length - 1].toLowerCase() ===
-          network.protocolAddress.toLowerCase();
+        // Check if UAP protocol is installed
+        const urdValue = await upContract.getData(ERC725YDataKeys.LSP1.LSP1UniversalReceiverDelegate);
+        const isProtocolInstalled = urdValue.toLowerCase() === network.protocolAddress.toLowerCase();
         setIsUAPInstalled(isProtocolInstalled);
-        for (const encodedVal of rawValues.slice(0, allKeys.length - 1)) {
-          if (encodedVal && encodedVal !== '0x') {
-            const addresses = customDecodeAddresses(encodedVal);
-            if (addresses.length > 0) {
-              setHasAnyAssistants(true);
-              setIsLoading(false);
-              return;
+        
+        // Check for assistants using new UAP format
+        const erc725UAP = createUAPERC725Instance(profileAddress, provider);
+        const allTypeIds = Object.values(transactionTypeMap).map(o => o.id);
+        
+        for (const typeId of allTypeIds) {
+          try {
+            const typeConfigKey = generateUAPTypeConfigKey(erc725UAP, typeId);
+            const encodedVal = await upContract.getData(typeConfigKey);
+            
+            if (encodedVal && encodedVal !== '0x') {
+              const addresses = erc725UAP.decodeValueType('address[]', encodedVal) as string[];
+              if (addresses.length > 0) {
+                setHasAnyAssistants(true);
+                setIsLoading(false);
+                return;
+              }
             }
+          } catch (typeError) {
+            console.warn(`Error checking type ${typeId}:`, typeError);
           }
         }
         setHasAnyAssistants(false);

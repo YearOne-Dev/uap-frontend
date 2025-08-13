@@ -2,10 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { Box, Spinner, Text } from '@chakra-ui/react';
 import { typeIdOptionsMap, typeIdOrder } from '@/constants/assistantTypes';
 import {
-  customDecodeAddresses,
-  generateMappingKey,
+  createUAPERC725Instance,
+  generateUAPTypeConfigKey,
 } from '@/utils/configDataKeyValueStore';
-import { ERC725__factory } from '@/types';
+import { LSP0ERC725Account__factory } from '@/types';
 import { ethers } from 'ethers';
 import { supportedNetworks } from '@/constants/supportedNetworks';
 
@@ -32,23 +32,30 @@ const ReadConfiguredAssistants: React.FC<UPTypeConfigDisplayProps> = ({
           name: name,
           chainId: networkId,
         });
+        
+        // Create UAP ERC725 instance for new format
+        const erc725UAP = createUAPERC725Instance(upAddress, provider);
+        const upContract = LSP0ERC725Account__factory.connect(upAddress, provider);
+        
         const newTypeConfigs: { [typeId: string]: string[] } = {};
 
         for (const typeIdValue of typeIdOrder) {
-          // Generate mapping key
-          const mappingKey = generateMappingKey('UAPTypeConfig', typeIdValue);
-
-          // fetch data
-          const UP = ERC725__factory.connect(upAddress, provider);
-          const encodedResult = await UP.getData(mappingKey);
-          const assistantAddresses = customDecodeAddresses(encodedResult);
-
-          if (
-            assistantAddresses &&
-            Array.isArray(assistantAddresses) &&
-            assistantAddresses.length > 0
-          ) {
-            newTypeConfigs[typeIdValue] = assistantAddresses;
+          try {
+            // Use new UAP format to get type configuration
+            const typeConfigKey = generateUAPTypeConfigKey(erc725UAP, typeIdValue);
+            const encodedResult = await upContract.getData(typeConfigKey);
+            
+            if (encodedResult && encodedResult !== '0x') {
+              // Decode using ERC725 UAP instance (address[] format)
+              const assistantAddresses = erc725UAP.decodeValueType('address[]', encodedResult) as string[];
+              
+              if (assistantAddresses && assistantAddresses.length > 0) {
+                newTypeConfigs[typeIdValue] = assistantAddresses;
+              }
+            }
+          } catch (typeError) {
+            console.warn(`Error fetching config for type ${typeIdValue}:`, typeError);
+            // Continue with other types if one fails
           }
         }
 
@@ -60,6 +67,7 @@ const ReadConfiguredAssistants: React.FC<UPTypeConfigDisplayProps> = ({
         isLoading(false);
       }
     };
+    
     if (upAddress && networkId) {
       fetchTypeConfigs();
     }
@@ -93,7 +101,7 @@ const ReadConfiguredAssistants: React.FC<UPTypeConfigDisplayProps> = ({
                     ?.name;
                 return (
                   <Text key={index}>
-                    {`${assistantName ? assistantName : 'Unknown'}`}: {address}
+                    {`${assistantName ? assistantName : 'Unknown'} (Order ${index})`}: {address}
                   </Text>
                 );
               })}

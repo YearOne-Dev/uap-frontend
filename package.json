@@ -9,16 +9,17 @@
     "lint": "next lint",
     "format": "prettier --write .",
     "format-check": "prettier --check .",
-    "typechain": "typechain --target ethers-v6 --out-dir types ./node_modules/@erc725/smart-contracts/artifacts/*.json"
+    "typechain": "typechain --target ethers-v6 --out-dir types ./node_modules/@lukso/lsp-smart-contracts/artifacts/*.json"
   },
   "dependencies": {
     "@chakra-ui/icons": "^2.1.1",
     "@chakra-ui/react": "^2.8.2",
     "@emotion/react": "^11.11.4",
     "@emotion/styled": "^11.11.5",
-    "@erc725/erc725.js": "^0.26.0",
-    "@lukso/lsp-smart-contracts": "^0.15.0",
+    "@erc725/erc725.js": "^0.28.1",
+    "@lukso/lsp-smart-contracts": "^0.16.2",
     "@lukso/lsp-utils": "^0.2.0",
+    "@next/swc-darwin-arm64": "^15.3.4",
     "axios": "^1.7.2",
     "ethers": "^6.13.5",
     "form-data": "^4.0.0",

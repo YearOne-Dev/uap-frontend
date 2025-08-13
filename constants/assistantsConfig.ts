@@ -2,7 +2,7 @@ import { ExecutiveAssistant, ScreenerAssistant } from './CustomTypes';
 import { LSP1_TYPE_IDS } from '@lukso/lsp-smart-contracts';
 
 export const tipAssistantTestnet: ExecutiveAssistant = {
-  address: '0xf24c39a4d55994e70059443622fc166f05b5ff14',
+  address: '0x8b80c84b9cd9eb087e6894997ae161d4f9d975b9',
   name: 'Tip Assistant',
   description:
     'Tip LYX to an external wallet with every incoming LYX transaction.',
@@ -42,7 +42,7 @@ export const tipAssistantTestnet: ExecutiveAssistant = {
 };
 
 export const forwarderAssistantTestnet: ExecutiveAssistant = {
-  address: '0xc7ac1d785a3d67c6194daca801822f377fd93569',
+  address: '0x1296ace80af3230c961c79a9bee6a07b4a45f53f',
   name: 'Forwarder Assistant',
   description: 'Forward incoming assets to an external address.',
   iconPath: '/assistants/forwarder.jpg',
@@ -70,7 +70,7 @@ export const forwarderAssistantTestnet: ExecutiveAssistant = {
 };
 
 export const burntPixRefinerTestnet: ExecutiveAssistant = {
-  address: '0x34a8ad9cf56dece5790f64f790de137b517169c6',
+  address: '0x6bec84e010fd6083509121ff7966ffc9fe35c803',
   name: 'BurntPix Refiner',
   description:
     'Make transactions directed at you contribute iterations to a BurntPix of your choice.',
@@ -115,7 +115,7 @@ export const burntPixRefinerTestnet: ExecutiveAssistant = {
 };
 
 export const tipAssistantMainnet: ExecutiveAssistant = {
-  address: '0x0c3dc7ea7521c79b99a667f2024d76714d33def2',
+  address: '0x63908b663b712ef1bdd3b64ee47780e4967346fc',
   name: 'Tip Assistant',
   description:
     'Tip LYX to an external wallet with every incoming LYX transaction.',
@@ -155,7 +155,7 @@ export const tipAssistantMainnet: ExecutiveAssistant = {
 };
 
 export const forwarderAssistantMainnet: ExecutiveAssistant = {
-  address: '0x3cb70b7553d4aff2c0062d54a72ef99cfe228020',
+  address: '0xc503d7f50c4d2c0649fa86e43c247eb4e2e62fec',
   name: 'Forwarder Assistant',
   description: 'Forward incoming assets to an external address.',
   iconPath: '/assistants/forwarder.jpg',
@@ -183,7 +183,7 @@ export const forwarderAssistantMainnet: ExecutiveAssistant = {
 };
 
 export const burntPixRefinerMainnet: ExecutiveAssistant = {
-  address: '0xf13ff6e628cd1c3c20b0ac904ff7759b34ef5d7e',
+  address: '0x7ea957947e3dd7e2dc24582804711c1b9a3f898f',
   name: 'BurntPix Refiner',
   description:
     'Make transactions directed at you contribute iterations to a BurntPix of your choice.',
