@@ -222,6 +222,59 @@ export const fetchExecutiveAssistantConfig = async (
   return { configuredTypes, executionOrders, configData };
 };
 
+// NEW: Reorder assistants for a specific type
+export const reorderExecutiveAssistants = async (
+  erc725UAP: ERC725,
+  upContract: any,
+  typeId: string,
+  orderedAssistants: { address: string; configData: string }[]
+): Promise<{ keys: string[]; values: string[] }> => {
+  const keys: string[] = [];
+  const values: string[] = [];
+
+  // Step 1: Clear all existing executive configs for this type
+  // We need to find all existing configs first
+  const typeConfigKey = generateUAPTypeConfigKey(erc725UAP, typeId);
+  let existingAssistants: string[] = [];
+  
+  try {
+    const currentValue = await upContract.getData(typeConfigKey);
+    if (currentValue && currentValue !== '0x') {
+      existingAssistants = erc725UAP.decodeValueType('address[]', currentValue) as string[];
+    }
+  } catch (error) {
+    console.warn('Could not fetch existing assistants:', error);
+  }
+
+  // Remove all existing executive configs
+  for (let i = 0; i < existingAssistants.length; i++) {
+    const executiveKey = generateUAPExecutiveConfigKey(erc725UAP, typeId, i);
+    keys.push(executiveKey);
+    values.push('0x');
+  }
+
+  // Step 2: Set new executive configs in the new order
+  for (let i = 0; i < orderedAssistants.length; i++) {
+    const assistant = orderedAssistants[i];
+    const executiveKey = generateUAPExecutiveConfigKey(erc725UAP, typeId, i);
+    const execData = encodeTupleKeyValue(
+      '(Address,Bytes)',
+      '(address,bytes)',
+      [assistant.address, assistant.configData]
+    );
+    keys.push(executiveKey);
+    values.push(execData);
+  }
+
+  // Step 3: Update the type config with the new ordered array
+  const orderedAddresses = orderedAssistants.map(a => a.address);
+  const encodedAssistants = erc725UAP.encodeValueType('address[]', orderedAddresses);
+  keys.push(typeConfigKey);
+  values.push(encodedAssistants);
+
+  return { keys, values };
+};
+
 // NEW: Remove executive assistant configuration
 export const removeExecutiveAssistantConfig = async (
   erc725UAP: ERC725,

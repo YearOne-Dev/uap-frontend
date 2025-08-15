@@ -1,4 +1,5 @@
 import '@testing-library/jest-dom'
+import { vi } from 'vitest'
 
 // Mock window.lukso for browser provider tests
 Object.defineProperty(window, 'lukso', {

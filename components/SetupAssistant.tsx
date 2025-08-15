@@ -10,6 +10,8 @@ import {
   Text,
   useToast,
   VStack,
+  HStack,
+  useDisclosure,
 } from '@chakra-ui/react';
 import TransactionTypeBlock, {
   transactionTypeMap,
@@ -20,10 +22,13 @@ import {
   setExecutiveAssistantConfig,
   fetchExecutiveAssistantConfig,
   removeExecutiveAssistantConfig,
+  generateUAPTypeConfigKey,
 } from '@/utils/configDataKeyValueStore';
 import { LSP0ERC725Account__factory } from '@/types';
 import { ExecutiveAssistant } from '@/constants/CustomTypes';
 import { useProfile } from '@/contexts/ProfileProvider';
+import { supportedNetworks } from '@/constants/supportedNetworks';
+import AssistantReorderModal from './AssistantReorderModal';
 
 /**
  * Updated interface for assistant configuration using the new UAP format
@@ -88,12 +93,14 @@ async function fetchAssistantConfigNew({
 
 const SetupAssistant: React.FC<{
   config: ExecutiveAssistant;
+  networkId?: number;
 }> = ({
   config: {
     address: assistantAddress,
     supportedTransactionTypes: assistantSupportedTransactionTypes,
     configParams,
   },
+  networkId,
 }) => {
   const [fieldValues, setFieldValues] = useState<Record<string, string>>(() => {
     const initial: Record<string, string> = {};
@@ -107,10 +114,19 @@ const SetupAssistant: React.FC<{
   const [error, setError] = useState<string>('');
   const [isUPSubscribedToAssistant, setIsUPSubscribedToAssistant] = useState<boolean>(false);
   const [executionOrders, setExecutionOrders] = useState<{ [typeId: string]: number }>({});
+  const [allAssistantsForTypes, setAllAssistantsForTypes] = useState<{
+    [typeId: string]: { address: string; name: string; currentOrder: number; configData: string }[];
+  }>({});
+  const [selectedTypeForReorder, setSelectedTypeForReorder] = useState<{
+    typeId: string;
+    typeName: string;
+  } | null>(null);
+  const { isOpen: isReorderOpen, onOpen: onReorderOpen, onClose: onReorderClose } = useDisclosure();
 
   const toast = useToast({ position: 'bottom-left' });
-  const { profileDetailsData } = useProfile();
+  const { profileDetailsData, chainId } = useProfile();
   const address = profileDetailsData?.upWallet;
+  const currentNetworkId = networkId || chainId || 42; // Fallback to mainnet
 
   // --------------------------------------------------------------------------
   // Helpers
@@ -122,6 +138,70 @@ const SetupAssistant: React.FC<{
     const provider = new BrowserProvider(window.lukso);
     return provider.getSigner(address);
   }, [address]);
+
+  // --------------------------------------------------------------------------  
+  // Fetch all assistants for the configured types (for reordering)
+  // --------------------------------------------------------------------------
+  const fetchAllAssistantsForTypes = useCallback(async (configuredTypes: string[]) => {
+    if (!address || configuredTypes.length === 0) return;
+
+    try {
+      const signer = await getSigner();
+      const upContract = LSP0ERC725Account__factory.connect(address, signer);
+      const erc725UAP = createUAPERC725Instance(address, signer.provider);
+      
+      const assistantsForTypes: { [typeId: string]: { address: string; name: string; currentOrder: number; configData: string }[] } = {};
+
+      for (const typeId of configuredTypes) {
+        const typeConfigKey = generateUAPTypeConfigKey(erc725UAP, typeId);
+        const encodedResult = await upContract.getData(typeConfigKey);
+        
+        if (encodedResult && encodedResult !== '0x') {
+          const assistantAddresses = erc725UAP.decodeValueType('address[]', encodedResult) as string[];
+          
+          if (assistantAddresses && assistantAddresses.length > 0) {
+            const assistantInfos = [];
+            
+            for (let i = 0; i < assistantAddresses.length; i++) {
+              const assistantAddr = assistantAddresses[i];
+              const assistantName = supportedNetworks[currentNetworkId]?.assistants[assistantAddr.toLowerCase()]?.name || 'Unknown';
+              
+              // Fetch the config data for this assistant
+              try {
+                const { configData } = await fetchExecutiveAssistantConfig(
+                  erc725UAP,
+                  upContract,
+                  assistantAddr,
+                  [typeId]
+                );
+                
+                assistantInfos.push({
+                  address: assistantAddr,
+                  name: assistantName,
+                  currentOrder: i,
+                  configData: configData[typeId] || '0x'
+                });
+              } catch (configError) {
+                console.warn(`Error fetching config for assistant ${assistantAddr}:`, configError);
+                assistantInfos.push({
+                  address: assistantAddr,
+                  name: assistantName,
+                  currentOrder: i,
+                  configData: '0x'
+                });
+              }
+            }
+            
+            assistantsForTypes[typeId] = assistantInfos;
+          }
+        }
+      }
+
+      setAllAssistantsForTypes(assistantsForTypes);
+    } catch (err) {
+      console.error('Error fetching all assistants for types:', err);
+    }
+  }, [address, getSigner, currentNetworkId]);
 
   // --------------------------------------------------------------------------
   // On Page Load: fetch existing configuration
@@ -149,6 +229,9 @@ const SetupAssistant: React.FC<{
         if (fieldValues) {
           setFieldValues(fieldValues);
         }
+        
+        // Fetch all assistants for the configured types (for reordering)
+        await fetchAllAssistantsForTypes(configuredTypes);
       } catch (err) {
         console.error('Failed to load existing config:', err);
       } finally {
@@ -163,7 +246,52 @@ const SetupAssistant: React.FC<{
     assistantSupportedTransactionTypes,
     configParams,
     getSigner,
+    fetchAllAssistantsForTypes,
   ]);
+
+  // --------------------------------------------------------------------------
+  // Handle reorder functionality
+  // --------------------------------------------------------------------------
+  const handleReorderClick = (typeId: string) => {
+    const typeObj = Object.values(transactionTypeMap).find(t => t.id === typeId);
+    if (typeObj) {
+      setSelectedTypeForReorder({
+        typeId,
+        typeName: `${typeObj.label} ${typeObj.typeName}`
+      });
+      onReorderOpen();
+    }
+  };
+
+  const handleReorderComplete = async () => {
+    try {
+      // Refetch all assistants for the configured types
+      if (selectedConfigTypes.length > 0) {
+        await fetchAllAssistantsForTypes(selectedConfigTypes);
+      }
+
+      // Refetch this assistant's own configuration to update execution orders
+      const signer = await getSigner();
+      const { configuredTypes, executionOrders: newExecutionOrders, isUPSubscribedToAssistant: newSubscriptionStatus, fieldValues } =
+        await fetchAssistantConfigNew({
+          upAddress: address!,
+          assistantAddress,
+          supportedTransactionTypes: assistantSupportedTransactionTypes,
+          configParams,
+          signer,
+        });
+
+      // Update the execution orders state
+      setExecutionOrders(newExecutionOrders);
+      setSelectedConfigTypes(configuredTypes);
+      setIsUPSubscribedToAssistant(newSubscriptionStatus);
+      if (fieldValues) {
+        setFieldValues(fieldValues);
+      }
+    } catch (err) {
+      console.error('Error refetching config after reorder:', err);
+    }
+  };
 
   // --------------------------------------------------------------------------
   // Save configuration using new UAP format
@@ -262,6 +390,9 @@ const SetupAssistant: React.FC<{
       }
 
       setIsUPSubscribedToAssistant(selectedConfigTypes.length > 0);
+
+      // Refetch all assistants after saving
+      await fetchAllAssistantsForTypes(selectedConfigTypes);
 
       toast({
         title: 'Success',
@@ -391,17 +522,34 @@ const SetupAssistant: React.FC<{
                 )
                 .map(([key, { id, label, typeName, icon, iconPath }]) => (
                   <Checkbox key={key} value={id}>
-                    <TransactionTypeBlock
-                      label={label}
-                      typeName={typeName}
-                      icon={icon}
-                      iconPath={iconPath}
-                    />
-                    {executionOrders[id] !== undefined && (
-                      <Text fontSize="xs" color="gray.500" ml={2}>
-                        (Execution Order: {executionOrders[id]})
-                      </Text>
-                    )}
+                    <VStack align="start" spacing={1}>
+                      <TransactionTypeBlock
+                        label={label}
+                        typeName={typeName}
+                        icon={icon}
+                        iconPath={iconPath}
+                      />
+                      <HStack spacing={2}>
+                        {executionOrders[id] !== undefined && (
+                          <Text fontSize="xs" color="orange.500" fontWeight="semibold">
+                            Execution Order: {executionOrders[id] + 1}
+                          </Text>
+                        )}
+                        {allAssistantsForTypes[id] && allAssistantsForTypes[id].length > 1 && (
+                          <Button
+                            size="xs"
+                            variant="outline"
+                            colorScheme="orange"
+                            onClick={() => handleReorderClick(id)}
+                            fontSize="xs"
+                            px={2}
+                            minW="auto"
+                          >
+                            Reorder ({allAssistantsForTypes[id].length})
+                          </Button>
+                        )}
+                      </HStack>
+                    </VStack>
                   </Checkbox>
                 ))}
             </VStack>
@@ -458,6 +606,21 @@ const SetupAssistant: React.FC<{
           Save & Activate Assistant
         </Button>
       </Flex>
+      
+      {selectedTypeForReorder && allAssistantsForTypes[selectedTypeForReorder.typeId] && (
+        <AssistantReorderModal
+          isOpen={isReorderOpen}
+          onClose={() => {
+            onReorderClose();
+            setSelectedTypeForReorder(null);
+          }}
+          typeId={selectedTypeForReorder.typeId}
+          typeName={selectedTypeForReorder.typeName}
+          assistants={allAssistantsForTypes[selectedTypeForReorder.typeId]}
+          networkId={currentNetworkId}
+          onReorderComplete={handleReorderComplete}
+        />
+      )}
     </Flex>
   );
 };
