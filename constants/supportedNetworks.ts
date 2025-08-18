@@ -1,4 +1,4 @@
-import { ExecutiveAssistant } from '@/constants/CustomTypes';
+import { ExecutiveAssistant, ScreenerAssistant } from '@/constants/CustomTypes';
 import {
   burntPixRefinerMainnet,
   burntPixRefinerTestnet,
@@ -7,6 +7,12 @@ import {
   tipAssistantMainnet,
   tipAssistantTestnet,
 } from '@/constants/assistantsConfig';
+import {
+  notifierListScreenerMainnet,
+  notifierListScreenerTestnet,
+  notifierCurationScreenerMainnet,
+  notifierCurationScreenerTestnet,
+} from '@/constants/screenersConfig';
 
 interface ChainInfo {
   name: string;
@@ -25,6 +31,7 @@ interface ChainInfo {
   universalEverything: string;
   luksoSiteName: string;
   assistants: { [key: string]: ExecutiveAssistant };
+  screeners: { [key: string]: ScreenerAssistant };
 }
 
 export enum CHAINS {
@@ -55,6 +62,10 @@ export const supportedNetworks: { [key: string]: ChainInfo } = {
         forwarderAssistantMainnet,
       [burntPixRefinerMainnet.address.toLowerCase()]: burntPixRefinerMainnet,
     },
+    screeners: {
+      [notifierListScreenerMainnet.address.toLowerCase()]: notifierListScreenerMainnet,
+      [notifierCurationScreenerMainnet.address.toLowerCase()]: notifierCurationScreenerMainnet,
+    },
   },
   '4201': {
     name: 'LUKSO Testnet',
@@ -77,6 +88,10 @@ export const supportedNetworks: { [key: string]: ChainInfo } = {
       [forwarderAssistantTestnet.address.toLowerCase()]:
         forwarderAssistantTestnet,
       [burntPixRefinerTestnet.address.toLowerCase()]: burntPixRefinerTestnet,
+    },
+    screeners: {
+      [notifierListScreenerTestnet.address.toLowerCase()]: notifierListScreenerTestnet,
+      [notifierCurationScreenerTestnet.address.toLowerCase()]: notifierCurationScreenerTestnet,
     },
   },
 };

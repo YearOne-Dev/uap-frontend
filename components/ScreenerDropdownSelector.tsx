@@ -1,0 +1,193 @@
+'use client';
+import React, { useState } from 'react';
+import {
+  Box,
+  Button,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
+  VStack,
+  HStack,
+  Text,
+  Image,
+  Badge,
+  Icon,
+  useColorModeValue,
+  Flex,
+} from '@chakra-ui/react';
+import { ChevronDownIcon, AddIcon } from '@chakra-ui/icons';
+import { ScreenerAssistant } from '@/constants/CustomTypes';
+import { supportedNetworks } from '@/constants/supportedNetworks';
+
+interface ScreenerDropdownSelectorProps {
+  networkId: number;
+  selectedScreeners: string[];
+  onAddScreener: (screenerId: string, screener: ScreenerAssistant) => void;
+  maxScreeners?: number;
+}
+
+const ScreenerDropdownSelector: React.FC<ScreenerDropdownSelectorProps> = ({
+  networkId,
+  selectedScreeners,
+  onAddScreener,
+  maxScreeners = 5,
+}) => {
+  const menuBg = useColorModeValue('white', 'gray.800');
+  const borderColor = useColorModeValue('gray.200', 'gray.600');
+  const hoverBg = useColorModeValue('gray.50', 'gray.700');
+
+  const availableScreeners = React.useMemo(() => {
+    const network = supportedNetworks[networkId];
+    return network?.screeners ? Object.values(network.screeners) : [];
+  }, [networkId]);
+
+  const canAddMore = selectedScreeners.length < maxScreeners;
+
+  const handleScreenerSelect = (screener: ScreenerAssistant) => {
+    // Generate unique instance ID to support multiple instances of same screener
+    const instanceId = `${screener.address}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    onAddScreener(instanceId, screener);
+  };
+
+  if (!canAddMore) {
+    return (
+      <Box p={3} bg="yellow.50" border="1px solid" borderColor="yellow.200" borderRadius="lg">
+        <Text fontSize="sm" color="yellow.800" textAlign="center">
+          Maximum number of screeners ({maxScreeners}) reached
+        </Text>
+      </Box>
+    );
+  }
+
+  return (
+    <Box>
+      <Menu>
+        <MenuButton
+          as={Button}
+          rightIcon={<ChevronDownIcon />}
+          leftIcon={<AddIcon />}
+          variant="outline"
+          colorScheme="orange"
+          size="md"
+          width="100%"
+          textAlign="left"
+        >
+          <Text fontSize="sm">Add Transaction Screener</Text>
+        </MenuButton>
+        
+        <MenuList
+          bg={menuBg}
+          borderColor={borderColor}
+          maxH="400px"
+          overflowY="auto"
+          minW="400px"
+        >
+          {availableScreeners.length === 0 ? (
+            <MenuItem isDisabled>
+              <Text fontSize="sm" color="gray.500">
+                No screeners available for this network
+              </Text>
+            </MenuItem>
+          ) : (
+            <>
+              <Box p={3} borderBottom="1px solid" borderColor={borderColor}>
+                <Text fontSize="xs" fontWeight="bold" color="gray.600" textTransform="uppercase">
+                  Available Transaction Screeners
+                </Text>
+                <Text fontSize="xs" color="gray.500" mt={1}>
+                  Choose screeners to qualify transactions for your assistant
+                </Text>
+              </Box>
+              
+              {availableScreeners.map((screener) => (
+                <MenuItem
+                  key={screener.address}
+                  onClick={() => handleScreenerSelect(screener)}
+                  _hover={{ bg: hoverBg }}
+                  p={4}
+                >
+                  <HStack spacing={3} align="center" width="100%">
+                    {/* Screener Icon */}
+                    <Box flexShrink={0}>
+                      <Image
+                        boxSize="10"
+                        src={screener.iconPath}
+                        alt={screener.name}
+                        borderRadius="lg"
+                        fallback={
+                          <Box
+                            boxSize="10"
+                            bg="orange.100"
+                            borderRadius="lg"
+                            display="flex"
+                            alignItems="center"
+                            justifyContent="center"
+                          >
+                            <Text fontSize="lg">🛡️</Text>
+                          </Box>
+                        }
+                      />
+                    </Box>
+
+                    {/* Screener Details */}
+                    <VStack align="start" spacing={1} flex={1} minW={0}>
+                      <HStack justify="space-between" width="100%">
+                        <Text fontWeight="bold" fontSize="sm" noOfLines={1}>
+                          {screener.name}
+                        </Text>
+                        <Badge colorScheme="orange" size="sm" flexShrink={0}>
+                          Screening Assistant
+                        </Badge>
+                      </HStack>
+                      
+                      <Text fontSize="xs" color="gray.600" lineHeight="1.3" noOfLines={2}>
+                        {screener.description}
+                      </Text>
+                      
+                      {/* Configuration Preview */}
+                      <HStack spacing={2} mt={1}>
+                        <Text fontSize="xs" color="gray.500">
+                          Configurable:
+                        </Text>
+                        {screener.configParams.slice(0, 2).map((param, index) => (
+                          <Badge key={index} variant="outline" size="sm" fontSize="xs">
+                            {param.name}
+                          </Badge>
+                        ))}
+                        {screener.configParams.length > 2 && (
+                          <Text fontSize="xs" color="gray.500">
+                            +{screener.configParams.length - 2} more
+                          </Text>
+                        )}
+                      </HStack>
+                    </VStack>
+
+                    {/* Add Indicator */}
+                    <Box
+                      bg="orange.500"
+                      color="white"
+                      borderRadius="full"
+                      p={1}
+                      flexShrink={0}
+                    >
+                      <AddIcon boxSize="3" />
+                    </Box>
+                  </HStack>
+                </MenuItem>
+              ))}
+              
+              <Box p={3} borderTop="1px solid" borderColor={borderColor}>
+                <Text fontSize="xs" color="gray.500" textAlign="center">
+                  💡 You can add multiple instances of the same screener with different configurations
+                </Text>
+              </Box>
+            </>
+          )}
+        </MenuList>
+      </Menu>
+    </Box>
+  );
+};
+
+export default ScreenerDropdownSelector;

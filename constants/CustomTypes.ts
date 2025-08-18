@@ -13,21 +13,31 @@ export type AbstractAssistant = {
   chainId: number;
 };
 
-export type ExecutiveAssistant = AbstractAssistant & {
-  assistantType: 'Executive';
-  configParams: {
-    name: string;
-    type: string;
-    description: string;
-    defaultValue?: string;
-    placeholder?: string;
-    hidden?: boolean;
-    validate?: (value: any, upAddress: string) => boolean;
-    validationMessage?: string;
-  }[];
+export type ConfigParam = {
+  name: string;
+  type: string;
+  description: string;
+  defaultValue?: string;
+  placeholder?: string;
+  hidden?: boolean;
+  validate?: (value: any, upAddress: string) => boolean;
+  validationMessage?: string;
+  options?: { value: any; label: string }[]; // For radio button selections
 };
 
-export type ScreenerAssistant = AbstractAssistant & {
+export type ExecutiveAssistant = AbstractAssistant & {
+  assistantType: 'Executive';
+  configParams: ConfigParam[];
+};
+
+export type ScreenerAssistant = {
+  address: string;
+  name: string;
+  description: string;
+  iconPath: string;
   assistantType: 'Screener';
-  configParams: { name: string; type: string }[];
+  creatorAddress: string;
+  configParams: ConfigParam[];
+  chainId: number;
+  links?: Link[];
 };

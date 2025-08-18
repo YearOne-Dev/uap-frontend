@@ -55,7 +55,7 @@ const SupportedTransactions: React.FC<{
         </Text>
       </Flex>
       <HStack spacing={8} justifyContent="center" alignItems="center">
-        {assistant.supportedTransactionTypes.map(type =>
+        {assistant.assistantType === 'Executive' && assistant.supportedTransactionTypes.map(type =>
           transactionTypeMap[type] ? (
             <TransactionBlock
               key={type}

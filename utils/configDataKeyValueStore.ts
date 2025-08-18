@@ -584,3 +584,364 @@ export const isUAPInstalled = async (
   }
   return UPURD?.toLowerCase() === expectedDelegate?.toLowerCase();
 };
+
+// ===================================================================
+// SCREENER ASSISTANT CONFIGURATION FUNCTIONS
+// ===================================================================
+
+// Generate screener-related UAP keys
+export const generateUAPExecutiveScreenersKey = (
+  erc725UAP: ERC725,
+  typeId: string,
+  executionOrder: number
+): string => {
+  return erc725UAP.encodeKeyName('UAPExecutiveScreeners:<bytes32>:<uint256>', [
+    typeId,
+    executionOrder.toString(),
+  ]);
+};
+
+export const generateUAPExecutiveScreenersANDLogicKey = (
+  erc725UAP: ERC725,
+  typeId: string,
+  executionOrder: number
+): string => {
+  return erc725UAP.encodeKeyName('UAPExecutiveScreenersANDLogic:<bytes32>:<uint256>', [
+    typeId,
+    executionOrder.toString(),
+  ]);
+};
+
+export const generateUAPScreenerConfigKey = (
+  erc725UAP: ERC725,
+  typeId: string,
+  screenerOrder: number
+): string => {
+  return erc725UAP.encodeKeyName('UAPScreenerConfig:<bytes32>:<uint256>', [
+    typeId,
+    screenerOrder.toString(),
+  ]);
+};
+
+export const generateUAPAddressListNameKey = (
+  erc725UAP: ERC725,
+  typeId: string,
+  screenerOrder: number
+): string => {
+  return erc725UAP.encodeKeyName('UAPAddressListName:<bytes32>:<uint256>', [
+    typeId,
+    screenerOrder.toString(),
+  ]);
+};
+
+// Calculate screener order (executionOrder * 1000 + screenerIndex)
+export const calculateScreenerOrder = (executionOrder: number, screenerIndex: number): number => {
+  return executionOrder * 1000 + screenerIndex;
+};
+
+// Set screener assistant configuration for an executive assistant
+export const setScreenerAssistantConfig = async (
+  erc725UAP: ERC725,
+  upContract: any,
+  executiveAddress: string,
+  typeId: string,
+  executionOrder: number,
+  screenerAddresses: string[],
+  screenerConfigs: string[],
+  useANDLogic: boolean = true,
+  addressListNames: string[] = []
+): Promise<{ keys: string[]; values: string[] }> => {
+  const keys: string[] = [];
+  const values: string[] = [];
+
+  if (screenerAddresses.length !== screenerConfigs.length) {
+    throw new Error('Screener addresses and configs arrays must have the same length');
+  }
+
+  // Set screener addresses for the executive assistant
+  const screenersKey = generateUAPExecutiveScreenersKey(erc725UAP, typeId, executionOrder);
+  const encodedScreeners = erc725UAP.encodeValueType('address[]', screenerAddresses);
+  keys.push(screenersKey);
+  values.push(encodedScreeners);
+
+  // Set AND/OR logic for screeners
+  const logicKey = generateUAPExecutiveScreenersANDLogicKey(erc725UAP, typeId, executionOrder);
+  const encodedLogic = encodeBoolValue(useANDLogic);
+  keys.push(logicKey);
+  values.push(encodedLogic);
+
+  // Configure each individual screener
+  for (let i = 0; i < screenerAddresses.length; i++) {
+    const screenerOrder = calculateScreenerOrder(executionOrder, i);
+    
+    // Set screener configuration using manual byte packing (to match smart contract expectation)
+    const configKey = generateUAPScreenerConfigKey(erc725UAP, typeId, screenerOrder);
+    
+    // Manual byte packing: executive address (20 bytes) + screener address (20 bytes) + config data
+    const executiveBytes = executiveAddress.toLowerCase().replace('0x', '');
+    const screenerBytes = screenerAddresses[i].toLowerCase().replace('0x', '');
+    const configBytes = screenerConfigs[i].replace('0x', '');
+    const configValue = '0x' + executiveBytes + screenerBytes + configBytes;
+    
+    keys.push(configKey);
+    values.push(configValue);
+
+    // Set address list name if provided
+    if (addressListNames[i]) {
+      const listNameKey = generateUAPAddressListNameKey(erc725UAP, typeId, screenerOrder);
+      const listNameValue = erc725UAP.encodeValueType('string', addressListNames[i]);
+      keys.push(listNameKey);
+      values.push(listNameValue);
+    }
+  }
+
+  return { keys, values };
+};
+
+// Fetch screener assistant configuration for an executive assistant
+export const fetchScreenerAssistantConfig = async (
+  erc725UAP: ERC725,
+  upContract: any,
+  assistantAddress: string,
+  typeId: string,
+  executionOrder: number
+): Promise<{
+  screenerAddresses: string[];
+  screenerConfigData: string[];
+  useANDLogic: boolean;
+  addressListNames: string[];
+}> => {
+  // Fetch screener addresses
+  const screenersKey = generateUAPExecutiveScreenersKey(erc725UAP, typeId, executionOrder);
+  let screenerAddresses: string[] = [];
+  
+  try {
+    const screenersValue = await upContract.getData(screenersKey);
+    if (screenersValue && screenersValue !== '0x') {
+      screenerAddresses = erc725UAP.decodeValueType('address[]', screenersValue) as string[];
+    }
+  } catch (error) {
+    console.warn('Error fetching screener addresses:', error);
+  }
+
+  // Fetch AND/OR logic
+  const logicKey = generateUAPExecutiveScreenersANDLogicKey(erc725UAP, typeId, executionOrder);
+  let useANDLogic = true; // Default to AND logic
+  
+  try {
+    const logicValue = await upContract.getData(logicKey);
+    if (logicValue && logicValue !== '0x') {
+      useANDLogic = logicValue === '0x01';
+    }
+  } catch (error) {
+    console.warn('Error fetching screener logic:', error);
+  }
+
+  // Fetch individual screener configurations and address list names
+  const screenerConfigData: string[] = [];
+  const addressListNames: string[] = [];
+
+  for (let i = 0; i < screenerAddresses.length; i++) {
+    const screenerOrder = calculateScreenerOrder(executionOrder, i);
+    
+    // Fetch screener config
+    try {
+      const configKey = generateUAPScreenerConfigKey(erc725UAP, typeId, screenerOrder);
+      const configValue = await upContract.getData(configKey);
+      
+      if (configValue && configValue !== '0x' && configValue.length >= 82) { // 2 + 40 + 40 minimum
+        // Manual byte unpacking to match smart contract decoding logic
+        // First 20 bytes (40 hex chars) = executive address
+        // Next 20 bytes (40 hex chars) = screener address  
+        // Remaining bytes = config data
+        const executiveAddress = '0x' + configValue.slice(2, 42);
+        const screenerAddress = '0x' + configValue.slice(42, 82);
+        const configData = '0x' + configValue.slice(82);
+        
+        screenerConfigData.push(configData);
+      } else {
+        screenerConfigData.push('0x');
+      }
+    } catch (error) {
+      console.warn(`Error fetching config for screener ${i}:`, error);
+      screenerConfigData.push('0x');
+    }
+
+    // Fetch address list name
+    try {
+      const listNameKey = generateUAPAddressListNameKey(erc725UAP, typeId, screenerOrder);
+      const listNameValue = await upContract.getData(listNameKey);
+      
+      if (listNameValue && listNameValue !== '0x') {
+        const listName = erc725UAP.decodeValueType('string', listNameValue) as string;
+        addressListNames.push(listName);
+      } else {
+        addressListNames.push('');
+      }
+    } catch (error) {
+      console.warn(`Error fetching list name for screener ${i}:`, error);
+      addressListNames.push('');
+    }
+  }
+
+  return {
+    screenerAddresses,
+    screenerConfigData,
+    useANDLogic,
+    addressListNames
+  };
+};
+
+// Remove screener assistant configuration
+export const removeScreenerAssistantConfig = async (
+  erc725UAP: ERC725,
+  upContract: any,
+  assistantAddress: string,
+  typeId: string,
+  executionOrder: number
+): Promise<{ keys: string[]; values: string[] }> => {
+  const keys: string[] = [];
+  const values: string[] = [];
+
+  // First, get current screener configuration to know how many screeners to remove
+  const currentConfig = await fetchScreenerAssistantConfig(erc725UAP, upContract, assistantAddress, typeId, executionOrder);
+
+  // Remove main screener keys
+  const screenersKey = generateUAPExecutiveScreenersKey(erc725UAP, typeId, executionOrder);
+  const logicKey = generateUAPExecutiveScreenersANDLogicKey(erc725UAP, typeId, executionOrder);
+  
+  keys.push(screenersKey, logicKey);
+  values.push('0x', '0x'); // Clear the values
+
+  // Remove individual screener configurations
+  for (let i = 0; i < currentConfig.screenerAddresses.length; i++) {
+    const screenerOrder = calculateScreenerOrder(executionOrder, i);
+    
+    const configKey = generateUAPScreenerConfigKey(erc725UAP, typeId, screenerOrder);
+    const listNameKey = generateUAPAddressListNameKey(erc725UAP, typeId, screenerOrder);
+    
+    keys.push(configKey, listNameKey);
+    values.push('0x', '0x'); // Clear the values
+  }
+
+  return { keys, values };
+};
+
+// LSP2 Address List Utilities
+
+// Generate LSP2/LSP5 list item index key (ListName[index])
+export const generateListItemIndexKey = (erc725Instance: any, listName: string, index: number): string => {
+  // Get the base array key hash: keccak256(arrayName + "[]")
+  const baseArrayKey = erc725Instance.encodeKeyName(`${listName}[]`);
+  
+  // Take first 16 bytes (32 hex chars) of the base key
+  const keyPrefix = baseArrayKey.slice(0, 34); // 0x + 32 chars = 34 total
+  
+  // Convert index to bytes16 (32 hex chars, padded)
+  const indexBytes16 = index.toString(16).padStart(32, '0');
+  
+  // Concatenate: bytes16(keccak256(arrayName)) + bytes16(uint128(index))
+  return keyPrefix + indexBytes16;
+};
+
+// Encode LSP2 map value (bytes4 + uint256)
+export const encodeListMapValue = (erc725Instance: any, itemType: string, position: number): string => {
+  const positionHex = position.toString(16).padStart(64, '0');
+  return itemType + positionHex;
+};
+
+// Set entire address list using LSP5 pattern
+export const setAddressList = async (
+  erc725UAP: ERC725,
+  listName: string,
+  addresses: string[]
+): Promise<{ keys: string[]; values: string[] }> => {
+  const keys: string[] = [];
+  const values: string[] = [];
+  
+  // Set list length using LSP5 pattern
+  const listLengthKey = erc725UAP.encodeKeyName(`${listName}[]`);
+  const listLength = erc725UAP.encodeValueType('uint256', addresses.length);
+  keys.push(listLengthKey);
+  values.push(listLength);
+  
+  // Set each address and its mapping using LSP5 pattern
+  for (let i = 0; i < addresses.length; i++) {
+    const address = addresses[i];
+    
+    // Set array item: ListName[index] using proper LSP5 key generation
+    const itemKey = generateListItemIndexKey(erc725UAP, listName, i);
+    const encodedAddress = erc725UAP.encodeValueType('address', address);
+    keys.push(itemKey);
+    values.push(encodedAddress);
+    
+    // Set mapping: ListNameMap:<address> -> (bytes4, uint128) for fast lookups
+    const mapKey = erc725UAP.encodeKeyName(`${listName}Map:<address>`, [address]);
+    const mapValue = encodeListMapValue(erc725UAP, '0x00000000', i); // Generic item type + position
+    keys.push(mapKey);
+    values.push(mapValue);
+  }
+  
+  return { keys, values };
+};
+
+// Get entire address list using LSP5 pattern
+export const getAddressList = async (
+  erc725UAP: ERC725,
+  upContract: any,
+  listName: string
+): Promise<string[]> => {
+  try {
+    // Get list length using LSP5 pattern
+    const listLengthKey = erc725UAP.encodeKeyName(`${listName}[]`);
+    const listLengthRaw = await upContract.getData(listLengthKey);
+    
+    if (!listLengthRaw || listLengthRaw === '0x') {
+      return [];
+    }
+    
+    const listLength = Number(erc725UAP.decodeValueType('uint256', listLengthRaw));
+    if (listLength === 0) {
+      return [];
+    }
+    
+    // Get all addresses from array items using proper LSP5 keys
+    const itemKeys: string[] = [];
+    for (let i = 0; i < listLength; i++) {
+      itemKeys.push(generateListItemIndexKey(erc725UAP, listName, i));
+    }
+    
+    const itemValues = await upContract.getDataBatch(itemKeys);
+    return itemValues
+      .filter(value => value && value !== '0x')
+      .map(value => erc725UAP.decodeValueType('address', value) as string);
+  } catch (error) {
+    console.warn(`Error fetching address list ${listName}:`, error);
+    return [];
+  }
+};
+
+// Add single address to list (deprecated - use setAddressList for batch operations)
+export const addToAddressList = async (
+  erc725UAP: ERC725,
+  upContract: any,
+  listName: string,
+  addressToAdd: string
+): Promise<{ keys: string[]; values: string[] }> => {
+  const currentList = await getAddressList(erc725UAP, upContract, listName);
+  if (!currentList.includes(addressToAdd.toLowerCase())) {
+    currentList.push(addressToAdd);
+  }
+  return setAddressList(erc725UAP, listName, currentList);
+};
+
+export const removeFromAddressList = async (
+  erc725UAP: ERC725,
+  upContract: any,
+  listName: string,
+  addressToRemove: string
+): Promise<{ keys: string[]; values: string[] }> => {
+  const currentList = await getAddressList(erc725UAP, upContract, listName);
+  const filteredList = currentList.filter(addr => addr.toLowerCase() !== addressToRemove.toLowerCase());
+  return setAddressList(erc725UAP, listName, filteredList);
+};

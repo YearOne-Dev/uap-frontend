@@ -12,6 +12,12 @@ import {
   VStack,
   HStack,
   useDisclosure,
+  Box,
+  Collapse,
+  Switch,
+  FormControl,
+  FormLabel,
+  Divider,
 } from '@chakra-ui/react';
 import TransactionTypeBlock, {
   transactionTypeMap,
@@ -23,12 +29,19 @@ import {
   fetchExecutiveAssistantConfig,
   removeExecutiveAssistantConfig,
   generateUAPTypeConfigKey,
+  setScreenerAssistantConfig,
+  fetchScreenerAssistantConfig,
+  removeScreenerAssistantConfig,
+  setAddressList,
+  getAddressList,
 } from '@/utils/configDataKeyValueStore';
 import { LSP0ERC725Account__factory } from '@/types';
-import { ExecutiveAssistant } from '@/constants/CustomTypes';
+import { ExecutiveAssistant, ScreenerAssistant } from '@/constants/CustomTypes';
 import { useProfile } from '@/contexts/ProfileProvider';
 import { supportedNetworks } from '@/constants/supportedNetworks';
 import AssistantReorderModal from './AssistantReorderModal';
+import TransactionScreeningSection from './TransactionScreeningSection';
+import AssistantConfigurationSection from './AssistantConfigurationSection';
 
 /**
  * Updated interface for assistant configuration using the new UAP format
@@ -123,6 +136,13 @@ const SetupAssistant: React.FC<{
   } | null>(null);
   const { isOpen: isReorderOpen, onOpen: onReorderOpen, onClose: onReorderClose } = useDisclosure();
 
+  // Screener-related state
+  const [enableScreeners, setEnableScreeners] = useState<boolean>(false);
+  const [selectedScreeners, setSelectedScreeners] = useState<string[]>([]);
+  const [screenerConfigs, setScreenerConfigs] = useState<{ [screenerId: string]: any }>({});
+  const [useANDLogic, setUseANDLogic] = useState<boolean>(true);
+  const { isOpen: isScreenerOpen, onToggle: onScreenerToggle } = useDisclosure();
+
   const toast = useToast({ position: 'bottom-left' });
   const { profileDetailsData, chainId } = useProfile();
   const address = profileDetailsData?.upWallet;
@@ -204,6 +224,114 @@ const SetupAssistant: React.FC<{
   }, [address, getSigner, currentNetworkId]);
 
   // --------------------------------------------------------------------------
+  // Load screener configurations
+  // --------------------------------------------------------------------------
+  const loadScreenerConfigurations = useCallback(async (configuredTypes: string[], signer: any, executionOrdersMap: { [typeId: string]: number }) => {
+    try {
+      const upContract = LSP0ERC725Account__factory.connect(address!, signer);
+      const erc725UAP = createUAPERC725Instance(address!, signer.provider);
+
+      const loadedScreenerConfigs: { [instanceId: string]: any } = {};
+      const loadedSelectedScreeners: string[] = [];
+      let loadedUseANDLogic = true;
+
+      // Check each configured type for screener configurations
+      for (const typeId of configuredTypes) {
+        try {
+          const executionOrder = executionOrdersMap[typeId] || 0;
+          
+          const screenerConfig = await fetchScreenerAssistantConfig(
+            erc725UAP,
+            upContract,
+            assistantAddress,
+            typeId,
+            executionOrder
+          );
+
+          if (screenerConfig.screenerAddresses.length > 0) {
+            setEnableScreeners(true);
+            loadedUseANDLogic = screenerConfig.useANDLogic;
+            
+            // Process each screener and create instance IDs
+            for (let i = 0; i < screenerConfig.screenerAddresses.length; i++) {
+              const screenerAddress = screenerConfig.screenerAddresses[i];
+              const screenerData = screenerConfig.screenerConfigData[i];
+              const addressListName = screenerConfig.addressListNames[i];
+              
+              // Generate unique instance ID for this loaded screener
+              const instanceId = `${screenerAddress}_loaded_${i}_${Date.now()}`;
+              loadedSelectedScreeners.push(instanceId);
+              
+              const screener = supportedNetworks[currentNetworkId]?.screeners[screenerAddress.toLowerCase()];
+              if (screener && screenerData && screenerData !== '0x') {
+                // Decode screener configuration based on type
+                if (screener.name === 'Address List Screener') {
+                  try {
+                    const abiCoder = new AbiCoder();
+                    const decoded = abiCoder.decode(['bool'], screenerData);
+                    
+                    // Load address list from ERC725Y storage using the list name
+                    let addresses: string[] = [];
+                    if (addressListName) {
+                      try {
+                        addresses = await getAddressList(erc725UAP, upContract, addressListName);
+                      } catch (err) {
+                        console.warn(`Error loading address list ${addressListName}:`, err);
+                      }
+                    }
+                    
+                    loadedScreenerConfigs[instanceId] = {
+                      returnValueWhenInList: decoded[0],
+                      addresses
+                    };
+                  } catch (err) {
+                    console.warn('Error decoding Address List Screener config:', err);
+                  }
+                } else if (screener.name === 'Community Gate') {
+                  try {
+                    const abiCoder = new AbiCoder();
+                    const decoded = abiCoder.decode(['address', 'bool'], screenerData);
+                    
+                    // Load blocklist addresses if blocklist is enabled
+                    let blocklistAddresses: string[] = [];
+                    if (addressListName === 'UAPBlockList') {
+                      try {
+                        blocklistAddresses = await getAddressList(erc725UAP, upContract, 'UAPBlockList');
+                      } catch (err) {
+                        console.warn('Error loading blocklist addresses:', err);
+                      }
+                    }
+                    
+                    loadedScreenerConfigs[instanceId] = {
+                      curatedListAddress: decoded[0],
+                      returnValueWhenCurated: decoded[1],
+                      useBlocklist: !!addressListName,
+                      blocklistAddresses
+                    };
+                  } catch (err) {
+                    console.warn('Error decoding Community Gate config:', err);
+                  }
+                }
+              }
+            }
+          }
+        } catch (err) {
+          console.warn(`Error loading screener config for type ${typeId}:`, err);
+        }
+      }
+
+      // Update state with loaded screener configurations using instance-based format
+      if (loadedSelectedScreeners.length > 0) {
+        setSelectedScreeners(loadedSelectedScreeners);
+        setScreenerConfigs(loadedScreenerConfigs);
+        setUseANDLogic(loadedUseANDLogic);
+      }
+    } catch (err) {
+      console.error('Error loading screener configurations:', err);
+    }
+  }, [address, assistantAddress, currentNetworkId]);
+
+  // --------------------------------------------------------------------------
   // On Page Load: fetch existing configuration
   // --------------------------------------------------------------------------
   useEffect(() => {
@@ -232,6 +360,11 @@ const SetupAssistant: React.FC<{
         
         // Fetch all assistants for the configured types (for reordering)
         await fetchAllAssistantsForTypes(configuredTypes);
+        
+        // Fetch screener configurations for each configured type
+        if (configuredTypes.length > 0) {
+          await loadScreenerConfigurations(configuredTypes, signer, executionOrders);
+        }
       } catch (err) {
         console.error('Failed to load existing config:', err);
       } finally {
@@ -247,6 +380,7 @@ const SetupAssistant: React.FC<{
     configParams,
     getSigner,
     fetchAllAssistantsForTypes,
+    loadScreenerConfigurations,
   ]);
 
   // --------------------------------------------------------------------------
@@ -333,6 +467,37 @@ const SetupAssistant: React.FC<{
       }
     }
 
+    // Validate screener configurations if enabled
+    if (enableScreeners && selectedScreeners.length > 0) {
+      for (const instanceId of selectedScreeners) {
+        // Extract screener address from instanceId (format: address_timestamp_random)
+        const screenerAddress = instanceId.split('_')[0];
+        const screener = supportedNetworks[currentNetworkId]?.screeners[screenerAddress.toLowerCase()];
+        const config = screenerConfigs[instanceId];
+        
+        if (!screener || !config) {
+          setError(`Screener configuration is missing for ${screener?.name || 'unknown screener'}`);
+          return;
+        }
+
+        // Validate Address List Screener
+        if (screener.name === 'Address List Screener') {
+          if (!config.addresses || config.addresses.length === 0) {
+            setError(`Please add at least one address to the ${screener.name} screener`);
+            return;
+          }
+        }
+
+        // Validate Community Gate
+        if (screener.name === 'Community Gate') {
+          if (!config.curatedListAddress) {
+            setError(`Please enter a curated list contract address for the ${screener.name} screener`);
+            return;
+          }
+        }
+      }
+    }
+
     try {
       setIsProcessingTransaction(true);
       const signer = await getSigner();
@@ -363,6 +528,85 @@ const SetupAssistant: React.FC<{
         
         allKeys.push(...keys);
         allValues.push(...values);
+
+        // Configure screeners for this type if enabled
+        if (enableScreeners && selectedScreeners.length > 0) {
+          const screenerAddresses: string[] = [];
+          const screenerConfigData: string[] = [];
+          const addressListNames: string[] = [];
+
+          for (const instanceId of selectedScreeners) {
+            // Extract screener address from instanceId (format: address_timestamp_random)
+            const screenerAddress = instanceId.split('_')[0];
+            const screener = supportedNetworks[currentNetworkId]?.screeners[screenerAddress.toLowerCase()];
+            const config = screenerConfigs[instanceId];
+            
+            if (screener && config) {
+              screenerAddresses.push(screener.address);
+              
+              // Encode screener configuration based on type
+              if (screener.name === 'Address List Screener') {
+                const abiCoder = new AbiCoder();
+                const configData = abiCoder.encode(
+                  ['bool'],
+                  [config.returnValueWhenInList]
+                );
+                screenerConfigData.push(configData);
+                
+                // Use standard UAPAddressList name for all address filters
+                const listName = 'UAPAddressList';
+                addressListNames.push(listName);
+                
+                // Add address list storage keys/values
+                if (config.addresses && config.addresses.length > 0) {
+                  const { keys: listKeys, values: listValues } = await setAddressList(
+                    erc725UAP,
+                    listName,
+                    config.addresses
+                  );
+                  allKeys.push(...listKeys);
+                  allValues.push(...listValues);
+                }
+              } else if (screener.name === 'Community Gate') {
+                const abiCoder = new AbiCoder();
+                const configData = abiCoder.encode(
+                  ['address', 'bool'],
+                  [config.curatedListAddress, config.returnValueWhenCurated]
+                );
+                screenerConfigData.push(configData);
+                addressListNames.push(config.useBlocklist ? 'UAPBlockList' : '');
+                
+                // Store blocklist addresses if enabled
+                if (config.useBlocklist && config.blocklistAddresses && config.blocklistAddresses.length > 0) {
+                  const { keys: blocklistKeys, values: blocklistValues } = await setAddressList(
+                    erc725UAP,
+                    'UAPBlockList',
+                    config.blocklistAddresses
+                  );
+                  allKeys.push(...blocklistKeys);
+                  allValues.push(...blocklistValues);
+                }
+              }
+            }
+          }
+
+          if (screenerAddresses.length > 0) {
+            const { keys: screenerKeys, values: screenerValues } = await setScreenerAssistantConfig(
+              erc725UAP,
+              upContract,
+              assistantAddress,
+              typeId,
+              executionOrder,
+              screenerAddresses,
+              screenerConfigData,
+              useANDLogic,
+              addressListNames
+            );
+            
+            allKeys.push(...screenerKeys);
+            allValues.push(...screenerValues);
+          }
+        }
       }
 
       // Remove from types that are no longer selected
@@ -555,32 +799,65 @@ const SetupAssistant: React.FC<{
             </VStack>
           </CheckboxGroup>
         </Flex>
-        {configParams.map(param => (
-          <Flex
-            key={param.name}
-            flexDirection="row"
-            gap={4}
-            maxWidth="550px"
-            display={param.hidden ? 'none' : undefined}
-          >
-            <Text fontWeight="bold" fontSize="sm" w="70%">
-              {param.description}
-            </Text>
-            <Input
-              hidden={param.hidden}
-              placeholder={param.placeholder}
-              value={fieldValues[param.name] || ''}
-              onChange={e =>
-                setFieldValues({
-                  ...fieldValues,
-                  [param.name]: e.target.value,
-                })
+
+        <TransactionScreeningSection
+          selectedConfigTypes={selectedConfigTypes}
+          enableScreeners={enableScreeners}
+          selectedScreeners={selectedScreeners}
+          screenerConfigs={screenerConfigs}
+          useANDLogic={useANDLogic}
+          currentNetworkId={currentNetworkId}
+          onEnableScreenersChange={(enabled) => {
+            setEnableScreeners(enabled);
+            if (!enabled) {
+              setSelectedScreeners([]);
+              setScreenerConfigs({});
+            }
+          }}
+          onAddScreener={(instanceId, screener) => {
+            setSelectedScreeners(prev => [...prev, instanceId]);
+            // Initialize default config for the screener instance
+            const defaultConfig: any = {};
+            screener.configParams.forEach(param => {
+              if (param.defaultValue) {
+                defaultConfig[param.name] = param.defaultValue === 'true' ? true : param.defaultValue === 'false' ? false : param.defaultValue;
               }
-              w="70%"
-            />
-          </Flex>
-        ))}
-      </Flex>
+            });
+            setScreenerConfigs(prev => ({
+              ...prev,
+              [instanceId]: defaultConfig
+            }));
+          }}
+          onRemoveScreener={(instanceId) => {
+            setSelectedScreeners(prev => prev.filter(id => id !== instanceId));
+            setScreenerConfigs(prev => {
+              const newConfigs = { ...prev };
+              delete newConfigs[instanceId];
+              return newConfigs;
+            });
+          }}
+          onScreenerConfigChange={(instanceId, config) => {
+            setScreenerConfigs(prev => ({
+              ...prev,
+              [instanceId]: config
+            }));
+          }}
+          onLogicChange={setUseANDLogic}
+        />
+
+        <AssistantConfigurationSection
+          selectedConfigTypes={selectedConfigTypes}
+          configParams={configParams}
+          fieldValues={fieldValues}
+          assistantAddress={assistantAddress}
+          currentNetworkId={currentNetworkId}
+          onFieldChange={(fieldName, value) => {
+            setFieldValues({
+              ...fieldValues,
+              [fieldName]: value,
+            });
+          }}
+        />
 
       <Flex gap={2}>
         <Button
@@ -605,6 +882,7 @@ const SetupAssistant: React.FC<{
         >
           Save & Activate Assistant
         </Button>
+      </Flex>
       </Flex>
       
       {selectedTypeForReorder && allAssistantsForTypes[selectedTypeForReorder.typeId] && (
