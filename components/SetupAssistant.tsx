@@ -26,6 +26,7 @@ import { AbiCoder, BrowserProvider } from 'ethers';
 import {
   createUAPERC725Instance,
   setExecutiveAssistantConfig,
+  setExecutiveAssistantConfigWithScreenerMigration,
   fetchExecutiveAssistantConfig,
   removeExecutiveAssistantConfig,
   generateUAPTypeConfigKey,
@@ -130,6 +131,7 @@ const SetupAssistant: React.FC<{
   const [allAssistantsForTypes, setAllAssistantsForTypes] = useState<{
     [typeId: string]: { address: string; name: string; currentOrder: number; configData: string }[];
   }>({});
+  const [predictedExecutionOrders, setPredictedExecutionOrders] = useState<{ [typeId: string]: number }>({});
   const [selectedTypeForReorder, setSelectedTypeForReorder] = useState<{
     typeId: string;
     typeName: string;
@@ -384,6 +386,39 @@ const SetupAssistant: React.FC<{
   ]);
 
   // --------------------------------------------------------------------------
+  // Calculate predicted execution orders for newly selected transaction types
+  // --------------------------------------------------------------------------
+  useEffect(() => {
+    const newPredictedOrders: { [typeId: string]: number } = {};
+    
+    selectedConfigTypes.forEach(typeId => {
+      // If assistant is already configured for this type, don't predict
+      if (executionOrders[typeId] !== undefined) {
+        return;
+      }
+      
+      // Calculate what the execution order would be for this assistant
+      const currentAssistants = allAssistantsForTypes[typeId] || [];
+      const assistantAlreadyInList = currentAssistants.some(
+        assistant => assistant.address.toLowerCase() === assistantAddress.toLowerCase()
+      );
+      
+      if (!assistantAlreadyInList) {
+        // New assistant would be added at the end
+        newPredictedOrders[typeId] = currentAssistants.length;
+      } else {
+        // Assistant exists, find its current position
+        const existingIndex = currentAssistants.findIndex(
+          assistant => assistant.address.toLowerCase() === assistantAddress.toLowerCase()
+        );
+        newPredictedOrders[typeId] = existingIndex;
+      }
+    });
+    
+    setPredictedExecutionOrders(newPredictedOrders);
+  }, [selectedConfigTypes, allAssistantsForTypes, executionOrders, assistantAddress]);
+
+  // --------------------------------------------------------------------------
   // Handle reorder functionality
   // --------------------------------------------------------------------------
   const handleReorderClick = (typeId: string) => {
@@ -517,7 +552,7 @@ const SetupAssistant: React.FC<{
       for (let i = 0; i < selectedConfigTypes.length; i++) {
         const typeId = selectedConfigTypes[i];
         
-        const { keys, values, executionOrder } = await setExecutiveAssistantConfig(
+        const { keys, values, executionOrder } = await setExecutiveAssistantConfigWithScreenerMigration(
           erc725UAP,
           upContract,
           assistantAddress,
@@ -774,9 +809,18 @@ const SetupAssistant: React.FC<{
                         iconPath={iconPath}
                       />
                       <HStack spacing={2}>
-                        {executionOrders[id] !== undefined && (
+                        {(executionOrders[id] !== undefined || predictedExecutionOrders[id] !== undefined) && (
                           <Text fontSize="xs" color="orange.500" fontWeight="semibold">
-                            Execution Order: {executionOrders[id] + 1}
+                            Execution Order: {
+                              executionOrders[id] !== undefined 
+                                ? executionOrders[id] + 1 
+                                : predictedExecutionOrders[id] + 1
+                            }
+                            {executionOrders[id] === undefined && predictedExecutionOrders[id] !== undefined && (
+                              <Text as="span" fontSize="xs" color="orange.500" ml={1}>
+                                (pending activation)
+                              </Text>
+                            )}
                           </Text>
                         )}
                         {allAssistantsForTypes[id] && allAssistantsForTypes[id].length > 1 && (
@@ -818,7 +862,7 @@ const SetupAssistant: React.FC<{
             setSelectedScreeners(prev => [...prev, instanceId]);
             // Initialize default config for the screener instance
             const defaultConfig: any = {};
-            screener.configParams.forEach(param => {
+            screener.configParams.forEach((param: any) => {
               if (param.defaultValue) {
                 defaultConfig[param.name] = param.defaultValue === 'true' ? true : param.defaultValue === 'false' ? false : param.defaultValue;
               }

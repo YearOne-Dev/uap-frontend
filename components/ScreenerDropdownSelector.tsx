@@ -13,7 +13,6 @@ import {
   Image,
   Badge,
   Icon,
-  useColorModeValue,
   Flex,
 } from '@chakra-ui/react';
 import { ChevronDownIcon, AddIcon } from '@chakra-ui/icons';
@@ -33,9 +32,7 @@ const ScreenerDropdownSelector: React.FC<ScreenerDropdownSelectorProps> = ({
   onAddScreener,
   maxScreeners = 5,
 }) => {
-  const menuBg = useColorModeValue('white', 'gray.800');
-  const borderColor = useColorModeValue('gray.200', 'gray.600');
-  const hoverBg = useColorModeValue('gray.50', 'gray.700');
+  // Removed unused color mode variables as we now use fixed orange theme colors
 
   const availableScreeners = React.useMemo(() => {
     const network = supportedNetworks[networkId];
@@ -67,21 +64,36 @@ const ScreenerDropdownSelector: React.FC<ScreenerDropdownSelectorProps> = ({
           as={Button}
           rightIcon={<ChevronDownIcon />}
           leftIcon={<AddIcon />}
-          variant="outline"
-          colorScheme="orange"
+          bg="white"
+          color="orange.700"
+          border="2px solid"
+          borderColor="orange.300"
+          _hover={{ 
+            bg: "orange.50", 
+            borderColor: "orange.400"
+          }}
+          _active={{ 
+            bg: "orange.100"
+          }}
           size="md"
           width="100%"
           textAlign="left"
+          fontWeight="semibold"
+          h="12"
         >
           <Text fontSize="sm">Add Transaction Screener</Text>
         </MenuButton>
         
         <MenuList
-          bg={menuBg}
-          borderColor={borderColor}
+          bg="white"
+          border="2px solid"
+          borderColor="orange.200"
+          borderRadius="xl"
+          boxShadow="0 12px 24px rgba(251, 211, 141, 0.2)"
           maxH="400px"
           overflowY="auto"
           minW="400px"
+          p={0}
         >
           {availableScreeners.length === 0 ? (
             <MenuItem isDisabled>
@@ -91,22 +103,28 @@ const ScreenerDropdownSelector: React.FC<ScreenerDropdownSelectorProps> = ({
             </MenuItem>
           ) : (
             <>
-              <Box p={3} borderBottom="1px solid" borderColor={borderColor}>
-                <Text fontSize="xs" fontWeight="bold" color="gray.600" textTransform="uppercase">
+              <Box p={4} bg="orange.50" borderBottom="2px solid" borderColor="orange.100" borderTopRadius="xl">
+                <Text fontSize="xs" fontWeight="bold" color="orange.800" textTransform="uppercase" letterSpacing="wide">
                   Available Transaction Screeners
                 </Text>
-                <Text fontSize="xs" color="gray.500" mt={1}>
+                <Text fontSize="xs" color="orange.600" mt={1}>
                   Choose screeners to qualify transactions for your assistant
                 </Text>
               </Box>
               
-              {availableScreeners.map((screener) => (
-                <MenuItem
-                  key={screener.address}
-                  onClick={() => handleScreenerSelect(screener)}
-                  _hover={{ bg: hoverBg }}
-                  p={4}
-                >
+              {availableScreeners.map((screener, index) => (
+                <React.Fragment key={screener.address}>
+                  <MenuItem
+                    onClick={() => handleScreenerSelect(screener)}
+                    _hover={{ 
+                      bg: "orange.25"
+                    }}
+                    _active={{ 
+                      bg: "orange.50"
+                    }}
+                    p={4}
+                    transition="background-color 0.15s ease"
+                  >
                   <HStack spacing={3} align="center" width="100%">
                     {/* Screener Icon */}
                     <Box flexShrink={0}>
@@ -145,22 +163,6 @@ const ScreenerDropdownSelector: React.FC<ScreenerDropdownSelectorProps> = ({
                         {screener.description}
                       </Text>
                       
-                      {/* Configuration Preview */}
-                      <HStack spacing={2} mt={1}>
-                        <Text fontSize="xs" color="gray.500">
-                          Configurable:
-                        </Text>
-                        {screener.configParams.slice(0, 2).map((param, index) => (
-                          <Badge key={index} variant="outline" size="sm" fontSize="xs">
-                            {param.name}
-                          </Badge>
-                        ))}
-                        {screener.configParams.length > 2 && (
-                          <Text fontSize="xs" color="gray.500">
-                            +{screener.configParams.length - 2} more
-                          </Text>
-                        )}
-                      </HStack>
                     </VStack>
 
                     {/* Add Indicator */}
@@ -168,17 +170,27 @@ const ScreenerDropdownSelector: React.FC<ScreenerDropdownSelectorProps> = ({
                       bg="orange.500"
                       color="white"
                       borderRadius="full"
-                      p={1}
+                      w="6"
+                      h="6"
+                      display="flex"
+                      alignItems="center"
+                      justifyContent="center"
                       flexShrink={0}
                     >
                       <AddIcon boxSize="3" />
                     </Box>
                   </HStack>
-                </MenuItem>
+                  </MenuItem>
+                  
+                  {/* Add separator between screener items */}
+                  {index < availableScreeners.length - 1 && (
+                    <Box h="1px" bg="orange.100" mx={4} />
+                  )}
+                </React.Fragment>
               ))}
               
-              <Box p={3} borderTop="1px solid" borderColor={borderColor}>
-                <Text fontSize="xs" color="gray.500" textAlign="center">
+              <Box p={4} bg="orange.50" borderTop="2px solid" borderColor="orange.100" borderBottomRadius="xl">
+                <Text fontSize="xs" color="orange.600" textAlign="center" lineHeight="1.4">
                   💡 You can add multiple instances of the same screener with different configurations
                 </Text>
               </Box>

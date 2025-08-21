@@ -45,6 +45,7 @@ const TransactionScreeningSection: React.FC<TransactionScreeningSectionProps> = 
 
   return (
     <Box 
+      maxWidth="750px" // Constrain maximum width for better readability
       p={6} 
       bg="orange.50" 
       border="2px solid" 
@@ -53,24 +54,47 @@ const TransactionScreeningSection: React.FC<TransactionScreeningSectionProps> = 
       position="relative"
     >
       <VStack spacing={4} align="stretch">
-        <HStack justify="space-between" align="center">
-          <VStack align="start" spacing={1}>
-            <Text fontSize="lg" fontWeight="bold" color="orange.800">
-              🛡️ Transaction Screening
-            </Text>
+        <Box>
+          {/* Mobile and Tablet Layout */}
+          <VStack align="stretch" spacing={3} display={{ base: "flex", md: "none" }}>
+            <HStack justify="space-between" align="center">
+              <Text fontSize="lg" fontWeight="bold" color="orange.800">
+                🛡️ Transaction Screening
+              </Text>
+              <Switch
+                isChecked={enableScreeners}
+                onChange={(e) => {
+                  onEnableScreenersChange(e.target.checked);
+                }}
+                colorScheme="orange"
+                size="lg"
+              />
+            </HStack>
             <Text fontSize="sm" color="orange.700">
               Optional: Add screeners to qualify transactions for your assistant
             </Text>
           </VStack>
-          <Switch
-            isChecked={enableScreeners}
-            onChange={(e) => {
-              onEnableScreenersChange(e.target.checked);
-            }}
-            colorScheme="orange"
-            size="lg"
-          />
-        </HStack>
+
+          {/* Desktop Layout */}
+          <HStack spacing={6} align="center" display={{ base: "none", md: "flex" }}>
+            <VStack align="start" spacing={1} flex={1} maxWidth="500px">
+              <Text fontSize="lg" fontWeight="bold" color="orange.800">
+                🛡️ Transaction Screening
+              </Text>
+              <Text fontSize="sm" color="orange.700">
+                Optional: Add screeners to qualify transactions for your assistant
+              </Text>
+            </VStack>
+            <Switch
+              isChecked={enableScreeners}
+              onChange={(e) => {
+                onEnableScreenersChange(e.target.checked);
+              }}
+              colorScheme="orange"
+              size="lg"
+            />
+          </HStack>
+        </Box>
 
         <Collapse in={enableScreeners}>
           <VStack spacing={6} align="stretch">
@@ -80,11 +104,6 @@ const TransactionScreeningSection: React.FC<TransactionScreeningSectionProps> = 
                 useANDLogic={useANDLogic}
                 onLogicChange={onLogicChange}
                 screenerCount={selectedScreeners.length}
-                screenerNames={selectedScreeners.map(instanceId => {
-                  // Extract screener address from instanceId
-                  const screenerAddress = instanceId.split('_')[0];
-                  return supportedNetworks[currentNetworkId]?.screeners[screenerAddress.toLowerCase()]?.name || 'Unknown Screener'
-                })}
               />
             )}
 

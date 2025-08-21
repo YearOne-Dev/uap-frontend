@@ -108,7 +108,8 @@ export const setExecutiveAssistantConfig = async (
   assistantAddress: string,
   typeId: string,
   configData: string,
-  updateTypeConfig: boolean = true
+  updateTypeConfig: boolean = true,
+  providedExecutionOrder?: number
 ): Promise<{ keys: string[]; values: string[]; executionOrder: number }> => {
   const keys: string[] = [];
   const values: string[] = [];
@@ -128,11 +129,14 @@ export const setExecutiveAssistantConfig = async (
     currentAssistants = [];
   }
 
-  // Calculate execution order based on current array length (BEFORE adding assistant)
+  // Calculate execution order based on provided order or current array
   const assistantLower = assistantAddress.toLowerCase();
   const existingIndex = currentAssistants.findIndex(addr => addr.toLowerCase() === assistantLower);
   
-  if (existingIndex !== -1) {
+  if (providedExecutionOrder !== undefined) {
+    // Use the provided execution order (for migration scenarios)
+    executionOrder = providedExecutionOrder;
+  } else if (existingIndex !== -1) {
     // Assistant already exists, use its current position
     executionOrder = existingIndex;
   } else {
@@ -232,8 +236,7 @@ export const reorderExecutiveAssistants = async (
   const keys: string[] = [];
   const values: string[] = [];
 
-  // Step 1: Clear all existing executive configs for this type
-  // We need to find all existing configs first
+  // Step 1: Get current assistant configuration to detect order changes
   const typeConfigKey = generateUAPTypeConfigKey(erc725UAP, typeId);
   let existingAssistants: string[] = [];
   
@@ -246,14 +249,46 @@ export const reorderExecutiveAssistants = async (
     console.warn('Could not fetch existing assistants:', error);
   }
 
-  // Remove all existing executive configs
+  // Step 2: Handle screener migrations for assistants that changed execution order
+  for (let newIndex = 0; newIndex < orderedAssistants.length; newIndex++) {
+    const assistant = orderedAssistants[newIndex];
+    const assistantLower = assistant.address.toLowerCase();
+    
+    // Find the current execution order of this assistant
+    const currentIndex = existingAssistants.findIndex(addr => addr.toLowerCase() === assistantLower);
+    
+    // If assistant exists and is moving to a different position, migrate screeners
+    if (currentIndex !== -1 && currentIndex !== newIndex) {
+      console.log(`Migrating screeners for assistant ${assistant.address} from order ${currentIndex} to ${newIndex}`);
+      
+      try {
+        const migrationBatch = await migrateExecutiveOrderWithScreeners(
+          erc725UAP,
+          upContract,
+          assistant.address,
+          typeId,
+          currentIndex, // old execution order
+          newIndex      // new execution order
+        );
+        
+        // Add migration batch to the transaction
+        keys.push(...migrationBatch.keys);
+        values.push(...migrationBatch.values);
+      } catch (migrationError) {
+        console.error(`Error migrating screeners for assistant ${assistant.address}:`, migrationError);
+        // Continue with reordering even if screener migration fails
+      }
+    }
+  }
+
+  // Step 3: Clear all existing executive configs
   for (let i = 0; i < existingAssistants.length; i++) {
     const executiveKey = generateUAPExecutiveConfigKey(erc725UAP, typeId, i);
     keys.push(executiveKey);
     values.push('0x');
   }
 
-  // Step 2: Set new executive configs in the new order
+  // Step 4: Set new executive configs in the new order
   for (let i = 0; i < orderedAssistants.length; i++) {
     const assistant = orderedAssistants[i];
     const executiveKey = generateUAPExecutiveConfigKey(erc725UAP, typeId, i);
@@ -266,7 +301,7 @@ export const reorderExecutiveAssistants = async (
     values.push(execData);
   }
 
-  // Step 3: Update the type config with the new ordered array
+  // Step 5: Update the type config with the new ordered array
   const orderedAddresses = orderedAssistants.map(a => a.address);
   const encodedAssistants = erc725UAP.encodeValueType('address[]', orderedAddresses);
   keys.push(typeConfigKey);
@@ -827,6 +862,144 @@ export const removeScreenerAssistantConfig = async (
   return { keys, values };
 };
 
+// ===================================================================
+// EXECUTIVE ORDER MIGRATION UTILITIES
+// ===================================================================
+
+// Migrate screener configuration when executive execution order changes
+export const migrateExecutiveOrderWithScreeners = async (
+  erc725UAP: ERC725,
+  upContract: any,
+  executiveAddress: string,
+  typeId: string,
+  oldExecutionOrder: number,
+  newExecutionOrder: number
+): Promise<{ keys: string[], values: string[] }> => {
+  const keys: string[] = [];
+  const values: string[] = [];
+
+  try {
+    // STEP 1: Fetch existing screener configuration from old execution order
+    const existingConfig = await fetchScreenerAssistantConfig(
+      erc725UAP, 
+      upContract, 
+      executiveAddress, 
+      typeId, 
+      oldExecutionOrder
+    );
+
+    // STEP 2: If there are screeners, prepare migration batch
+    if (existingConfig.screenerAddresses.length > 0) {
+      // Delete old screener keys (set to '0x' for cleanup)
+      const oldScreenersKey = generateUAPExecutiveScreenersKey(erc725UAP, typeId, oldExecutionOrder);
+      const oldLogicKey = generateUAPExecutiveScreenersANDLogicKey(erc725UAP, typeId, oldExecutionOrder);
+      
+      keys.push(oldScreenersKey, oldLogicKey);
+      values.push('0x', '0x');
+
+      // Delete old individual screener configs
+      for (let i = 0; i < existingConfig.screenerAddresses.length; i++) {
+        const oldScreenerOrder = calculateScreenerOrder(oldExecutionOrder, i);
+        const oldConfigKey = generateUAPScreenerConfigKey(erc725UAP, typeId, oldScreenerOrder);
+        const oldListNameKey = generateUAPAddressListNameKey(erc725UAP, typeId, oldScreenerOrder);
+        
+        keys.push(oldConfigKey, oldListNameKey);
+        values.push('0x', '0x');
+      }
+
+      // STEP 3: Create new screener configuration at new execution order
+      const screenerConfig = await setScreenerAssistantConfig(
+        erc725UAP,
+        upContract,
+        executiveAddress,
+        typeId,
+        newExecutionOrder,
+        existingConfig.screenerAddresses,
+        existingConfig.screenerConfigData,
+        existingConfig.useANDLogic,
+        existingConfig.addressListNames
+      );
+
+      // Add new screener keys and values to the batch
+      keys.push(...screenerConfig.keys);
+      values.push(...screenerConfig.values);
+    }
+
+    return { keys, values };
+
+  } catch (error) {
+    console.error('Error migrating executive order with screeners:', error);
+    // Return empty batch on error to avoid corrupting data
+    return { keys: [], values: [] };
+  }
+};
+
+// Enhanced setExecutiveAssistantConfig that handles execution order changes with screener migration
+export const setExecutiveAssistantConfigWithScreenerMigration = async (
+  erc725UAP: ERC725,
+  upContract: any,
+  assistantAddress: string,
+  typeId: string,
+  configData: string,
+  updateTypeConfig: boolean = true,
+  providedExecutionOrder?: number
+): Promise<{ keys: string[]; values: string[]; executionOrder: number }> => {
+  // Get current state
+  const typeConfigKey = generateUAPTypeConfigKey(erc725UAP, typeId);
+  const currentValue = await upContract.getData(typeConfigKey);
+  const currentAssistants = currentValue && currentValue !== '0x' 
+    ? erc725UAP.decodeValueType('address[]', currentValue) as string[]
+    : [];
+
+  const assistantLower = assistantAddress.toLowerCase();
+  const existingIndex = currentAssistants.findIndex(addr => addr.toLowerCase() === assistantLower);
+  
+  let executionOrder: number;
+  let migrationBatch: { keys: string[], values: string[] } = { keys: [], values: [] };
+
+  // Determine execution order and check if migration is needed
+  if (providedExecutionOrder !== undefined) {
+    executionOrder = providedExecutionOrder;
+    
+    // Check if assistant exists at different execution order (requires migration)
+    if (existingIndex !== -1 && existingIndex !== executionOrder) {
+      console.log(`Migrating screeners for ${assistantAddress} from order ${existingIndex} to ${executionOrder}`);
+      migrationBatch = await migrateExecutiveOrderWithScreeners(
+        erc725UAP,
+        upContract,
+        assistantAddress,
+        typeId,
+        existingIndex, // old order
+        executionOrder  // new order
+      );
+    }
+  } else if (existingIndex !== -1) {
+    // Assistant exists, use current position
+    executionOrder = existingIndex;
+  } else {
+    // New assistant, add at end
+    executionOrder = currentAssistants.length;
+  }
+
+  // Get regular executive config batch
+  const executiveConfig = await setExecutiveAssistantConfig(
+    erc725UAP,
+    upContract,
+    assistantAddress,
+    typeId,
+    configData,
+    updateTypeConfig,
+    executionOrder
+  );
+
+  // Combine migration batch with executive config batch
+  const allKeys = [...migrationBatch.keys, ...executiveConfig.keys];
+  const allValues = [...migrationBatch.values, ...executiveConfig.values];
+
+  return { keys: allKeys, values: allValues, executionOrder };
+};
+
+// ===================================================================
 // LSP2 Address List Utilities
 
 // Generate LSP2/LSP5 list item index key (ListName[index])
@@ -861,7 +1034,7 @@ export const setAddressList = async (
   
   // Set list length using LSP5 pattern
   const listLengthKey = erc725UAP.encodeKeyName(`${listName}[]`);
-  const listLength = erc725UAP.encodeValueType('uint256', addresses.length);
+  const listLength = erc725UAP.encodeValueType('uint256', addresses.length.toString());
   keys.push(listLengthKey);
   values.push(listLength);
   
@@ -913,8 +1086,8 @@ export const getAddressList = async (
     
     const itemValues = await upContract.getDataBatch(itemKeys);
     return itemValues
-      .filter(value => value && value !== '0x')
-      .map(value => erc725UAP.decodeValueType('address', value) as string);
+      .filter((value: any) => value && value !== '0x')
+      .map((value: any) => erc725UAP.decodeValueType('address', value) as string);
   } catch (error) {
     console.warn(`Error fetching address list ${listName}:`, error);
     return [];
