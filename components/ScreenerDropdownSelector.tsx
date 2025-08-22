@@ -108,7 +108,7 @@ const ScreenerDropdownSelector: React.FC<ScreenerDropdownSelectorProps> = ({
                   Available Transaction Screeners
                 </Text>
                 <Text fontSize="xs" color="orange.600" mt={1}>
-                  Choose screeners to qualify transactions for your assistant
+                  Choose screeners to control when your assistant activates
                 </Text>
               </Box>
               

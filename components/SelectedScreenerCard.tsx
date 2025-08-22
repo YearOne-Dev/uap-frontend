@@ -24,6 +24,8 @@ interface SelectedScreenerCardProps {
   onConfigChange: (instanceId: string, config: any) => void;
   onRemove: (instanceId: string) => void;
   networkId: number;
+  isLoadedFromBlockchain?: boolean; // New prop to indicate if this was loaded vs newly added
+  originalConfig?: any; // Original config for change detection
 }
 
 const SelectedScreenerCard: React.FC<SelectedScreenerCardProps> = ({
@@ -33,6 +35,8 @@ const SelectedScreenerCard: React.FC<SelectedScreenerCardProps> = ({
   onConfigChange,
   onRemove,
   networkId,
+  isLoadedFromBlockchain = false,
+  originalConfig,
 }) => {
   const cardBg = useColorModeValue('white', 'gray.700');
   const borderColor = useColorModeValue('orange.200', 'orange.400');
@@ -44,6 +48,35 @@ const SelectedScreenerCard: React.FC<SelectedScreenerCardProps> = ({
       ...newConfig,
     });
   };
+
+  // Determine screener status
+  const getScreenerStatus = () => {
+    // Check if screener is properly configured
+    let isConfigured = false;
+    
+    if (screener.name === 'Address List Screener') {
+      isConfigured = config?.addresses && config.addresses.length > 0;
+    } else if (screener.name === 'Community Gate') {
+      isConfigured = config?.curatedListAddress && config.curatedListAddress.trim() !== '';
+    }
+
+    if (isLoadedFromBlockchain) {
+      // Check if loaded screener has been modified
+      if (originalConfig && JSON.stringify(config) !== JSON.stringify(originalConfig)) {
+        return { text: "Unsaved Changes", colorScheme: "orange" };
+      }
+      return { text: "Active", colorScheme: "green" };
+    }
+
+    // For newly added screeners
+    if (isConfigured) {
+      return { text: "Pending Activation", colorScheme: "orange" };
+    } else {
+      return { text: "Configure Required", colorScheme: "yellow" };
+    }
+  };
+
+  const status = getScreenerStatus();
 
   return (
     <Box
@@ -84,8 +117,8 @@ const SelectedScreenerCard: React.FC<SelectedScreenerCardProps> = ({
               <Text fontWeight="bold" fontSize="sm" noOfLines={1}>
                 {screener.name}
               </Text>
-              <Badge colorScheme="orange" size="sm">
-                Active
+              <Badge colorScheme={status.colorScheme} size="sm">
+                {status.text}
               </Badge>
             </HStack>
             <Text fontSize="xs" color="gray.600" noOfLines={1}>

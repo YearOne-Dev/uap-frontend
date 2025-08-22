@@ -7,18 +7,21 @@ import {
   Text,
   Switch,
   Collapse,
-  useColorModeValue,
+  Image,
+  Flex,
 } from '@chakra-ui/react';
 import ScreenerDropdownSelector from './ScreenerDropdownSelector';
 import SelectedScreenerCard from './SelectedScreenerCard';
 import ScreenerLogicSelector from './ScreenerLogicSelector';
 import { supportedNetworks } from '@/constants/supportedNetworks';
+import { transactionTypeMap } from './TransactionTypeBlock';
 
 interface TransactionScreeningSectionProps {
   selectedConfigTypes: string[];
   enableScreeners: boolean;
   selectedScreeners: string[];
   screenerConfigs: { [screenerId: string]: any };
+  originalScreenerConfigs?: { [screenerId: string]: any }; // Original configs for change detection
   useANDLogic: boolean;
   currentNetworkId: number;
   onEnableScreenersChange: (enabled: boolean) => void;
@@ -33,6 +36,7 @@ const TransactionScreeningSection: React.FC<TransactionScreeningSectionProps> = 
   enableScreeners,
   selectedScreeners,
   screenerConfigs,
+  originalScreenerConfigs,
   useANDLogic,
   currentNetworkId,
   onEnableScreenersChange,
@@ -42,6 +46,10 @@ const TransactionScreeningSection: React.FC<TransactionScreeningSectionProps> = 
   onLogicChange,
 }) => {
   if (selectedConfigTypes.length === 0) return null;
+
+  // Get transaction type info for the first (and only) type
+  const typeId = selectedConfigTypes[0];
+  const typeInfo = Object.values(transactionTypeMap).find(t => t.id === typeId);
 
   return (
     <Box 
@@ -58,9 +66,36 @@ const TransactionScreeningSection: React.FC<TransactionScreeningSectionProps> = 
           {/* Mobile and Tablet Layout */}
           <VStack align="stretch" spacing={3} display={{ base: "flex", md: "none" }}>
             <HStack justify="space-between" align="center">
-              <Text fontSize="lg" fontWeight="bold" color="orange.800">
-                🛡️ Transaction Screening
-              </Text>
+              <VStack align="start" spacing={2}>
+                <Text fontSize="lg" fontWeight="bold" color="orange.800">
+                  🛡️ Transaction Screening
+                </Text>
+                {typeInfo && (
+                  <HStack spacing={2} align="center">
+                    <Text fontSize="sm" color="orange.600">
+                      for
+                    </Text>
+                    <Flex align="center" gap={1}>
+                      <Text fontSize="sm" fontWeight="bold" color="orange.700">
+                        {typeInfo.label}
+                      </Text>
+                      <HStack spacing={1} align="center">
+                        {typeInfo.icon && (
+                          <Text fontSize="sm">
+                            {typeInfo.icon}
+                          </Text>
+                        )}
+                        {typeInfo.iconPath && (
+                          <Image src={typeInfo.iconPath} alt={typeInfo.typeName} height="16px" />
+                        )}
+                        <Text fontSize="sm" fontWeight="bold" color="orange.700">
+                          {typeInfo.typeName}
+                        </Text>
+                      </HStack>
+                    </Flex>
+                  </HStack>
+                )}
+              </VStack>
               <Switch
                 isChecked={enableScreeners}
                 onChange={(e) => {
@@ -71,18 +106,43 @@ const TransactionScreeningSection: React.FC<TransactionScreeningSectionProps> = 
               />
             </HStack>
             <Text fontSize="sm" color="orange.700">
-              Optional: Add screeners to qualify transactions for your assistant
+              Optional: Add screeners to control when your assistant activates (transactions always process)
             </Text>
           </VStack>
 
           {/* Desktop Layout */}
           <HStack spacing={6} align="center" display={{ base: "none", md: "flex" }}>
-            <VStack align="start" spacing={1} flex={1} maxWidth="500px">
+            <VStack align="start" spacing={2} flex={1} maxWidth="500px">
               <Text fontSize="lg" fontWeight="bold" color="orange.800">
                 🛡️ Transaction Screening
               </Text>
+              {typeInfo && (
+                <HStack spacing={2} align="center">
+                  <Text fontSize="sm" color="orange.600">
+                    for
+                  </Text>
+                  <Flex align="center" gap={1}>
+                    <Text fontSize="md" fontWeight="bold" color="orange.700">
+                      {typeInfo.label}
+                    </Text>
+                    <HStack spacing={1} align="center">
+                      {typeInfo.icon && (
+                        <Text fontSize="md">
+                          {typeInfo.icon}
+                        </Text>
+                      )}
+                      {typeInfo.iconPath && (
+                        <Image src={typeInfo.iconPath} alt={typeInfo.typeName} height="18px" />
+                      )}
+                      <Text fontSize="md" fontWeight="bold" color="orange.700">
+                        {typeInfo.typeName}
+                      </Text>
+                    </HStack>
+                  </Flex>
+                </HStack>
+              )}
               <Text fontSize="sm" color="orange.700">
-                Optional: Add screeners to qualify transactions for your assistant
+                Optional: Add screeners to control when your assistant activates (transactions always process)
               </Text>
             </VStack>
             <Switch
@@ -140,9 +200,11 @@ const TransactionScreeningSection: React.FC<TransactionScreeningSectionProps> = 
                         instanceId={instanceId}
                         screener={screener}
                         config={screenerConfigs[instanceId] || {}}
+                        originalConfig={originalScreenerConfigs?.[instanceId]}
                         onConfigChange={onScreenerConfigChange}
                         onRemove={onRemoveScreener}
                         networkId={currentNetworkId}
+                        isLoadedFromBlockchain={instanceId.includes('_loaded_')}
                       />
                       
                       {/* AND/OR Logic Indicator between cards */}
@@ -171,7 +233,7 @@ const TransactionScreeningSection: React.FC<TransactionScreeningSectionProps> = 
             {!enableScreeners && (
               <Box p={4} bg="white" borderRadius="lg" border="1px solid" borderColor="orange.300">
                 <Text fontSize="sm" color="gray.600" textAlign="center">
-                  💡 Your assistant will run for all transactions. Enable screening above to add qualification rules.
+                  💡 Your assistant will activate for all matching transactions. Enable screening above to add activation conditions.
                 </Text>
               </Box>
             )}

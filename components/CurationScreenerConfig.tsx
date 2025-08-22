@@ -170,7 +170,7 @@ const CurationScreenerConfig: React.FC<CurationScreenerConfigProps> = ({
               <VStack align="start" spacing={1}>
                 <Text fontSize="sm">Community members pass screening</Text>
                 <Text fontSize="xs" color="gray.600">
-                  Only addresses that are community members qualify for executive pickup
+                  Only addresses that are community members will trigger the assistant
                 </Text>
               </VStack>
             </Radio>
@@ -178,7 +178,7 @@ const CurationScreenerConfig: React.FC<CurationScreenerConfigProps> = ({
               <VStack align="start" spacing={1}>
                 <Text fontSize="sm">Community members fail screening</Text>
                 <Text fontSize="xs" color="gray.600">
-                  Community member addresses do not qualify and are filtered out
+                  Community member addresses will not trigger the assistant
                 </Text>
               </VStack>
             </Radio>
@@ -232,7 +232,7 @@ const CurationScreenerConfig: React.FC<CurationScreenerConfigProps> = ({
             • Uses sender address to verify membership in the curated community list
           </Text>
           <Text fontSize="xs" color="blue.700">
-            • Perfect for community-driven transaction qualification systems
+            • Perfect for community-driven assistant activation systems
           </Text>
           {useBlocklist && (
             <Text fontSize="xs" color="blue.700">

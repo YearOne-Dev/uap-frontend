@@ -50,7 +50,7 @@ const ScreenerAssistantSelector: React.FC<ScreenerAssistantSelectorProps> = ({
             Screener Configuration
           </Text>
           <Text fontSize="sm" color="gray.600">
-            Add screeners to qualify transactions for this assistant
+            Add screeners to control when this assistant activates
           </Text>
         </VStack>
         {selectedScreeners.length > 0 && (

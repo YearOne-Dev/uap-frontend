@@ -5,7 +5,7 @@ import { ethers } from 'ethers';
 export const notifierListScreenerTestnet: ScreenerAssistant = {
   address: '0x31c7ab87662132f5901f190032d49e0abe9fabec',
   name: 'Address List Screener',
-  description: 'Screen transactions based on sender address - only qualified addresses pass screening',
+  description: 'Screen transactions based on notifier address - only qualified addresses pass screening',
   iconPath: '/screeners/default-list.svg',
   assistantType: 'Screener',
   creatorAddress: '0xfE67D89DeBEC38592aB2FeD217b8bbb28851DF88',
@@ -62,7 +62,7 @@ export const notifierCurationScreenerTestnet: ScreenerAssistant = {
 export const notifierListScreenerMainnet: ScreenerAssistant = {
   address: '0x7fe2bf2ec24f94fd43f10d6911123a18450e3c5e',
   name: 'Address List Screener',
-  description: 'Screen transactions based on sender address - only qualified addresses pass screening',
+  description: 'Screen transactions based on notifier address - only qualified addresses pass screening',
   iconPath: '/screeners/default-list.svg',
   assistantType: 'Screener',
   creatorAddress: '0xec1c59E78De6f840A66b6EE8E4066700Be863529',
