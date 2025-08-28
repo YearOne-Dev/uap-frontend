@@ -59,21 +59,21 @@ const ScreenerDropdownSelector: React.FC<ScreenerDropdownSelectorProps> = ({
 
   return (
     <Box>
-      <Menu>
+      <Menu strategy="fixed">
         <MenuButton
           as={Button}
           rightIcon={<ChevronDownIcon />}
           leftIcon={<AddIcon />}
           bg="white"
-          color="orange.700"
+          color="blue.700"
           border="2px solid"
-          borderColor="orange.300"
+          borderColor="blue.300"
           _hover={{ 
-            bg: "orange.50", 
-            borderColor: "orange.400"
+            bg: "blue.50", 
+            borderColor: "blue.400"
           }}
           _active={{ 
-            bg: "orange.100"
+            bg: "blue.100"
           }}
           size="md"
           width="100%"
@@ -87,13 +87,14 @@ const ScreenerDropdownSelector: React.FC<ScreenerDropdownSelectorProps> = ({
         <MenuList
           bg="white"
           border="2px solid"
-          borderColor="orange.200"
+          borderColor="blue.200"
           borderRadius="xl"
           boxShadow="0 12px 24px rgba(251, 211, 141, 0.2)"
           maxH="400px"
           overflowY="auto"
           minW="400px"
           p={0}
+          zIndex={1000}
         >
           {availableScreeners.length === 0 ? (
             <MenuItem isDisabled>
@@ -103,11 +104,11 @@ const ScreenerDropdownSelector: React.FC<ScreenerDropdownSelectorProps> = ({
             </MenuItem>
           ) : (
             <>
-              <Box p={4} bg="orange.50" borderBottom="2px solid" borderColor="orange.100" borderTopRadius="xl">
-                <Text fontSize="xs" fontWeight="bold" color="orange.800" textTransform="uppercase" letterSpacing="wide">
+              <Box p={4} bg="blue.50" borderBottom="2px solid" borderColor="blue.100" borderTopRadius="xl">
+                <Text fontSize="xs" fontWeight="bold" color="blue.800" textTransform="uppercase" letterSpacing="wide">
                   Available Transaction Screeners
                 </Text>
-                <Text fontSize="xs" color="orange.600" mt={1}>
+                <Text fontSize="xs" color="blue.600" mt={1}>
                   Choose screeners to control when your assistant activates
                 </Text>
               </Box>
@@ -117,10 +118,10 @@ const ScreenerDropdownSelector: React.FC<ScreenerDropdownSelectorProps> = ({
                   <MenuItem
                     onClick={() => handleScreenerSelect(screener)}
                     _hover={{ 
-                      bg: "orange.25"
+                      bg: "blue.25"
                     }}
                     _active={{ 
-                      bg: "orange.50"
+                      bg: "blue.50"
                     }}
                     p={4}
                     transition="background-color 0.15s ease"
@@ -136,7 +137,7 @@ const ScreenerDropdownSelector: React.FC<ScreenerDropdownSelectorProps> = ({
                         fallback={
                           <Box
                             boxSize="10"
-                            bg="orange.100"
+                            bg="blue.100"
                             borderRadius="lg"
                             display="flex"
                             alignItems="center"
@@ -154,7 +155,7 @@ const ScreenerDropdownSelector: React.FC<ScreenerDropdownSelectorProps> = ({
                         <Text fontWeight="bold" fontSize="sm" noOfLines={1}>
                           {screener.name}
                         </Text>
-                        <Badge colorScheme="orange" size="sm" flexShrink={0}>
+                        <Badge colorScheme="blue" size="sm" flexShrink={0}>
                           Screening Assistant
                         </Badge>
                       </HStack>
@@ -167,7 +168,7 @@ const ScreenerDropdownSelector: React.FC<ScreenerDropdownSelectorProps> = ({
 
                     {/* Add Indicator */}
                     <Box
-                      bg="orange.500"
+                      bg="blue.500"
                       color="white"
                       borderRadius="full"
                       w="6"
@@ -184,13 +185,13 @@ const ScreenerDropdownSelector: React.FC<ScreenerDropdownSelectorProps> = ({
                   
                   {/* Add separator between screener items */}
                   {index < availableScreeners.length - 1 && (
-                    <Box h="1px" bg="orange.100" mx={4} />
+                    <Box h="1px" bg="blue.100" mx={4} />
                   )}
                 </React.Fragment>
               ))}
               
-              <Box p={4} bg="orange.50" borderTop="2px solid" borderColor="orange.100" borderBottomRadius="xl">
-                <Text fontSize="xs" color="orange.600" textAlign="center" lineHeight="1.4">
+              <Box p={4} bg="blue.50" borderTop="2px solid" borderColor="blue.100" borderBottomRadius="xl">
+                <Text fontSize="xs" color="blue.600" textAlign="center" lineHeight="1.4">
                   💡 You can add multiple instances of the same screener with different configurations
                 </Text>
               </Box>

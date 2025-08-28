@@ -469,7 +469,7 @@ describe('configDataKeyValueStore', () => {
         expect(result.values).toHaveLength(5)
         
         // Verify list length encoding
-        expect(mockERC725.encodeValueType).toHaveBeenCalledWith('uint256', 2)
+        expect(mockERC725.encodeValueType).toHaveBeenCalledWith('uint256', BigInt(2))
         
         // Verify address encoding
         expect(mockERC725.encodeValueType).toHaveBeenCalledWith('address', addresses[0])
@@ -487,7 +487,7 @@ describe('configDataKeyValueStore', () => {
 
         expect(result.keys).toHaveLength(1) // Only length key
         expect(result.values).toHaveLength(1)
-        expect(mockERC725.encodeValueType).toHaveBeenCalledWith('uint256', 0)
+        expect(mockERC725.encodeValueType).toHaveBeenCalledWith('uint256', BigInt(0))
       })
     })
   })

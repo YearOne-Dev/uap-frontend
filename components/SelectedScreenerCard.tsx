@@ -39,7 +39,7 @@ const SelectedScreenerCard: React.FC<SelectedScreenerCardProps> = ({
   originalConfig,
 }) => {
   const cardBg = useColorModeValue('white', 'gray.700');
-  const borderColor = useColorModeValue('orange.200', 'orange.400');
+  const borderColor = useColorModeValue('blue.200', 'blue.400');
   const { isOpen, onToggle } = useDisclosure({ defaultIsOpen: true });
 
   const handleConfigUpdate = (newConfig: any) => {
@@ -100,7 +100,7 @@ const SelectedScreenerCard: React.FC<SelectedScreenerCardProps> = ({
             fallback={
               <Box
                 boxSize="8"
-                bg="orange.100"
+                bg="blue.100"
                 borderRadius="lg"
                 display="flex"
                 alignItems="center"
@@ -150,7 +150,7 @@ const SelectedScreenerCard: React.FC<SelectedScreenerCardProps> = ({
       {/* Configuration Section */}
       <Collapse in={isOpen}>
         <Box mt={3} pt={3} borderTop="1px solid" borderColor="gray.200">
-          <Text fontSize="sm" fontWeight="semibold" mb={3} color="orange.800">
+          <Text fontSize="sm" fontWeight="semibold" mb={3} color="blue.800">
             ⚙️ Screening Configuration
           </Text>
 

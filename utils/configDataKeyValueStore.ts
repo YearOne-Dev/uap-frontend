@@ -1,6 +1,6 @@
 // Updated UAP configuration utilities for the new protocol format
 import { ERC725YDataKeys, LSP1_TYPE_IDS } from '@lukso/lsp-smart-contracts';
-import { BrowserProvider, ethers } from 'ethers';
+import { BrowserProvider, ethers, AbiCoder } from 'ethers';
 import UniversalProfile from '@lukso/lsp-smart-contracts/artifacts/UniversalProfile.json';
 import LSP6Schema from '@erc725/erc725.js/schemas/LSP6KeyManager.json';
 import ERC725, { ERC725JSONSchema } from '@erc725/erc725.js';
@@ -226,17 +226,264 @@ export const fetchExecutiveAssistantConfig = async (
   return { configuredTypes, executionOrders, configData };
 };
 
-// NEW: Reorder assistants for a specific type
+// NEW: Reorder assistants for a specific type using unified state transitions
+/**
+ * Configures executive assistant using the UnifiedExecutiveStateManager system.
+ * Handles assistant configuration, screener setup, and address list creation optimally.
+ */
+export const configureExecutiveAssistantWithUnifiedSystem = async (
+  erc725UAP: ERC725,
+  upContract: any,
+  typeId: string,
+  assistantAddress: string,
+  assistantConfigData: string,
+  screenerConfig: {
+    enableScreeners: boolean
+    selectedScreeners: string[]
+    screenerConfigs: { [screenerId: string]: any }
+    useANDLogic: boolean
+  },
+  networkId: number,
+  supportedNetworks: any
+): Promise<{ keys: string[]; values: string[] }> => {
+  const { UnifiedExecutiveStateManager } = await import('./unifiedExecutiveStateManager')
+  const stateManager = new UnifiedExecutiveStateManager(erc725UAP, upContract, typeId)
+
+  // Get current executives for this type
+  const typeConfigKey = generateUAPTypeConfigKey(erc725UAP, typeId)
+  let currentExecutives: string[] = []
+  
+  try {
+    const currentValue = await upContract.getData(typeConfigKey)
+    if (currentValue && currentValue !== '0x') {
+      currentExecutives = erc725UAP.decodeValueType('address[]', currentValue) as string[]
+    }
+  } catch (error) {
+    console.warn('Could not fetch current executives:', error)
+  }
+
+  // Build target executive configuration
+  const targetExecutives: any[] = []
+
+  // Check if this assistant is already configured
+  const existingIndex = currentExecutives.findIndex(addr => addr.toLowerCase() === assistantAddress.toLowerCase())
+  
+  if (existingIndex >= 0) {
+    // Update existing assistant configuration
+    for (let i = 0; i < currentExecutives.length; i++) {
+      const execAddress = currentExecutives[i]
+      
+      if (execAddress.toLowerCase() === assistantAddress.toLowerCase()) {
+        // This is our target assistant - configure with new data
+        const executiveConfig = await buildExecutiveConfig(
+          execAddress,
+          assistantConfigData,
+          screenerConfig,
+          networkId,
+          supportedNetworks
+        )
+        targetExecutives.push(executiveConfig)
+      } else {
+        // Keep other assistants as-is
+        try {
+          const existingConfig = await fetchExecutiveAssistantConfig(
+            erc725UAP,
+            upContract,
+            execAddress,
+            [typeId]
+          )
+          const existingScreenerConfig = await fetchScreenerAssistantConfig(
+            erc725UAP,
+            upContract,
+            execAddress,
+            typeId,
+            i
+          )
+          
+          const executiveConfig = {
+            address: execAddress,
+            configData: existingConfig.configData[typeId] || assistantConfigData,
+            screenerAddresses: existingScreenerConfig.screenerAddresses,
+            screenerConfigData: existingScreenerConfig.screenerConfigData,
+            useANDLogic: existingScreenerConfig.useANDLogic,
+            addressListNames: existingScreenerConfig.addressListNames,
+            addressListData: {} as { [listName: string]: string[] }
+          }
+          
+          // Load existing address lists
+          for (const listName of existingScreenerConfig.addressListNames) {
+            if (listName) {
+              try {
+                const addresses = await getAddressList(erc725UAP, upContract, listName)
+                executiveConfig.addressListData[listName] = addresses
+              } catch (err) {
+                executiveConfig.addressListData[listName] = []
+              }
+            }
+          }
+          
+          targetExecutives.push(executiveConfig)
+        } catch (err) {
+          console.warn(`Error loading existing config for ${execAddress}:`, err)
+          targetExecutives.push({
+            address: execAddress,
+            configData: assistantConfigData,
+            screenerAddresses: [],
+            screenerConfigData: [],
+            useANDLogic: true,
+            addressListNames: [],
+            addressListData: {} as { [listName: string]: string[] }
+          })
+        }
+      }
+    }
+  } else {
+    // Add new assistant
+    // Keep existing assistants
+    for (let i = 0; i < currentExecutives.length; i++) {
+      const execAddress = currentExecutives[i]
+      try {
+        const existingConfig = await fetchExecutiveAssistantConfig(
+          erc725UAP,
+          upContract,
+          execAddress,
+          [typeId]
+        )
+        const existingScreenerConfig = await fetchScreenerAssistantConfig(
+          erc725UAP,
+          upContract,
+          execAddress,
+          typeId,
+          i
+        )
+        
+        const executiveConfig = {
+          address: execAddress,
+          configData: existingConfig.configData[typeId] || assistantConfigData,
+          screenerAddresses: existingScreenerConfig.screenerAddresses,
+          screenerConfigData: existingScreenerConfig.screenerConfigData,
+          useANDLogic: existingScreenerConfig.useANDLogic,
+          addressListNames: existingScreenerConfig.addressListNames,
+          addressListData: {} as { [listName: string]: string[] }
+        }
+        
+        // Load existing address lists
+        for (const listName of existingScreenerConfig.addressListNames) {
+          if (listName) {
+            try {
+              const addresses = await getAddressList(erc725UAP, upContract, listName)
+              executiveConfig.addressListData[listName] = addresses
+            } catch (err) {
+              executiveConfig.addressListData[listName] = []
+            }
+          }
+        }
+        
+        targetExecutives.push(executiveConfig)
+      } catch (err) {
+        console.warn(`Error loading existing config for ${execAddress}:`, err)
+        targetExecutives.push({
+          address: execAddress,
+          configData: assistantConfigData,
+          screenerAddresses: [],
+          screenerConfigData: [],
+          useANDLogic: true,
+          addressListNames: [],
+          addressListData: {} as { [listName: string]: string[] }
+        })
+      }
+    }
+    
+    // Add the new assistant
+    const newExecutiveConfig = await buildExecutiveConfig(
+      assistantAddress,
+      assistantConfigData,
+      screenerConfig,
+      networkId,
+      supportedNetworks
+    )
+    targetExecutives.push(newExecutiveConfig)
+  }
+
+  // Use the unified state manager to perform the reconfiguration
+  const transition = await stateManager.performOptimalReconfiguration(currentExecutives, targetExecutives)
+  
+  return {
+    keys: transition.keys,
+    values: transition.values
+  }
+}
+
+// Helper function to build ExecutiveConfig from screener configuration
+async function buildExecutiveConfig(
+  assistantAddress: string,
+  assistantConfigData: string,
+  screenerConfig: {
+    enableScreeners: boolean
+    selectedScreeners: string[]
+    screenerConfigs: { [screenerId: string]: any }
+    useANDLogic: boolean
+  },
+  networkId: number,
+  supportedNetworks: any
+): Promise<any> {
+  const config = {
+    address: assistantAddress,
+    configData: assistantConfigData,
+    screenerAddresses: [] as string[],
+    screenerConfigData: [] as string[],
+    useANDLogic: screenerConfig.useANDLogic,
+    addressListNames: [] as string[],
+    addressListData: {} as { [listName: string]: string[] }
+  }
+
+  if (screenerConfig.enableScreeners && screenerConfig.selectedScreeners.length > 0) {
+    for (const screenerId of screenerConfig.selectedScreeners) {
+      const [screenerAddress] = screenerId.split('_')
+      const screenerData = screenerConfig.screenerConfigs[screenerId] || {}
+      const screenerDef = supportedNetworks[networkId]?.screeners[screenerAddress.toLowerCase()]
+
+      config.screenerAddresses.push(screenerAddress)
+
+      // Encode screener configuration data
+      if (screenerDef?.configParams && screenerDef.configParams.length > 0) {
+        const abiCoder = new AbiCoder()
+        const types = screenerDef.configParams.map((p: any) => p.type)
+        const values = screenerDef.configParams.map((p: any) => {
+          const value = screenerData[p.name] || p.defaultValue || ''
+          return p.type.startsWith('uint') ? BigInt(value) : value
+        })
+        const encodedConfig = abiCoder.encode(types, values)
+        config.screenerConfigData.push(encodedConfig)
+      } else {
+        config.screenerConfigData.push('0x')
+      }
+
+      // Handle address list for Address List Screeners
+      if (screenerDef?.name === 'Address List Screener' && screenerData.addresses && screenerData.addresses.length > 0) {
+        const listName = `ScreenerList_${screenerId}`
+        config.addressListNames.push(listName)
+        config.addressListData[listName] = screenerData.addresses
+      } else {
+        config.addressListNames.push('')
+      }
+    }
+  }
+
+  return config
+}
+
 export const reorderExecutiveAssistants = async (
   erc725UAP: ERC725,
   upContract: any,
   typeId: string,
   orderedAssistants: { address: string; configData: string }[]
 ): Promise<{ keys: string[]; values: string[] }> => {
-  const keys: string[] = [];
-  const values: string[] = [];
+  // Import and instantiate the unified state manager
+  const { UnifiedExecutiveStateManager } = await import('./unifiedExecutiveStateManager');
+  const stateManager = new UnifiedExecutiveStateManager(erc725UAP, upContract, typeId);
 
-  // Step 1: Get current assistant configuration to detect order changes
+  // Get current assistants
   const typeConfigKey = generateUAPTypeConfigKey(erc725UAP, typeId);
   let existingAssistants: string[] = [];
   
@@ -249,65 +496,74 @@ export const reorderExecutiveAssistants = async (
     console.warn('Could not fetch existing assistants:', error);
   }
 
-  // Step 2: Handle screener migrations for assistants that changed execution order
-  for (let newIndex = 0; newIndex < orderedAssistants.length; newIndex++) {
-    const assistant = orderedAssistants[newIndex];
+  // Convert ordered assistants to ExecutiveConfig format with screener data
+  const targetExecutives = [];
+  for (let i = 0; i < orderedAssistants.length; i++) {
+    const assistant = orderedAssistants[i];
     const assistantLower = assistant.address.toLowerCase();
     
-    // Find the current execution order of this assistant
+    // Find current execution order to fetch existing screener configuration
     const currentIndex = existingAssistants.findIndex(addr => addr.toLowerCase() === assistantLower);
     
-    // If assistant exists and is moving to a different position, migrate screeners
-    if (currentIndex !== -1 && currentIndex !== newIndex) {
-      console.log(`Migrating screeners for assistant ${assistant.address} from order ${currentIndex} to ${newIndex}`);
-      
+    let screenerConfig: {
+      screenerAddresses: string[];
+      screenerConfigData: string[];
+      useANDLogic: boolean;
+      addressListNames: string[];
+    } = {
+      screenerAddresses: [],
+      screenerConfigData: [],
+      useANDLogic: true,
+      addressListNames: []
+    };
+
+    // Fetch existing screener configuration if assistant exists
+    if (currentIndex !== -1) {
       try {
-        const migrationBatch = await migrateExecutiveOrderWithScreeners(
+        screenerConfig = await fetchScreenerAssistantConfig(
           erc725UAP,
           upContract,
           assistant.address,
           typeId,
-          currentIndex, // old execution order
-          newIndex      // new execution order
+          currentIndex
         );
-        
-        // Add migration batch to the transaction
-        keys.push(...migrationBatch.keys);
-        values.push(...migrationBatch.values);
-      } catch (migrationError) {
-        console.error(`Error migrating screeners for assistant ${assistant.address}:`, migrationError);
-        // Continue with reordering even if screener migration fails
+      } catch (error) {
+        console.warn(`Could not fetch screener config for ${assistant.address}:`, error);
       }
     }
+
+    // Load address list data for each address list name
+    const addressListData: { [listName: string]: string[] } = {}
+    for (const listName of screenerConfig.addressListNames) {
+      if (listName && typeof listName === 'string' && listName.trim() !== '') {
+        try {
+          const addresses = await getAddressList(erc725UAP, upContract, listName)
+          addressListData[listName] = addresses || []
+        } catch (error) {
+          console.warn(`Could not load address list ${listName}:`, error)
+          addressListData[listName] = []
+        }
+      }
+    }
+
+    targetExecutives.push({
+      address: assistant.address,
+      configData: assistant.configData,
+      screenerAddresses: screenerConfig.screenerAddresses,
+      screenerConfigData: screenerConfig.screenerConfigData,
+      useANDLogic: screenerConfig.useANDLogic,
+      addressListNames: screenerConfig.addressListNames,
+      addressListData: addressListData
+    });
   }
 
-  // Step 3: Clear all existing executive configs
-  for (let i = 0; i < existingAssistants.length; i++) {
-    const executiveKey = generateUAPExecutiveConfigKey(erc725UAP, typeId, i);
-    keys.push(executiveKey);
-    values.push('0x');
-  }
+  // Use unified state manager to perform optimal reconfiguration
+  const transition = await stateManager.performOptimalReconfiguration(
+    existingAssistants,
+    targetExecutives
+  );
 
-  // Step 4: Set new executive configs in the new order
-  for (let i = 0; i < orderedAssistants.length; i++) {
-    const assistant = orderedAssistants[i];
-    const executiveKey = generateUAPExecutiveConfigKey(erc725UAP, typeId, i);
-    const execData = encodeTupleKeyValue(
-      '(Address,Bytes)',
-      '(address,bytes)',
-      [assistant.address, assistant.configData]
-    );
-    keys.push(executiveKey);
-    values.push(execData);
-  }
-
-  // Step 5: Update the type config with the new ordered array
-  const orderedAddresses = orderedAssistants.map(a => a.address);
-  const encodedAssistants = erc725UAP.encodeValueType('address[]', orderedAddresses);
-  keys.push(typeConfigKey);
-  values.push(encodedAssistants);
-
-  return { keys, values };
+  return { keys: transition.keys, values: transition.values };
 };
 
 // NEW: Remove executive assistant configuration
@@ -663,10 +919,8 @@ export const generateUAPAddressListNameKey = (
   typeId: string,
   screenerOrder: number
 ): string => {
-  return erc725UAP.encodeKeyName('UAPAddressListName:<bytes32>:<uint256>', [
-    typeId,
-    screenerOrder.toString(),
-  ]);
+  // Use standard ERC725.js key generation (schema now follows LSP2 convention)
+  return erc725UAP.encodeKeyName("UAPAddressListName:<bytes32>:<uint256>", [typeId, screenerOrder.toString()]);
 };
 
 // Calculate screener order (executionOrder * 1000 + screenerIndex)
@@ -963,7 +1217,6 @@ export const setExecutiveAssistantConfigWithScreenerMigration = async (
     
     // Check if assistant exists at different execution order (requires migration)
     if (existingIndex !== -1 && existingIndex !== executionOrder) {
-      console.log(`Migrating screeners for ${assistantAddress} from order ${existingIndex} to ${executionOrder}`);
       migrationBatch = await migrateExecutiveOrderWithScreeners(
         erc725UAP,
         upContract,
@@ -1034,7 +1287,7 @@ export const setAddressList = async (
   
   // Set list length using LSP5 pattern
   const listLengthKey = erc725UAP.encodeKeyName(`${listName}[]`);
-  const listLength = erc725UAP.encodeValueType('uint256', addresses.length.toString());
+  const listLength = erc725UAP.encodeValueType('uint256', BigInt(addresses.length));
   keys.push(listLengthKey);
   values.push(listLength);
   

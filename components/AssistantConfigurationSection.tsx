@@ -25,7 +25,7 @@ const AssistantConfigurationSection: React.FC<AssistantConfigurationSectionProps
   currentNetworkId,
   onFieldChange,
 }) => {
-  if (selectedConfigTypes.length === 0 || configParams.length === 0) return null;
+  if (configParams.length === 0) return null;
 
   const assistantName = supportedNetworks[currentNetworkId]?.assistants[assistantAddress.toLowerCase()]?.name || 'assistant';
 

@@ -150,7 +150,7 @@ export default function ExecutiveAssistantConfigureClient({
       );
     }
 
-    return <SetupAssistant config={assistantInfo} />;
+    return <SetupAssistant config={assistantInfo} networkId={network.chainId} />;
   };
 
   if (!assistantInfo) {

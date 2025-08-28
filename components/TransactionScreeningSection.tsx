@@ -53,12 +53,7 @@ const TransactionScreeningSection: React.FC<TransactionScreeningSectionProps> = 
 
   return (
     <Box 
-      maxWidth="750px" // Constrain maximum width for better readability
       p={6} 
-      bg="orange.50" 
-      border="2px solid" 
-      borderColor="orange.200" 
-      borderRadius="xl"
       position="relative"
     >
       <VStack spacing={4} align="stretch">
@@ -67,34 +62,9 @@ const TransactionScreeningSection: React.FC<TransactionScreeningSectionProps> = 
           <VStack align="stretch" spacing={3} display={{ base: "flex", md: "none" }}>
             <HStack justify="space-between" align="center">
               <VStack align="start" spacing={2}>
-                <Text fontSize="lg" fontWeight="bold" color="orange.800">
-                  🛡️ Transaction Screening
+                <Text fontSize="md" fontWeight="bold" color="orange.800">
+                  {enableScreeners ? 'Screening enabled' : 'Screening disabled'}
                 </Text>
-                {typeInfo && (
-                  <HStack spacing={2} align="center">
-                    <Text fontSize="sm" color="orange.600">
-                      for
-                    </Text>
-                    <Flex align="center" gap={1}>
-                      <Text fontSize="sm" fontWeight="bold" color="orange.700">
-                        {typeInfo.label}
-                      </Text>
-                      <HStack spacing={1} align="center">
-                        {typeInfo.icon && (
-                          <Text fontSize="sm">
-                            {typeInfo.icon}
-                          </Text>
-                        )}
-                        {typeInfo.iconPath && (
-                          <Image src={typeInfo.iconPath} alt={typeInfo.typeName} height="16px" />
-                        )}
-                        <Text fontSize="sm" fontWeight="bold" color="orange.700">
-                          {typeInfo.typeName}
-                        </Text>
-                      </HStack>
-                    </Flex>
-                  </HStack>
-                )}
               </VStack>
               <Switch
                 isChecked={enableScreeners}
@@ -105,46 +75,13 @@ const TransactionScreeningSection: React.FC<TransactionScreeningSectionProps> = 
                 size="lg"
               />
             </HStack>
-            <Text fontSize="sm" color="orange.700">
-              Optional: Add screeners to control when your assistant activates (transactions always process)
-            </Text>
           </VStack>
 
           {/* Desktop Layout */}
-          <HStack spacing={6} align="center" display={{ base: "none", md: "flex" }}>
-            <VStack align="start" spacing={2} flex={1} maxWidth="500px">
-              <Text fontSize="lg" fontWeight="bold" color="orange.800">
-                🛡️ Transaction Screening
+          <Flex align="center" gap={2} display={{ base: "none", md: "block" }}>
+              <Text fontSize="md" fontWeight="bold" color="orange.800">
+                {enableScreeners ? 'Screening enabled' : 'Screening disabled'}
               </Text>
-              {typeInfo && (
-                <HStack spacing={2} align="center">
-                  <Text fontSize="sm" color="orange.600">
-                    for
-                  </Text>
-                  <Flex align="center" gap={1}>
-                    <Text fontSize="md" fontWeight="bold" color="orange.700">
-                      {typeInfo.label}
-                    </Text>
-                    <HStack spacing={1} align="center">
-                      {typeInfo.icon && (
-                        <Text fontSize="md">
-                          {typeInfo.icon}
-                        </Text>
-                      )}
-                      {typeInfo.iconPath && (
-                        <Image src={typeInfo.iconPath} alt={typeInfo.typeName} height="18px" />
-                      )}
-                      <Text fontSize="md" fontWeight="bold" color="orange.700">
-                        {typeInfo.typeName}
-                      </Text>
-                    </HStack>
-                  </Flex>
-                </HStack>
-              )}
-              <Text fontSize="sm" color="orange.700">
-                Optional: Add screeners to control when your assistant activates (transactions always process)
-              </Text>
-            </VStack>
             <Switch
               isChecked={enableScreeners}
               onChange={(e) => {
@@ -153,7 +90,7 @@ const TransactionScreeningSection: React.FC<TransactionScreeningSectionProps> = 
               colorScheme="orange"
               size="lg"
             />
-          </HStack>
+          </Flex>
         </Box>
 
         <Collapse in={enableScreeners}>
@@ -168,10 +105,7 @@ const TransactionScreeningSection: React.FC<TransactionScreeningSectionProps> = 
             )}
 
             {/* Add Screener Dropdown */}
-            <Box>
-              <Text fontSize="md" fontWeight="semibold" mb={3} color="orange.800">
-                Add Transaction Screeners:
-              </Text>
+            <Box position="relative">
               <ScreenerDropdownSelector
                 networkId={currentNetworkId}
                 selectedScreeners={selectedScreeners}

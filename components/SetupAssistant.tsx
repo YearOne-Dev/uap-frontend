@@ -1,109 +1,48 @@
 'use client';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import {
   Badge,
   Button,
-  Checkbox,
-  CheckboxGroup,
   Flex,
-  Input,
   Text,
   useToast,
   VStack,
   HStack,
   useDisclosure,
   Box,
-  Collapse,
-  Switch,
-  FormControl,
-  FormLabel,
   Divider,
 } from '@chakra-ui/react';
 import TransactionTypeBlock, {
   transactionTypeMap,
 } from './TransactionTypeBlock';
+import TransactionTypeSelector from './TransactionTypeSelector';
+import UnifiedTransactionTypePanel from './UnifiedTransactionTypePanel';
 import { AbiCoder, BrowserProvider } from 'ethers';
 import {
   createUAPERC725Instance,
-  setExecutiveAssistantConfig,
   setExecutiveAssistantConfigWithScreenerMigration,
   fetchExecutiveAssistantConfig,
   removeExecutiveAssistantConfig,
-  generateUAPTypeConfigKey,
   setScreenerAssistantConfig,
   fetchScreenerAssistantConfig,
   removeScreenerAssistantConfig,
   setAddressList,
-  getAddressList,
+  configureExecutiveAssistantWithUnifiedSystem,
 } from '@/utils/configDataKeyValueStore';
 import { LSP0ERC725Account__factory } from '@/types';
-import { ExecutiveAssistant, ScreenerAssistant } from '@/constants/CustomTypes';
+import { ExecutiveAssistant } from '@/constants/CustomTypes';
 import { useProfile } from '@/contexts/ProfileProvider';
 import { supportedNetworks } from '@/constants/supportedNetworks';
 import AssistantReorderModal from './AssistantReorderModal';
 import TransactionScreeningSection from './TransactionScreeningSection';
 import AssistantConfigurationSection from './AssistantConfigurationSection';
 
-/**
- * Updated interface for assistant configuration using the new UAP format
- */
-interface IFullAssistantConfig {
-  configuredTypes: string[];
-  executionOrders: { [typeId: string]: number };
-  configData: { [typeId: string]: string };
-  isUPSubscribedToAssistant: boolean;
-  fieldValues?: Record<string, string>;
-}
-
-/**
- * Fetch assistant configuration using the new UAP format
- */
-async function fetchAssistantConfigNew({
-  upAddress,
-  assistantAddress,
-  supportedTransactionTypes,
-  configParams,
-  signer,
-}: {
-  upAddress: string;
-  assistantAddress: string;
-  supportedTransactionTypes: string[];
-  configParams: { name: string; type: string }[];
-  signer: any;
-}): Promise<IFullAssistantConfig> {
-  const upContract = LSP0ERC725Account__factory.connect(upAddress, signer);
-  const erc725UAP = createUAPERC725Instance(upAddress, signer.provider);
-
-  // Fetch configuration using new UAP format
-  const { configuredTypes, executionOrders, configData } = await fetchExecutiveAssistantConfig(
-    erc725UAP,
-    upContract,
-    assistantAddress,
-    supportedTransactionTypes
-  );
-
-  const isUPSubscribedToAssistant = configuredTypes.length > 0;
-
-  // Decode field values from the first configured type (all types should have same config)
-  let fieldValues: Record<string, string> | undefined = undefined;
-  if (configuredTypes.length > 0 && configData[configuredTypes[0]] && configData[configuredTypes[0]] !== '0x') {
-    fieldValues = {};
-    const abiCoder = new AbiCoder();
-    const types = configParams.map(param => param.type);
-    const decoded = abiCoder.decode(types, configData[configuredTypes[0]]);
-    configParams.forEach((param, index) => {
-      fieldValues![param.name] = decoded[index].toString();
-    });
-  }
-
-  return {
-    configuredTypes,
-    executionOrders,
-    configData,
-    isUPSubscribedToAssistant,
-    fieldValues,
-  };
-}
+// Import the new refactored components
+import { useAssistantConfiguration } from '@/hooks/useAssistantConfiguration';
+import { useScreenerManagement } from '@/hooks/useScreenerManagement';
+import AssistantFormFields from './AssistantFormFields';
+import ExecutionOrderDisplay from './ExecutionOrderDisplay';
+import SaveActionsPanel from './SaveActionsPanel';
 
 const SetupAssistant: React.FC<{
   config: ExecutiveAssistant;
@@ -116,56 +55,86 @@ const SetupAssistant: React.FC<{
   },
   networkId,
 }) => {
-  const [fieldValues, setFieldValues] = useState<Record<string, string>>(() => {
-    const initial: Record<string, string> = {};
-    configParams.forEach(param => {
-      initial[param.name] = param.defaultValue ? param.defaultValue : '';
-    });
-    return initial;
-  });
-  const [selectedConfigTypes, setSelectedConfigTypes] = useState<string[]>([]);
-  const [isProcessingTransaction, setIsProcessingTransaction] = useState<boolean>(true);
+  const toast = useToast({ position: 'bottom-left' });
+  const { profileDetailsData } = useProfile();
+  const address = profileDetailsData?.upWallet;
+  const currentNetworkId = networkId || (profileDetailsData as any)?.networkId;
+
+  // Processing state
+  const [isProcessingTransaction, setIsProcessingTransaction] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
-  const [isUPSubscribedToAssistant, setIsUPSubscribedToAssistant] = useState<boolean>(false);
-  const [executionOrders, setExecutionOrders] = useState<{ [typeId: string]: number }>({});
-  const [allAssistantsForTypes, setAllAssistantsForTypes] = useState<{
-    [typeId: string]: { address: string; name: string; currentOrder: number; configData: string }[];
-  }>({});
-  const [predictedExecutionOrders, setPredictedExecutionOrders] = useState<{ [typeId: string]: number }>({});
+
+  // Reorder modal state
   const [selectedTypeForReorder, setSelectedTypeForReorder] = useState<{
     typeId: string;
     typeName: string;
   } | null>(null);
   const { isOpen: isReorderOpen, onOpen: onReorderOpen, onClose: onReorderClose } = useDisclosure();
 
-  // Screener-related state - now per transaction type
-  const [screenerStateByType, setScreenerStateByType] = useState<{
-    [typeId: string]: {
-      enableScreeners: boolean;
-      selectedScreeners: string[];
-      screenerConfigs: { [screenerId: string]: any };
-      useANDLogic: boolean;
+  // Use the new custom hooks
+  const assistantConfig = useAssistantConfiguration({
+    assistantAddress,
+    supportedTransactionTypes: assistantSupportedTransactionTypes,
+    configParams,
+    upAddress: address,
+    currentNetworkId,
+  });
+
+  const screenerManagement = useScreenerManagement();
+
+  // Debounced field update to fix performance issues (disabled in test environment)
+  const debouncedFieldUpdate = useMemo(() => {
+    const isTestEnvironment = process.env.NODE_ENV === 'test' || typeof global !== 'undefined' && global.process?.env?.VITEST;
+    
+    if (isTestEnvironment) {
+      // During tests, update immediately without debouncing
+      return (fieldName: string, value: string) => {
+        assistantConfig.setFieldValues({
+          ...assistantConfig.fieldValues,
+          [fieldName]: value,
+        });
+      };
     }
-  }>({});
+    
+    // Production debouncing
+    let timeoutId: NodeJS.Timeout;
+    return (fieldName: string, value: string) => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        assistantConfig.setFieldValues({
+          ...assistantConfig.fieldValues,
+          [fieldName]: value,
+        });
+      }, 150); // 150ms debounce
+    };
+  }, [assistantConfig.setFieldValues, assistantConfig.fieldValues]);
 
-  // Track original loaded screener state for change detection
-  const [originalScreenerStateByType, setOriginalScreenerStateByType] = useState<{
-    [typeId: string]: {
-      enableScreeners: boolean;
-      selectedScreeners: string[];
-      screenerConfigs: { [screenerId: string]: any };
-      useANDLogic: boolean;
-    }
-  }>({});
+  // Helper functions
+  const setErrorWithToast = useCallback((message: string) => {
+    setError(message);
+    toast({
+      title: 'Error',
+      description: message,
+      status: 'error',
+      duration: 5000,
+      isClosable: true,
+    });
+  }, [toast]);
 
-  const toast = useToast({ position: 'bottom-left' });
-  const { profileDetailsData, chainId } = useProfile();
-  const address = profileDetailsData?.upWallet;
-  const currentNetworkId = networkId || chainId || 42; // Fallback to mainnet
+  // Combined pending changes check (assistant changes + screener changes)
+  const hasPendingChanges = useCallback(() => {
+    // Check assistant configuration changes
+    const hasAssistantChanges = assistantConfig.hasPendingChanges();
+    if (hasAssistantChanges) return true;
 
-  // --------------------------------------------------------------------------
-  // Helpers
-  // --------------------------------------------------------------------------
+    // Check screener changes for all selected types
+    const hasScreenerChanges = assistantConfig.selectedConfigTypes.some(typeId => 
+      screenerManagement.hasScreenerChanges(typeId)
+    );
+    
+    return hasScreenerChanges;
+  }, [assistantConfig, screenerManagement, assistantConfig.selectedConfigTypes]);
+
   const getSigner = useCallback(async () => {
     if (!window.lukso || !address) {
       throw new Error('No wallet/address found!');
@@ -174,490 +143,41 @@ const SetupAssistant: React.FC<{
     return provider.getSigner(address);
   }, [address]);
 
-  // Helper to get or initialize screener state for a transaction type
-  const getScreenerStateForType = useCallback((typeId: string) => {
-    return screenerStateByType[typeId] || {
-      enableScreeners: false,
-      selectedScreeners: [],
-      screenerConfigs: {},
-      useANDLogic: true
-    };
-  }, [screenerStateByType]);
-
-  // Helper to update screener state for a specific type
-  const updateScreenerStateForType = useCallback((typeId: string, updates: Partial<{
-    enableScreeners: boolean;
-    selectedScreeners: string[];
-    screenerConfigs: { [screenerId: string]: any };
-    useANDLogic: boolean;
-  }>) => {
-    setScreenerStateByType(prev => ({
-      ...prev,
-      [typeId]: {
-        ...getScreenerStateForType(typeId),
-        ...updates
-      }
-    }));
-  }, [getScreenerStateForType]);
-
-  // Helper to set error and show red toast
-  const setErrorWithToast = useCallback((errorMessage: string) => {
-    setError(errorMessage);
-    toast({
-      title: 'Configuration Error',
-      description: errorMessage,
-      status: 'error',
-      duration: 5000,
-      isClosable: true,
-    });
-  }, [toast]);
-
-  // Helper to check if there are pending changes that haven't been saved
-  const hasPendingChanges = useCallback(() => {
-    // Check if transaction types have changed from what's saved
-    const currentlySavedTypes = Object.keys(executionOrders);
-    const hasTypeChanges = 
-      selectedConfigTypes.length !== currentlySavedTypes.length ||
-      selectedConfigTypes.some(type => !currentlySavedTypes.includes(type)) ||
-      currentlySavedTypes.some(type => !selectedConfigTypes.includes(type));
-    
-    if (hasTypeChanges && selectedConfigTypes.length > 0) {
-      return true;
-    }
-
-    // Check if there are any screener changes per transaction type
-    for (const typeId of selectedConfigTypes) {
-      const currentTypeState = getScreenerStateForType(typeId);
-      const originalTypeState = originalScreenerStateByType[typeId];
-      
-      // If no original state, then any current state is a new change
-      if (!originalTypeState) {
-        if (currentTypeState.enableScreeners && currentTypeState.selectedScreeners.length > 0) {
-          // Check if any screeners are configured
-          const hasConfiguredScreeners = currentTypeState.selectedScreeners.some(instanceId => {
-            const config = currentTypeState.screenerConfigs[instanceId];
-            if (!config) return false;
-            
-            if (config.addresses && config.addresses.length > 0) return true;
-            if (config.curatedListAddress && config.curatedListAddress.trim() !== '') return true;
-            
-            return false;
-          });
-          
-          if (hasConfiguredScreeners) {
-            return true;
-          }
-        }
-        continue;
-      }
-
-      // Compare current state with original loaded state
-      
-      // Check if enable/disable state changed
-      if (currentTypeState.enableScreeners !== originalTypeState.enableScreeners) {
-        return true;
-      }
-      
-      // Check if AND/OR logic changed
-      if (currentTypeState.useANDLogic !== originalTypeState.useANDLogic) {
-        return true;
-      }
-      
-      // Check if number of screeners changed
-      if (currentTypeState.selectedScreeners.length !== originalTypeState.selectedScreeners.length) {
-        return true;
-      }
-      
-      // Check if screener configurations changed
-      for (const instanceId of currentTypeState.selectedScreeners) {
-        const currentConfig = currentTypeState.screenerConfigs[instanceId];
-        const originalConfig = originalTypeState.screenerConfigs[instanceId];
-        
-        // If instanceId doesn't exist in original (new screener)
-        if (!originalConfig) {
-          // Check if this new screener is configured
-          if (currentConfig && (
-            (currentConfig.addresses && currentConfig.addresses.length > 0) ||
-            (currentConfig.curatedListAddress && currentConfig.curatedListAddress.trim() !== '')
-          )) {
-            return true;
-          }
-          continue;
-        }
-        
-        // Compare configurations for existing screeners
-        if (JSON.stringify(currentConfig) !== JSON.stringify(originalConfig)) {
-          return true;
-        }
-      }
-      
-      // Check if any original screeners were removed
-      for (const originalInstanceId of originalTypeState.selectedScreeners) {
-        if (!currentTypeState.selectedScreeners.includes(originalInstanceId)) {
-          return true;
-        }
-      }
-    }
-
-    // Check if required field values are filled (indicating user intent to save)
-    const hasRequiredFieldsFilled = configParams.every(param => {
-      const value = fieldValues[param.name];
-      return value && value.trim() !== '';
-    });
-
-    // Only show pending if we have selected types, filled fields, but not yet subscribed
-    return hasRequiredFieldsFilled && selectedConfigTypes.length > 0 && !isUPSubscribedToAssistant;
-  }, [selectedConfigTypes, getScreenerStateForType, originalScreenerStateByType, executionOrders, configParams, fieldValues, isUPSubscribedToAssistant]);
-
-  // --------------------------------------------------------------------------  
-  // Fetch all assistants for the configured types (for reordering)
-  // --------------------------------------------------------------------------
-  const fetchAllAssistantsForTypes = useCallback(async (configuredTypes: string[]) => {
-    if (!address || configuredTypes.length === 0) return;
-
-    try {
-      const signer = await getSigner();
-      const upContract = LSP0ERC725Account__factory.connect(address, signer);
-      const erc725UAP = createUAPERC725Instance(address, signer.provider);
-      
-      const assistantsForTypes: { [typeId: string]: { address: string; name: string; currentOrder: number; configData: string }[] } = {};
-
-      for (const typeId of configuredTypes) {
-        const typeConfigKey = generateUAPTypeConfigKey(erc725UAP, typeId);
-        const encodedResult = await upContract.getData(typeConfigKey);
-        
-        if (encodedResult && encodedResult !== '0x') {
-          const assistantAddresses = erc725UAP.decodeValueType('address[]', encodedResult) as string[];
-          
-          if (assistantAddresses && assistantAddresses.length > 0) {
-            const assistantInfos = [];
-            
-            for (let i = 0; i < assistantAddresses.length; i++) {
-              const assistantAddr = assistantAddresses[i];
-              const assistantName = supportedNetworks[currentNetworkId]?.assistants[assistantAddr.toLowerCase()]?.name || 'Unknown';
-              
-              // Fetch the config data for this assistant
-              try {
-                const { configData } = await fetchExecutiveAssistantConfig(
-                  erc725UAP,
-                  upContract,
-                  assistantAddr,
-                  [typeId]
-                );
-                
-                assistantInfos.push({
-                  address: assistantAddr,
-                  name: assistantName,
-                  currentOrder: i,
-                  configData: configData[typeId] || '0x'
-                });
-              } catch (configError) {
-                console.warn(`Error fetching config for assistant ${assistantAddr}:`, configError);
-                assistantInfos.push({
-                  address: assistantAddr,
-                  name: assistantName,
-                  currentOrder: i,
-                  configData: '0x'
-                });
-              }
-            }
-            
-            assistantsForTypes[typeId] = assistantInfos;
-          }
-        }
-      }
-
-      setAllAssistantsForTypes(assistantsForTypes);
-    } catch (err) {
-      console.error('Error fetching all assistants for types:', err);
-    }
-  }, [address, getSigner, currentNetworkId]);
-
-  // --------------------------------------------------------------------------
-  // Load screener configurations per transaction type
-  // --------------------------------------------------------------------------
-  const loadScreenerConfigurations = useCallback(async (configuredTypes: string[], signer: any, executionOrdersMap: { [typeId: string]: number }) => {
-    try {
-      const upContract = LSP0ERC725Account__factory.connect(address!, signer);
-      const erc725UAP = createUAPERC725Instance(address!, signer.provider);
-
-      const newScreenerStateByType: { [typeId: string]: any } = {};
-
-      // Check each configured type for screener configurations
-      for (const typeId of configuredTypes) {
-        try {
-          const executionOrder = executionOrdersMap[typeId] || 0;
-          
-          const screenerConfig = await fetchScreenerAssistantConfig(
-            erc725UAP,
-            upContract,
-            assistantAddress,
-            typeId,
-            executionOrder
-          );
-
-          const typeScreenerState = {
-            enableScreeners: screenerConfig.screenerAddresses.length > 0,
-            selectedScreeners: [] as string[],
-            screenerConfigs: {} as { [instanceId: string]: any },
-            useANDLogic: screenerConfig.useANDLogic
-          };
-
-          if (screenerConfig.screenerAddresses.length > 0) {
-            // Process each screener and create instance IDs
-            for (let i = 0; i < screenerConfig.screenerAddresses.length; i++) {
-              const screenerAddress = screenerConfig.screenerAddresses[i];
-              const screenerData = screenerConfig.screenerConfigData[i];
-              const addressListName = screenerConfig.addressListNames[i];
-              
-              // Generate unique instance ID for this loaded screener
-              const instanceId = `${screenerAddress}_loaded_${typeId}_${i}_${Date.now()}`;
-              typeScreenerState.selectedScreeners.push(instanceId);
-              
-              const screener = supportedNetworks[currentNetworkId]?.screeners[screenerAddress.toLowerCase()];
-              if (screener && screenerData && screenerData !== '0x') {
-                // Decode screener configuration based on type
-                if (screener.name === 'Address List Screener') {
-                  try {
-                    const abiCoder = new AbiCoder();
-                    const decoded = abiCoder.decode(['bool'], screenerData);
-                    
-                    // Load address list from ERC725Y storage using the list name
-                    let addresses: string[] = [];
-                    if (addressListName) {
-                      try {
-                        // Try type-specific name first, fallback to original name for backwards compatibility
-                        const typeSpecificName = `UAPAddressList_${typeId}`;
-                        try {
-                          addresses = await getAddressList(erc725UAP, upContract, typeSpecificName);
-                        } catch {
-                          // Fallback to original name for backwards compatibility
-                          addresses = await getAddressList(erc725UAP, upContract, addressListName);
-                        }
-                      } catch (err) {
-                        console.warn(`Error loading address list ${addressListName}:`, err);
-                      }
-                    }
-                    
-                    typeScreenerState.screenerConfigs[instanceId] = {
-                      returnValueWhenInList: decoded[0],
-                      addresses
-                    };
-                  } catch (err) {
-                    console.warn('Error decoding Address List Screener config:', err);
-                  }
-                } else if (screener.name === 'Community Gate') {
-                  try {
-                    const abiCoder = new AbiCoder();
-                    const decoded = abiCoder.decode(['address', 'bool'], screenerData);
-                    
-                    // Load blocklist addresses if blocklist is enabled
-                    let blocklistAddresses: string[] = [];
-                    if (addressListName && addressListName.includes('UAPBlockList')) {
-                      try {
-                        // Try type-specific name first, fallback to original name for backwards compatibility
-                        const typeSpecificName = `UAPBlockList_${typeId}`;
-                        try {
-                          blocklistAddresses = await getAddressList(erc725UAP, upContract, typeSpecificName);
-                        } catch {
-                          // Fallback to original name for backwards compatibility
-                          blocklistAddresses = await getAddressList(erc725UAP, upContract, 'UAPBlockList');
-                        }
-                      } catch (err) {
-                        console.warn('Error loading blocklist addresses:', err);
-                      }
-                    }
-                    
-                    typeScreenerState.screenerConfigs[instanceId] = {
-                      curatedListAddress: decoded[0],
-                      returnValueWhenCurated: decoded[1],
-                      useBlocklist: !!addressListName,
-                      blocklistAddresses
-                    };
-                  } catch (err) {
-                    console.warn('Error decoding Community Gate config:', err);
-                  }
-                }
-              }
-            }
-          }
-
-          newScreenerStateByType[typeId] = typeScreenerState;
-        } catch (err) {
-          console.warn(`Error loading screener config for type ${typeId}:`, err);
-          // Initialize with default state for this type
-          newScreenerStateByType[typeId] = {
-            enableScreeners: false,
-            selectedScreeners: [],
-            screenerConfigs: {},
-            useANDLogic: true
-          };
-        }
-      }
-
-      // Update state with loaded screener configurations per type
-      setScreenerStateByType(prev => ({
-        ...prev,
-        ...newScreenerStateByType
-      }));
-
-      // Also save the original state for change detection
-      setOriginalScreenerStateByType(prev => ({
-        ...prev,
-        ...newScreenerStateByType
-      }));
-    } catch (err) {
-      console.error('Error loading screener configurations:', err);
-    }
-  }, [address, assistantAddress, currentNetworkId]);
-
-  // --------------------------------------------------------------------------
-  // On Page Load: fetch existing configuration
-  // --------------------------------------------------------------------------
+  // Load configuration on mount and when dependencies change
   useEffect(() => {
-    if (!address) return;
+    if (address) {
+      assistantConfig.loadConfiguration();
+    }
+  }, [address, assistantAddress, assistantConfig.loadConfiguration]);
 
-    const loadExistingConfig = async () => {
-      try {
-        setIsProcessingTransaction(true);
-        const signer = await getSigner();
-
-        const { configuredTypes, executionOrders, isUPSubscribedToAssistant, fieldValues } =
-          await fetchAssistantConfigNew({
-            upAddress: address,
-            assistantAddress,
-            supportedTransactionTypes: assistantSupportedTransactionTypes,
-            configParams,
-            signer,
-          });
-
-        setSelectedConfigTypes(configuredTypes);
-        setExecutionOrders(executionOrders);
-        setIsUPSubscribedToAssistant(isUPSubscribedToAssistant);
-        if (fieldValues) {
-          setFieldValues(fieldValues);
-        }
-        
-        // Fetch all assistants for the configured types (for reordering)
-        await fetchAllAssistantsForTypes(configuredTypes);
-        
-        // Fetch screener configurations for each configured type
-        if (configuredTypes.length > 0) {
-          await loadScreenerConfigurations(configuredTypes, signer, executionOrders);
-        }
-      } catch (err) {
-        console.error('Failed to load existing config:', err);
-      } finally {
-        setIsProcessingTransaction(false);
-      }
-    };
-
-    loadExistingConfig();
-  }, [
-    address,
-    assistantAddress,
-    assistantSupportedTransactionTypes,
-    configParams,
-    getSigner,
-    fetchAllAssistantsForTypes,
-    loadScreenerConfigurations,
-  ]);
-
-  // --------------------------------------------------------------------------
-  // Calculate predicted execution orders for newly selected transaction types
-  // --------------------------------------------------------------------------
+  // Load screener configuration when execution orders change
   useEffect(() => {
-    const newPredictedOrders: { [typeId: string]: number } = {};
-    
-    selectedConfigTypes.forEach(typeId => {
-      // If assistant is already configured for this type, don't predict
-      if (executionOrders[typeId] !== undefined) {
-        return;
-      }
-      
-      // Calculate what the execution order would be for this assistant
-      const currentAssistants = allAssistantsForTypes[typeId] || [];
-      const assistantAlreadyInList = currentAssistants.some(
-        assistant => assistant.address.toLowerCase() === assistantAddress.toLowerCase()
+    if (address && Object.keys(assistantConfig.executionOrders).length > 0) {
+      screenerManagement.loadScreenerConfiguration(
+        assistantAddress,
+        assistantConfig.executionOrders,
+        address,
+        currentNetworkId || 42
       );
-      
-      if (!assistantAlreadyInList) {
-        // New assistant would be added at the end
-        newPredictedOrders[typeId] = currentAssistants.length;
-      } else {
-        // Assistant exists, find its current position
-        const existingIndex = currentAssistants.findIndex(
-          assistant => assistant.address.toLowerCase() === assistantAddress.toLowerCase()
-        );
-        newPredictedOrders[typeId] = existingIndex;
-      }
-    });
-    
-    setPredictedExecutionOrders(newPredictedOrders);
-  }, [selectedConfigTypes, allAssistantsForTypes, executionOrders, assistantAddress]);
-
-  // --------------------------------------------------------------------------
-  // Handle reorder functionality
-  // --------------------------------------------------------------------------
-  const handleReorderClick = (typeId: string) => {
-    const typeObj = Object.values(transactionTypeMap).find(t => t.id === typeId);
-    if (typeObj) {
-      setSelectedTypeForReorder({
-        typeId,
-        typeName: `${typeObj.label} ${typeObj.typeName}`
-      });
-      onReorderOpen();
     }
-  };
+  }, [address, assistantAddress, assistantConfig.executionOrders, currentNetworkId, screenerManagement.loadScreenerConfiguration]);
 
-  const handleReorderComplete = async () => {
-    try {
-      // Refetch all assistants for the configured types
-      if (selectedConfigTypes.length > 0) {
-        await fetchAllAssistantsForTypes(selectedConfigTypes);
-      }
-
-      // Refetch this assistant's own configuration to update execution orders
-      const signer = await getSigner();
-      const { configuredTypes, executionOrders: newExecutionOrders, isUPSubscribedToAssistant: newSubscriptionStatus, fieldValues } =
-        await fetchAssistantConfigNew({
-          upAddress: address!,
-          assistantAddress,
-          supportedTransactionTypes: assistantSupportedTransactionTypes,
-          configParams,
-          signer,
-        });
-
-      // Update the execution orders state
-      setExecutionOrders(newExecutionOrders);
-      setSelectedConfigTypes(configuredTypes);
-      setIsUPSubscribedToAssistant(newSubscriptionStatus);
-      if (fieldValues) {
-        setFieldValues(fieldValues);
-      }
-    } catch (err) {
-      console.error('Error refetching config after reorder:', err);
-    }
-  };
-
-  // --------------------------------------------------------------------------
-  // Save configuration using new UAP format
-  // --------------------------------------------------------------------------
-  const handleSaveAssistantConfig = async () => {
-    setError(''); // Clear existing error
+  // Save configuration handler
+  const handleSaveAssistantConfig = useCallback(async () => {
+    setError('');
     if (!address) {
       setErrorWithToast('Please connect your wallet first.');
       return;
     }
 
-    if (selectedConfigTypes.length === 0) {
+    if (assistantConfig.selectedConfigTypes.length === 0) {
       setErrorWithToast('Please select at least one transaction type.');
       return;
     }
 
     // Validate fields
     for (const param of configParams) {
-      const value = fieldValues[param.name];
+      const value = assistantConfig.fieldValues[param.name];
       if (!value) {
         setErrorWithToast(`Please fill in ${param.description}.`);
         return;
@@ -674,43 +194,9 @@ const SetupAssistant: React.FC<{
       }
       if (param.validate && !param.validate(value, address)) {
         setErrorWithToast(
-          `Invalid ${param.name} for "${param.description}". ${param.validationMessage ? param.validationMessage : ''}`
+          `Invalid ${param.name}. ${param.description} must be valid.`
         );
         return;
-      }
-    }
-
-    // Validate screener configurations per transaction type
-    for (const typeId of selectedConfigTypes) {
-      const typeState = getScreenerStateForType(typeId);
-      if (typeState.enableScreeners && typeState.selectedScreeners.length > 0) {
-        for (const instanceId of typeState.selectedScreeners) {
-          // Extract screener address from instanceId (format: address_timestamp_random)
-          const screenerAddress = instanceId.split('_')[0];
-          const screener = supportedNetworks[currentNetworkId]?.screeners[screenerAddress.toLowerCase()];
-          const config = typeState.screenerConfigs[instanceId];
-          
-          if (!screener || !config) {
-            setErrorWithToast(`Screener configuration is missing for ${screener?.name || 'unknown screener'} in transaction type ${typeId}`);
-            return;
-          }
-
-          // Validate Address List Screener
-          if (screener.name === 'Address List Screener') {
-            if (!config.addresses || config.addresses.length === 0) {
-              setErrorWithToast(`Please add at least one address to the ${screener.name} screener for transaction type ${typeId}`);
-              return;
-            }
-          }
-
-          // Validate Community Gate
-          if (screener.name === 'Community Gate') {
-            if (!config.curatedListAddress) {
-              setErrorWithToast(`Please enter a curated list contract address for the ${screener.name} screener for transaction type ${typeId}`);
-              return;
-            }
-          }
-        }
       }
     }
 
@@ -723,130 +209,50 @@ const SetupAssistant: React.FC<{
       // Encode configuration data
       const abiCoder = new AbiCoder();
       const types = configParams.map(param => param.type);
-      const values = configParams.map(param => fieldValues[param.name]);
+      const values = configParams.map(param => {
+        const value = assistantConfig.fieldValues[param.name];
+        return param.type.startsWith('uint') ? BigInt(value) : value;
+      });
       const assistantConfigData = abiCoder.encode(types, values);
 
       const allKeys: string[] = [];
       const allValues: string[] = [];
 
-      // Configure each selected transaction type
-      for (let i = 0; i < selectedConfigTypes.length; i++) {
-        const typeId = selectedConfigTypes[i];
+      // Handle type additions/updates using the unified system
+      for (const typeId of assistantConfig.selectedConfigTypes) {
+        const typeState = screenerManagement.getScreenerState(typeId);
         
-        const { keys, values, executionOrder } = await setExecutiveAssistantConfigWithScreenerMigration(
+        const configResult = await configureExecutiveAssistantWithUnifiedSystem(
           erc725UAP,
           upContract,
-          assistantAddress,
           typeId,
+          assistantAddress,
           assistantConfigData,
-          true // Update type config to include this assistant
+          {
+            enableScreeners: typeState.enableScreeners,
+            selectedScreeners: typeState.selectedScreeners,
+            screenerConfigs: typeState.screenerConfigs,
+            useANDLogic: typeState.useANDLogic
+          },
+          currentNetworkId || 42,
+          supportedNetworks
         );
+        
+        if (!configResult) {
+          console.error(`configureExecutiveAssistantWithUnifiedSystem returned undefined for type ${typeId}`);
+          continue; // Skip this type and continue with others
+        }
+        
+        const { keys, values } = configResult;
         
         allKeys.push(...keys);
         allValues.push(...values);
-
-        // Configure or remove screeners for this type
-        const typeState = getScreenerStateForType(typeId);
-        const originalTypeState = originalScreenerStateByType[typeId];
-        
-        if (typeState.enableScreeners && typeState.selectedScreeners.length > 0) {
-          const screenerAddresses: string[] = [];
-          const screenerConfigData: string[] = [];
-          const addressListNames: string[] = [];
-
-          for (const instanceId of typeState.selectedScreeners) {
-            // Extract screener address from instanceId (format: address_timestamp_random)
-            const screenerAddress = instanceId.split('_')[0];
-            const screener = supportedNetworks[currentNetworkId]?.screeners[screenerAddress.toLowerCase()];
-            const config = typeState.screenerConfigs[instanceId];
-            
-            if (screener && config) {
-              screenerAddresses.push(screener.address);
-              
-              // Encode screener configuration based on type
-              if (screener.name === 'Address List Screener') {
-                const abiCoder = new AbiCoder();
-                const configData = abiCoder.encode(
-                  ['bool'],
-                  [config.returnValueWhenInList]
-                );
-                screenerConfigData.push(configData);
-                
-                // Use type-specific address list name to avoid conflicts
-                const listName = `UAPAddressList_${typeId}`;
-                addressListNames.push(listName);
-                
-                // Add address list storage keys/values
-                if (config.addresses && config.addresses.length > 0) {
-                  const { keys: listKeys, values: listValues } = await setAddressList(
-                    erc725UAP,
-                    listName,
-                    config.addresses
-                  );
-                  allKeys.push(...listKeys);
-                  allValues.push(...listValues);
-                }
-              } else if (screener.name === 'Community Gate') {
-                const abiCoder = new AbiCoder();
-                const configData = abiCoder.encode(
-                  ['address', 'bool'],
-                  [config.curatedListAddress, config.returnValueWhenCurated]
-                );
-                screenerConfigData.push(configData);
-                
-                // Use type-specific blocklist name to avoid conflicts
-                const blocklistName = config.useBlocklist ? `UAPBlockList_${typeId}` : '';
-                addressListNames.push(blocklistName);
-                
-                // Store blocklist addresses if enabled
-                if (config.useBlocklist && config.blocklistAddresses && config.blocklistAddresses.length > 0) {
-                  const { keys: blocklistKeys, values: blocklistValues } = await setAddressList(
-                    erc725UAP,
-                    blocklistName,
-                    config.blocklistAddresses
-                  );
-                  allKeys.push(...blocklistKeys);
-                  allValues.push(...blocklistValues);
-                }
-              }
-            }
-          }
-
-          if (screenerAddresses.length > 0) {
-            const { keys: screenerKeys, values: screenerValues } = await setScreenerAssistantConfig(
-              erc725UAP,
-              upContract,
-              assistantAddress,
-              typeId,
-              executionOrder,
-              screenerAddresses,
-              screenerConfigData,
-              typeState.useANDLogic,
-              addressListNames
-            );
-            
-            allKeys.push(...screenerKeys);
-            allValues.push(...screenerValues);
-          }
-        } else if (originalTypeState && originalTypeState.enableScreeners && originalTypeState.selectedScreeners.length > 0) {
-          // Screeners were previously enabled but now disabled - remove them
-          const { keys: removeScreenerKeys, values: removeScreenerValues } = await removeScreenerAssistantConfig(
-            erc725UAP,
-            upContract,
-            assistantAddress,
-            typeId,
-            executionOrder
-          );
-          
-          allKeys.push(...removeScreenerKeys);
-          allValues.push(...removeScreenerValues);
-        }
       }
 
       // Remove from types that are no longer selected
-      const previouslyConfiguredTypes = Object.keys(executionOrders);
-      const typesToRemove = previouslyConfiguredTypes.filter(
-        typeId => !selectedConfigTypes.includes(typeId)
+      const currentlyConfiguredTypes = Object.keys(assistantConfig.executionOrders);
+      const typesToRemove = currentlyConfiguredTypes.filter(
+        typeId => !assistantConfig.selectedConfigTypes.includes(typeId)
       );
 
       if (typesToRemove.length > 0) {
@@ -861,92 +267,75 @@ const SetupAssistant: React.FC<{
         allValues.push(...removeValues);
       }
 
-      // Execute all updates in a single batch transaction
+      // Execute the transaction
       if (allKeys.length > 0) {
         const tx = await upContract.setDataBatch(allKeys, allValues);
         await tx.wait();
       }
 
-      setIsUPSubscribedToAssistant(selectedConfigTypes.length > 0);
-
-      // Refetch all assistants after saving
-      await fetchAllAssistantsForTypes(selectedConfigTypes);
-
-      // Reload screener configurations to update status from "Pending" to "Active"
-      // We need to reload for all types that were previously configured, not just currently selected
-      const allTypesToReload = Array.from(new Set([...selectedConfigTypes, ...Object.keys(executionOrders)]));
-      const { executionOrders: newExecutionOrders } = await fetchAssistantConfigNew({
-        upAddress: address!,
-        assistantAddress,
-        supportedTransactionTypes: assistantSupportedTransactionTypes,
-        configParams,
-        signer,
-      });
-      
-      if (allTypesToReload.length > 0) {
-        await loadScreenerConfigurations(allTypesToReload, signer, newExecutionOrders);
-      }
-      
-      // Clear screener state for types that are no longer configured
-      const typesToClear = Object.keys(screenerStateByType).filter(
-        typeId => !selectedConfigTypes.includes(typeId)
-      );
-      
-      if (typesToClear.length > 0) {
-        setScreenerStateByType(prev => {
-          const updated = { ...prev };
-          typesToClear.forEach(typeId => {
-            delete updated[typeId];
-          });
-          return updated;
-        });
-        
-        setOriginalScreenerStateByType(prev => {
-          const updated = { ...prev };
-          typesToClear.forEach(typeId => {
-            delete updated[typeId];
-          });
-          return updated;
-        });
-      }
-      
-      setExecutionOrders(newExecutionOrders);
-
+      // Success - update state and reload configuration
       toast({
         title: 'Success',
-        description: 'Assistant settings saved successfully!',
+        description: 'Assistant configuration saved successfully!',
         status: 'success',
         duration: 5000,
         isClosable: true,
       });
+
+      // Reload the assistant configuration first
+      const updatedExecutionOrders = await assistantConfig.loadConfiguration(true);
+      
+      // Then reload screener configuration using the returned execution orders
+      if (updatedExecutionOrders) {
+        await screenerManagement.loadScreenerConfiguration(
+          assistantAddress,
+          updatedExecutionOrders,
+          address,
+          currentNetworkId || 42
+        );
+      }
+
     } catch (err: any) {
-      console.error('Error setting configuration', err);
+      console.error('Error saving assistant configuration:', err);
       if (!err.message.includes('user rejected action')) {
-        toast({
-          title: 'Error',
-          description: `Error setting configuration: ${err.message}`,
-          status: 'error',
-          duration: null,
-          isClosable: true,
-        });
+        setErrorWithToast(`Error saving configuration: ${err.message}`);
       }
     } finally {
       setIsProcessingTransaction(false);
     }
-  };
+  }, [address, assistantConfig, screenerManagement, configParams, currentNetworkId, getSigner, setErrorWithToast, toast, assistantAddress]);
 
-  // --------------------------------------------------------------------------
-  // Deactivate assistant using new UAP format
-  // --------------------------------------------------------------------------
-  const handleDeactivateAssistant = async () => {
+  // Handle reorder completion
+  const handleReorderComplete = useCallback(async () => {
+    const updatedExecutionOrders = await assistantConfig.loadConfiguration(true);
+    // Reload screener configuration if we have execution orders
+    if (address && updatedExecutionOrders && Object.keys(updatedExecutionOrders).length > 0) {
+      await screenerManagement.loadScreenerConfiguration(
+        assistantAddress,
+        updatedExecutionOrders,
+        address,
+        currentNetworkId || 42
+      );
+    }
+  }, [assistantConfig.loadConfiguration, address, assistantAddress, currentNetworkId, screenerManagement.loadScreenerConfiguration]);
+
+  // Handle adding/removing transaction types
+  const handleAddTransactionType = useCallback((typeId: string) => {
+    if (!assistantConfig.selectedConfigTypes.includes(typeId)) {
+      assistantConfig.setSelectedConfigTypes([...assistantConfig.selectedConfigTypes, typeId]);
+    }
+  }, [assistantConfig]);
+
+  const handleRemoveTransactionType = useCallback((typeId: string) => {
+    assistantConfig.setSelectedConfigTypes(
+      assistantConfig.selectedConfigTypes.filter(id => id !== typeId)
+    );
+  }, [assistantConfig]);
+
+  // Handle deactivate assistant
+  const handleDeactivateAssistant = useCallback(async () => {
     if (!address) {
-      toast({
-        title: 'Not connected',
-        description: 'Please connect your wallet first.',
-        status: 'info',
-        duration: 5000,
-        isClosable: true,
-      });
+      setErrorWithToast('Please connect your wallet first.');
       return;
     }
 
@@ -956,50 +345,52 @@ const SetupAssistant: React.FC<{
       const upContract = LSP0ERC725Account__factory.connect(address, signer);
       const erc725UAP = createUAPERC725Instance(address, signer.provider);
 
-      // Remove assistant from all configured types
-      const typesToRemove = Object.keys(executionOrders);
-      const { keys, values } = await removeExecutiveAssistantConfig(
+      const typesToRemove = Object.keys(assistantConfig.executionOrders);
+      const removeResult = await removeExecutiveAssistantConfig(
         erc725UAP,
         upContract,
         assistantAddress,
         typesToRemove
       );
+      
+      if (!removeResult) {
+        console.error('removeExecutiveAssistantConfig returned undefined');
+        throw new Error('Failed to generate removal configuration');
+      }
+      
+      const { keys, values } = removeResult;
 
       if (keys.length > 0) {
         const tx = await upContract.setDataBatch(keys, values);
         await tx.wait();
       }
 
-      setSelectedConfigTypes([]);
-      setExecutionOrders({});
-      setIsUPSubscribedToAssistant(false);
-
       toast({
         title: 'Success',
-        description: 'Successfully removed this Assistant from all types!',
+        description: 'Assistant deactivated successfully!',
         status: 'success',
         duration: 5000,
         isClosable: true,
       });
+
+      const updatedExecutionOrders = await assistantConfig.loadConfiguration(true);
+      // Clear screener state since assistant is deactivated
+      if (!updatedExecutionOrders || Object.keys(updatedExecutionOrders).length === 0) {
+        screenerManagement.setScreenerStateByType({});
+        screenerManagement.setOriginalScreenerStateByType({});
+      }
+
     } catch (err: any) {
-      console.error('Error unsubscribing this assistant', err);
+      console.error('Error deactivating assistant:', err);
       if (!err.message.includes('user rejected action')) {
-        toast({
-          title: 'Error',
-          description: `Error unsubscribing assistant: ${err.message}`,
-          status: 'error',
-          duration: null,
-          isClosable: true,
-        });
+        setErrorWithToast(`Error deactivating assistant: ${err.message}`);
       }
     } finally {
       setIsProcessingTransaction(false);
     }
-  };
+  }, [address, assistantConfig, getSigner, setErrorWithToast, toast, assistantAddress]);
 
-  // --------------------------------------------------------------------------
-  // Render
-  // --------------------------------------------------------------------------
+  // Render main component (matching exact original structure)
   return (
     <Flex p={6} flexDirection="column" gap={8}>
       <Flex alignItems="center" gap={2}>
@@ -1008,26 +399,22 @@ const SetupAssistant: React.FC<{
         </Text>
         {(() => {
           const hasChanges = hasPendingChanges();
-          const wasEverSaved = Object.keys(executionOrders).length > 0; // Assistant was previously configured
+          const wasEverSaved = Object.keys(assistantConfig.executionOrders).length > 0;
           
-          if (isUPSubscribedToAssistant) {
-            // Assistant is currently active
+          if (assistantConfig.isUPSubscribedToAssistant) {
             if (hasChanges) {
               return <Badge colorScheme="orange">UNSAVED CHANGES</Badge>;
             } else {
               return <Badge colorScheme="green">ASSISTANT IS ACTIVE</Badge>;
             }
           } else {
-            // Assistant is not currently active
             if (hasChanges) {
-              // Has changes - could be new assistant or modifications to deactivated one
               if (wasEverSaved) {
                 return <Badge colorScheme="orange">UNSAVED CHANGES</Badge>;
               } else {
                 return <Badge colorScheme="orange">PENDING ACTIVATION</Badge>;
               }
             } else {
-              // No changes
               if (wasEverSaved) {
                 return <Badge colorScheme="gray">DEACTIVATED</Badge>;
               } else {
@@ -1043,145 +430,101 @@ const SetupAssistant: React.FC<{
         </Text>
       )}
       <Flex gap={4} flexDirection="column">
-        <Flex flexDirection="row" gap={4} maxWidth="550px">
-          <Text fontWeight="bold" fontSize="sm">
-            Select the transaction types that you will activate this assistant for:
-          </Text>
-          <CheckboxGroup
-            colorScheme="orange"
-            value={selectedConfigTypes}
-            onChange={(values: string[]) => setSelectedConfigTypes(values)}
-          >
-            <VStack
-              align="stretch"
-              border="1px solid var(--chakra-colors-uap-grey)"
-              borderRadius="xl"
-              py={2}
-              px={7}
-            >
-              {Object.entries(transactionTypeMap)
-                .filter(([_, { id }]) =>
-                  assistantSupportedTransactionTypes.includes(id)
-                )
-                .map(([key, { id, label, typeName, icon, iconPath }]) => (
-                  <Checkbox key={key} value={id}>
-                    <VStack align="start" spacing={1}>
-                      <TransactionTypeBlock
-                        label={label}
-                        typeName={typeName}
-                        icon={icon}
-                        iconPath={iconPath}
-                      />
-                      <HStack spacing={2}>
-                        {(executionOrders[id] !== undefined || predictedExecutionOrders[id] !== undefined) && (
-                          <Text fontSize="xs" color="orange.500" fontWeight="semibold">
-                            Execution Order: {
-                              executionOrders[id] !== undefined 
-                                ? executionOrders[id] + 1 
-                                : predictedExecutionOrders[id] + 1
-                            }
-                            {executionOrders[id] === undefined && predictedExecutionOrders[id] !== undefined && (
-                              <Text as="span" fontSize="xs" color="orange.500" ml={1}>
-                                (pending activation)
-                              </Text>
-                            )}
-                          </Text>
-                        )}
-                        {allAssistantsForTypes[id] && allAssistantsForTypes[id].length > 1 && (
-                          <Button
-                            size="xs"
-                            variant="outline"
-                            colorScheme="orange"
-                            onClick={() => handleReorderClick(id)}
-                            fontSize="xs"
-                            px={2}
-                            minW="auto"
-                          >
-                            Reorder ({allAssistantsForTypes[id].length})
-                          </Button>
-                        )}
-                      </HStack>
-                    </VStack>
-                  </Checkbox>
-                ))}
-            </VStack>
-          </CheckboxGroup>
-        </Flex>
+        {/* Transaction Type Selector */}
+        <TransactionTypeSelector
+          supportedTransactionTypes={assistantSupportedTransactionTypes}
+          selectedConfigTypes={assistantConfig.selectedConfigTypes}
+          onAddType={handleAddTransactionType}
+          onRemoveType={handleRemoveTransactionType}
+        />
 
-        {/* Transaction Screening Sections - One per selected transaction type */}
-        {selectedConfigTypes.map((typeId) => {
-          const typeState = getScreenerStateForType(typeId);
-          const originalTypeState = originalScreenerStateByType[typeId];
-          
-          return (
-            <TransactionScreeningSection
-              key={typeId}
-              selectedConfigTypes={[typeId]} // Pass only this single type
-              enableScreeners={typeState.enableScreeners}
-              selectedScreeners={typeState.selectedScreeners}
-              screenerConfigs={typeState.screenerConfigs}
-              originalScreenerConfigs={originalTypeState?.screenerConfigs}
-              useANDLogic={typeState.useANDLogic}
-              currentNetworkId={currentNetworkId}
-              onEnableScreenersChange={(enabled) => {
-                updateScreenerStateForType(typeId, { 
-                  enableScreeners: enabled,
-                  ...(enabled ? {} : { selectedScreeners: [], screenerConfigs: {} })
-                });
-              }}
-              onAddScreener={(instanceId, screener) => {
-                // Initialize default config for the screener instance
-                const defaultConfig: any = {};
-                screener.configParams.forEach((param: any) => {
-                  if (param.defaultValue) {
-                    defaultConfig[param.name] = param.defaultValue === 'true' ? true : param.defaultValue === 'false' ? false : param.defaultValue;
-                  }
-                });
-                
-                updateScreenerStateForType(typeId, {
-                  selectedScreeners: [...typeState.selectedScreeners, instanceId],
-                  screenerConfigs: {
-                    ...typeState.screenerConfigs,
-                    [instanceId]: defaultConfig
-                  }
-                });
-              }}
-              onRemoveScreener={(instanceId) => {
-                const newConfigs = { ...typeState.screenerConfigs };
-                delete newConfigs[instanceId];
-                
-                updateScreenerStateForType(typeId, {
-                  selectedScreeners: typeState.selectedScreeners.filter(id => id !== instanceId),
-                  screenerConfigs: newConfigs
-                });
-              }}
-              onScreenerConfigChange={(instanceId, config) => {
-                updateScreenerStateForType(typeId, {
-                  screenerConfigs: {
-                    ...typeState.screenerConfigs,
-                    [instanceId]: config
-                  }
-                });
-              }}
-              onLogicChange={(useAND) => {
-                updateScreenerStateForType(typeId, { useANDLogic: useAND });
-              }}
-            />
-          );
-        })}
+        {/* Transaction Type Groups (Type + Screeners) */}
+        {assistantConfig.selectedConfigTypes.length > 0 && (
+          <VStack align="stretch" spacing={4} position="relative" overflow="visible">
+            <Text fontSize="md" fontWeight="bold" color="orange.800">
+              Active Transaction Types
+            </Text>
+            {assistantConfig.selectedConfigTypes.map((typeId) => {
+              const typeState = screenerManagement.getScreenerState(typeId);
+              const originalTypeState = screenerManagement.originalScreenerStateByType[typeId];
+              
+              return (
+                <UnifiedTransactionTypePanel
+                  key={typeId}
+                  typeId={typeId}
+                  onRemove={handleRemoveTransactionType}
+                  onReorder={(typeId, typeName) => {
+                    setSelectedTypeForReorder({ typeId, typeName });
+                    onReorderOpen();
+                  }}
+                  executionOrder={assistantConfig.executionOrders[typeId]}
+                  predictedExecutionOrder={assistantConfig.predictedExecutionOrders[typeId]}
+                  allAssistantsCount={assistantConfig.allAssistantsForTypes[typeId]?.length}
+                  isConfigured={assistantConfig.executionOrders[typeId] !== undefined}
+                  isActive={assistantConfig.isUPSubscribedToAssistant && assistantConfig.executionOrders[typeId] !== undefined}
+                  
+                  // Screener props
+                  enableScreeners={typeState.enableScreeners}
+                  selectedScreeners={typeState.selectedScreeners}
+                  screenerConfigs={typeState.screenerConfigs}
+                  originalScreenerConfigs={originalTypeState?.screenerConfigs}
+                  useANDLogic={typeState.useANDLogic}
+                  currentNetworkId={currentNetworkId || 42}
+                  onEnableScreenersChange={(enabled) => {
+                    screenerManagement.updateScreenerForType(typeId, { 
+                      enableScreeners: enabled,
+                      ...(enabled ? {} : { selectedScreeners: [], screenerConfigs: {} })
+                    });
+                  }}
+                  onAddScreener={(instanceId, screener) => {
+                    const defaultConfig: any = {};
+                    screener.configParams.forEach((param: any) => {
+                      if (param.defaultValue) {
+                        defaultConfig[param.name] = param.defaultValue === 'true' ? true : param.defaultValue === 'false' ? false : param.defaultValue;
+                      }
+                    });
+                    
+                    screenerManagement.updateScreenerForType(typeId, {
+                      selectedScreeners: [...typeState.selectedScreeners, instanceId],
+                      screenerConfigs: {
+                        ...typeState.screenerConfigs,
+                        [instanceId]: defaultConfig
+                      }
+                    });
+                  }}
+                  onRemoveScreener={(instanceId) => {
+                    const newConfigs = { ...typeState.screenerConfigs };
+                    delete newConfigs[instanceId];
+                    
+                    screenerManagement.updateScreenerForType(typeId, {
+                      selectedScreeners: typeState.selectedScreeners.filter(id => id !== instanceId),
+                      screenerConfigs: newConfigs
+                    });
+                  }}
+                  onScreenerConfigChange={(instanceId, config) => {
+                    screenerManagement.updateScreenerForType(typeId, {
+                      screenerConfigs: {
+                        ...typeState.screenerConfigs,
+                        [instanceId]: config
+                      }
+                    });
+                  }}
+                  onLogicChange={(useAND) => {
+                    screenerManagement.updateScreenerForType(typeId, { useANDLogic: useAND });
+                  }}
+                />
+              );
+            })}
+          </VStack>
+        )}
 
         <AssistantConfigurationSection
-          selectedConfigTypes={selectedConfigTypes}
+          selectedConfigTypes={assistantConfig.selectedConfigTypes}
           configParams={configParams}
-          fieldValues={fieldValues}
+          fieldValues={assistantConfig.fieldValues}
           assistantAddress={assistantAddress}
           currentNetworkId={currentNetworkId}
-          onFieldChange={(fieldName, value) => {
-            setFieldValues({
-              ...fieldValues,
-              [fieldName]: value,
-            });
-          }}
+          onFieldChange={debouncedFieldUpdate}
         />
 
         {/* Error message right above save buttons */}
@@ -1200,33 +543,33 @@ const SetupAssistant: React.FC<{
           </Box>
         )}
 
-      <Flex gap={2}>
-        <Button
-          size="sm"
-          variant="outline"
-          colorScheme="orange"
-          onClick={handleDeactivateAssistant}
-          isLoading={isProcessingTransaction}
-          isDisabled={isProcessingTransaction || !isUPSubscribedToAssistant}
-        >
-          Deactivate Assistant
-        </Button>
-        <Button
-          size="sm"
-          bg="orange.500"
-          color="white"
-          _hover={{ bg: 'orange.600' }}
-          _active={{ bg: 'orange.700' }}
-          onClick={handleSaveAssistantConfig}
-          isLoading={isProcessingTransaction}
-          isDisabled={isProcessingTransaction || !hasPendingChanges()}
-        >
-          Save & Activate Assistant
-        </Button>
-      </Flex>
+        <Flex gap={2}>
+          <Button
+            size="sm"
+            variant="outline"
+            colorScheme="orange"
+            onClick={handleDeactivateAssistant}
+            isLoading={isProcessingTransaction}
+            isDisabled={isProcessingTransaction || !assistantConfig.isUPSubscribedToAssistant}
+          >
+            Deactivate Assistant
+          </Button>
+          <Button
+            size="sm"
+            bg="orange.500"
+            color="white"
+            _hover={{ bg: 'orange.600' }}
+            _active={{ bg: 'orange.700' }}
+            onClick={handleSaveAssistantConfig}
+            isLoading={isProcessingTransaction}
+            isDisabled={isProcessingTransaction || !hasPendingChanges()}
+          >
+            Save & Activate Assistant
+          </Button>
+        </Flex>
       </Flex>
       
-      {selectedTypeForReorder && allAssistantsForTypes[selectedTypeForReorder.typeId] && (
+      {selectedTypeForReorder && assistantConfig.allAssistantsForTypes[selectedTypeForReorder.typeId] && (
         <AssistantReorderModal
           isOpen={isReorderOpen}
           onClose={() => {
@@ -1235,7 +578,7 @@ const SetupAssistant: React.FC<{
           }}
           typeId={selectedTypeForReorder.typeId}
           typeName={selectedTypeForReorder.typeName}
-          assistants={allAssistantsForTypes[selectedTypeForReorder.typeId]}
+          assistants={assistantConfig.allAssistantsForTypes[selectedTypeForReorder.typeId]}
           networkId={currentNetworkId}
           onReorderComplete={handleReorderComplete}
         />

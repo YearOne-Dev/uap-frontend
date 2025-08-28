@@ -143,7 +143,7 @@ const AddressListManager: React.FC<AddressListManagerProps> = ({
             icon={<AddIcon />}
             onClick={handleAddAddress}
             aria-label="Add address"
-            colorScheme="orange"
+            colorScheme="blue"
             size="sm"
             isDisabled={!newAddress.trim()}
           />
