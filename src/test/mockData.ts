@@ -50,6 +50,15 @@ export const createMockProvider = () => ({
 // Sample Executive Assistant configuration
 export const mockExecutiveAssistant: ExecutiveAssistant = {
   address: '0xAssistant1111111111111111111111111111111',
+  name: 'Mock Executive Assistant',
+  description: 'A mock executive assistant for testing',
+  iconPath: '/icons/mock-assistant.svg',
+  links: [
+    { name: 'Documentation', url: 'https://example.com/docs' }
+  ],
+  creatorAddress: '0xCreator1111111111111111111111111111111111',
+  assistantType: 'Executive',
+  chainId: 42,
   supportedTransactionTypes: [
     '0x7c69f09937fb1c2bbe7c5e86e8a28a5a15b8f0cb0a11a91d4e3b9c3bf0a2c8e7',
     '0x9c1c644b16f2e1c1b6e5a8cbf3e4c9c6e8a28a5a15b8f0cb0a11a91d4e3b9c3b'
