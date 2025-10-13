@@ -287,7 +287,7 @@ const UnifiedTransactionTypePanel: React.FC<UnifiedTransactionTypePanelProps> = 
                 <HStack justify="space-between" align="center">
                   <VStack align="start" spacing={2}>
                     <Text fontSize="md" fontWeight="bold" color="blue.800">
-                      {enableScreeners ? 'Screening enabled' : 'Screening disabled'}
+                      Additional Screening
                     </Text>
                   </VStack>
                   <Switch
@@ -305,7 +305,7 @@ const UnifiedTransactionTypePanel: React.FC<UnifiedTransactionTypePanelProps> = 
               <HStack spacing={6} align="center" display={{ base: "none", md: "flex" }}>
                 <VStack align="start" spacing={2} maxWidth="500px">
                   <Text fontSize="md" fontWeight="bold" color="blue.800">
-                    {enableScreeners ? 'Screening enabled' : 'Screening disabled'}
+                    Additional Screening
                   </Text>
                 </VStack>
                 <Switch

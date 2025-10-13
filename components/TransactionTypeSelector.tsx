@@ -45,8 +45,8 @@ const TransactionTypeSelector: React.FC<TransactionTypeSelectorProps> = ({
     return (
       <VStack align="stretch" spacing={4}>
         <VStack align="start" spacing={2}>
-          <Text fontSize="md" fontWeight="bold" color="orange.800">
-            Target Transaction Types
+          <Text fontSize="md" fontWeight="bold">
+            Set Which Transactions Will Engage Assistant
           </Text>
           <Box p={3} bg="orange.50" border="1px solid" borderColor="orange.200" borderRadius="lg">
             <Text fontSize="sm" color="orange.800" textAlign="center">
@@ -61,8 +61,8 @@ const TransactionTypeSelector: React.FC<TransactionTypeSelectorProps> = ({
   return (
     <VStack align="stretch" spacing={4}>
       <VStack align="start" spacing={2}>
-        <Text fontSize="md" fontWeight="bold" color="orange.800">
-          Target Transaction Types
+        <Text fontSize="md" fontWeight="bold">
+          Set Which Transactions Will Engage Assistant
         </Text>
         
         <Box>

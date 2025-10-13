@@ -63,7 +63,7 @@ const TransactionScreeningSection: React.FC<TransactionScreeningSectionProps> = 
             <HStack justify="space-between" align="center">
               <VStack align="start" spacing={2}>
                 <Text fontSize="md" fontWeight="bold" color="orange.800">
-                  {enableScreeners ? 'Screening enabled' : 'Screening disabled'}
+                  Additional Screening
                 </Text>
               </VStack>
               <Switch
@@ -80,7 +80,7 @@ const TransactionScreeningSection: React.FC<TransactionScreeningSectionProps> = 
           {/* Desktop Layout */}
           <Flex align="center" gap={2} display={{ base: "none", md: "block" }}>
               <Text fontSize="md" fontWeight="bold" color="orange.800">
-                {enableScreeners ? 'Screening enabled' : 'Screening disabled'}
+                Additional Screening
               </Text>
             <Switch
               isChecked={enableScreeners}

@@ -25,8 +25,8 @@ import AddressListManager from './AddressListManager';
 interface CurationScreenerConfigProps {
   curatedListAddress: string;
   onCuratedListAddressChange: (address: string) => void;
-  behavior: 'allow' | 'block';
-  onBehaviorChange: (behavior: 'allow' | 'block') => void;
+  behavior: 'pass' | 'block';
+  onBehaviorChange: (behavior: 'pass' | 'block') => void;
   useBlocklist: boolean;
   onUseBlocklistChange: (useBlocklist: boolean) => void;
   blocklistAddresses: string[];
@@ -179,9 +179,9 @@ const CurationScreenerConfig: React.FC<CurationScreenerConfigProps> = ({
         <Text fontSize="sm" fontWeight="semibold" mb={3}>
           Screening Behavior:
         </Text>
-        <RadioGroup value={behavior} onChange={(value) => onBehaviorChange(value as 'allow' | 'block')}>
+        <RadioGroup value={behavior} onChange={(value) => onBehaviorChange(value as 'pass' | 'block')}>
           <Stack spacing={3}>
-            <Radio value="allow" colorScheme="green">
+            <Radio value="pass" colorScheme="green">
               <VStack align="start" spacing={1}>
                 <Text fontSize="sm">Community members pass screening</Text>
                 <Text fontSize="xs" color="gray.600">

@@ -5,7 +5,7 @@ import { ethers } from 'ethers';
 export const notifierListScreenerTestnet: ScreenerAssistant = {
   address: '0x31c7ab87662132f5901f190032d49e0abe9fabec',
   name: 'Address List Screener',
-  description: 'Screen transactions based on notifier address - only qualified addresses pass screening',
+  description: 'Screen transactions based on source',
   iconPath: '/screeners/default-list.svg',
   assistantType: 'Screener',
   creatorAddress: '0xfE67D89DeBEC38592aB2FeD217b8bbb28851DF88',
@@ -16,8 +16,8 @@ export const notifierListScreenerTestnet: ScreenerAssistant = {
       description: 'Screening behavior for listed addresses:',
       defaultValue: 'true',
       options: [
-        { value: true, label: 'Listed addresses pass screening' },
-        { value: false, label: 'Listed addresses fail screening' }
+        { value: true, label: 'If source address is in list, screening passes' },
+        { value: false, label: 'If source address is in list, screening fails' }
       ]
     }
   ],
@@ -74,8 +74,8 @@ export const notifierListScreenerMainnet: ScreenerAssistant = {
       description: 'Screening behavior for listed addresses:',
       defaultValue: 'true',
       options: [
-        { value: true, label: 'Listed addresses pass screening' },
-        { value: false, label: 'Listed addresses fail screening' }
+        { value: true, label: 'If source address is in list, screening passes' },
+        { value: false, label: 'If source address is in list, screening fails' }
       ]
     }
   ],

@@ -81,7 +81,7 @@ const ScreenerDropdownSelector: React.FC<ScreenerDropdownSelectorProps> = ({
           fontWeight="semibold"
           h="12"
         >
-          <Text fontSize="sm">Add Transaction Screener</Text>
+          <Text fontSize="sm">Add Screening</Text>
         </MenuButton>
         
         <MenuList

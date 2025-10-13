@@ -135,14 +135,14 @@ const SelectedScreenerCard: React.FC<SelectedScreenerCardProps> = ({
           {/* Screener Info */}
           <VStack align="start" spacing={1} flex={1} minW={0}>
             <HStack spacing={2} align="center">
-              <Text fontWeight="bold" fontSize="sm" noOfLines={1}>
+              <Text fontWeight="bold" fontSize="sm">
                 {screener.name}
               </Text>
               <Badge colorScheme={status.colorScheme} size="sm">
                 {status.text}
               </Badge>
             </HStack>
-            <Text fontSize="xs" color="gray.600" noOfLines={1}>
+            <Text fontSize="xs" color="gray.600">
               {screener.description}
             </Text>
           </VStack>
@@ -182,10 +182,10 @@ const SelectedScreenerCard: React.FC<SelectedScreenerCardProps> = ({
               onAddressesChange={(addresses) => {
                 handleConfigUpdate({ addresses });
               }}
-              behavior={config?.returnValueWhenInList ? 'allow' : 'block'}
+              behavior={config?.returnValueWhenInList ? 'pass' : 'block'}
               onBehaviorChange={(behavior) => {
                 handleConfigUpdate({
-                  returnValueWhenInList: behavior === 'allow'
+                  returnValueWhenInList: behavior === 'pass'
                 });
               }}
               placeholder="Add address to screening list (0x...)"
@@ -200,10 +200,10 @@ const SelectedScreenerCard: React.FC<SelectedScreenerCardProps> = ({
                   curatedListAddress: address
                 });
               }}
-              behavior={config?.returnValueWhenCurated ? 'allow' : 'block'}
+              behavior={config?.returnValueWhenCurated ? 'pass' : 'block'}
               onBehaviorChange={(behavior) => {
                 handleConfigUpdate({
-                  returnValueWhenCurated: behavior === 'allow'
+                  returnValueWhenCurated: behavior === 'pass'
                 });
               }}
               useBlocklist={config?.useBlocklist || false}

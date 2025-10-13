@@ -24,8 +24,8 @@ interface AddressListManagerProps {
   listName: string;
   addresses: string[];
   onAddressesChange: (addresses: string[]) => void;
-  behavior: 'allow' | 'block';
-  onBehaviorChange: (behavior: 'allow' | 'block') => void;
+  behavior: 'pass' | 'block';
+  onBehaviorChange: (behavior: 'pass' | 'block') => void;
   placeholder?: string;
 }
 
@@ -76,7 +76,7 @@ const AddressListManager: React.FC<AddressListManagerProps> = ({
     
     toast({
       title: 'Address added',
-      description: `Added to screening list (${behavior === 'allow' ? 'pass' : 'fail'} screening)`,
+      description: `Added to screening list (${behavior === 'pass' ? 'pass' : 'fail'} screening)`,
       status: 'success',
       duration: 3000,
       isClosable: true,
@@ -113,13 +113,13 @@ const AddressListManager: React.FC<AddressListManagerProps> = ({
         <Text fontSize="sm" fontWeight="semibold" mb={3}>
           Screening Behavior:
         </Text>
-        <RadioGroup value={behavior} onChange={(value) => onBehaviorChange(value as 'allow' | 'block')}>
+        <RadioGroup value={behavior} onChange={(value) => onBehaviorChange(value as 'pass' | 'block')}>
           <Stack direction="row" spacing={6}>
-            <Radio value="allow" colorScheme="green">
-              <Text fontSize="sm">Listed addresses pass screening</Text>
+            <Radio value="pass" colorScheme="green">
+              <Text fontSize="sm">If source address is in list, screening passes</Text>
             </Radio>
             <Radio value="block" colorScheme="red">
-              <Text fontSize="sm">Listed addresses fail screening</Text>
+              <Text fontSize="sm">If source address is in list, screening fails</Text>
             </Radio>
           </Stack>
         </RadioGroup>
@@ -163,7 +163,7 @@ const AddressListManager: React.FC<AddressListManagerProps> = ({
               {listName} ({addresses.length} address{addresses.length !== 1 ? 'es' : ''}) <Text as="span" color="red.500">*</Text>
             </Text>
             {addresses.length > 0 && (
-              <Badge colorScheme={behavior === 'allow' ? 'green' : 'red'} size="sm">
+              <Badge colorScheme={behavior === 'pass' ? 'green' : 'red'} size="sm">
                 {behavior}
               </Badge>
             )}
