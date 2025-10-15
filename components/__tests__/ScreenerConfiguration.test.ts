@@ -15,7 +15,7 @@ interface ScreenerConfig {
   addresses?: string[]
   returnValueWhenInList?: boolean
   
-  // Community Gate Screener  
+  // Curated List Screener  
   curatedListAddress?: string
   returnValueWhenCurated?: boolean
   useBlocklist?: boolean
@@ -142,7 +142,7 @@ class ScreenerConfigurationManager {
         if (!validation.isValid) {
           errors.push(`${screener.name}: ${validation.error}`)
         }
-      } else if (screener.name === 'Community Gate') {
+      } else if (screener.name === 'Curated List') {
         const validation = this.validateCommunityGateScreener(config)
         if (!validation.isValid) {
           errors.push(`${screener.name}: ${validation.error}`)
@@ -224,7 +224,7 @@ describe('Screener Configuration Management', () => {
       ]
     },
     '0xd2e14d15bbd13a0b71a52b57fd7e7f758e073ff1': {
-      name: 'Community Gate',
+      name: 'Curated List',
       address: '0xd2e14d15bbd13a0b71a52b57fd7e7f758e073ff1',
       description: 'Screen by community membership',
       configParams: [
@@ -396,7 +396,7 @@ describe('Screener Configuration Management', () => {
     })
   })
 
-  describe('Community Gate Screener Validation', () => {
+  describe('Curated List Screener Validation', () => {
     it('should validate properly configured community gate screener', () => {
       const config = {
         curatedListAddress: '0x1111111111111111111111111111111111111111',
@@ -475,7 +475,7 @@ describe('Screener Configuration Management', () => {
       const result = manager.validateAllScreeners(mockScreeners)
       expect(result.isValid).toBe(false)
       expect(result.errors).toHaveLength(1)
-      expect(result.errors[0]).toContain('Community Gate')
+      expect(result.errors[0]).toContain('Curated List')
       expect(result.errors[0]).toContain('Please enter a curated list contract address')
     })
 

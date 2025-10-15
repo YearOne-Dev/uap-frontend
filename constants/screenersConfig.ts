@@ -27,8 +27,8 @@ export const notifierListScreenerTestnet: ScreenerAssistant = {
 
 export const notifierCurationScreenerTestnet: ScreenerAssistant = {
   address: '0x647360684dd6ad295d1c62bebc43c11a843a4248',
-  name: 'Community Gate',
-  description: 'Screen based on curated community membership - only members pass screening',
+  name: 'Curated List',
+  description: 'Screen based on curation status on third party curated list',
   iconPath: '/screeners/default-curation.svg',
   assistantType: 'Screener',
   creatorAddress: '0xfE67D89DeBEC38592aB2FeD217b8bbb28851DF88',
@@ -50,8 +50,8 @@ export const notifierCurationScreenerTestnet: ScreenerAssistant = {
       description: 'Screening behavior for community members:',
       defaultValue: 'true',
       options: [
-        { value: true, label: 'Community members pass screening' },
-        { value: false, label: 'Community members fail screening' }
+        { value: true, label: 'Membership in list triggers pass in screening' },
+        { value: false, label: 'Membership in list triggers failure in screening' }
       ]
     }
   ],
@@ -85,8 +85,8 @@ export const notifierListScreenerMainnet: ScreenerAssistant = {
 
 export const notifierCurationScreenerMainnet: ScreenerAssistant = {
   address: '0x9ae3cdfe679935428094eea1668d30cdad8ede8c',
-  name: 'Community Gate',
-  description: 'Screen based on curated community membership - only members pass screening',
+  name: 'Curated List',
+  description: 'Screen based on curation status on third party curated list',
   iconPath: '/screeners/default-curation.svg',
   assistantType: 'Screener',
   creatorAddress: '0xec1c59E78De6f840A66b6EE8E4066700Be863529',
@@ -108,8 +108,8 @@ export const notifierCurationScreenerMainnet: ScreenerAssistant = {
       description: 'Screening behavior for community members:',
       defaultValue: 'true',
       options: [
-        { value: true, label: 'Community members pass screening' },
-        { value: false, label: 'Community members fail screening' }
+        { value: true, label: 'Membership in list triggers pass in screening' },
+        { value: false, label: 'Membership in list triggers failure in screening' }
       ]
     }
   ],

@@ -27,6 +27,7 @@ interface AddressListManagerProps {
   behavior: 'pass' | 'block';
   onBehaviorChange: (behavior: 'pass' | 'block') => void;
   placeholder?: string;
+  showBehaviorSelector?: boolean; // Hide behavior selector for fixed-behavior lists like blocklists
 }
 
 const AddressListManager: React.FC<AddressListManagerProps> = ({
@@ -35,7 +36,8 @@ const AddressListManager: React.FC<AddressListManagerProps> = ({
   onAddressesChange,
   behavior,
   onBehaviorChange,
-  placeholder = "Enter address (0x...)"
+  placeholder = "Enter address (0x...)",
+  showBehaviorSelector = true
 }) => {
   const [newAddress, setNewAddress] = useState('');
   const [error, setError] = useState('');
@@ -108,22 +110,24 @@ const AddressListManager: React.FC<AddressListManagerProps> = ({
 
   return (
     <Box>
-      {/* Screening Behavior */}
-      <Box mb={4}>
-        <Text fontSize="sm" fontWeight="semibold" mb={3}>
-          Screening Behavior:
-        </Text>
-        <RadioGroup value={behavior} onChange={(value) => onBehaviorChange(value as 'pass' | 'block')}>
-          <Stack direction="row" spacing={6}>
-            <Radio value="pass" colorScheme="green">
-              <Text fontSize="sm">If source address is in list, screening passes</Text>
-            </Radio>
-            <Radio value="block" colorScheme="red">
-              <Text fontSize="sm">If source address is in list, screening fails</Text>
-            </Radio>
-          </Stack>
-        </RadioGroup>
-      </Box>
+      {/* Screening Behavior - Only show if not a fixed-behavior list */}
+      {showBehaviorSelector && (
+        <Box mb={4}>
+          <Text fontSize="sm" fontWeight="semibold" mb={3}>
+            Screening Behavior:
+          </Text>
+          <RadioGroup value={behavior} onChange={(value) => onBehaviorChange(value as 'pass' | 'block')}>
+            <Stack direction="row" spacing={6}>
+              <Radio value="pass" colorScheme="green">
+                <Text fontSize="sm">If source address is in list, screening passes</Text>
+              </Radio>
+              <Radio value="block" colorScheme="red">
+                <Text fontSize="sm">If source address is in list, screening fails</Text>
+              </Radio>
+            </Stack>
+          </RadioGroup>
+        </Box>
+      )}
 
       {/* Address Input */}
       <Box mb={4}>

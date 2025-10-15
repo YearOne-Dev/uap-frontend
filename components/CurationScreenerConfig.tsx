@@ -60,7 +60,7 @@ const CurationScreenerConfig: React.FC<CurationScreenerConfigProps> = ({
         setError('');
         return;
       }
-      
+
       if (!ethers.isAddress(curatedListAddress)) {
         setValidationStatus('invalid');
         setContractInfo(null);
@@ -70,24 +70,24 @@ const CurationScreenerConfig: React.FC<CurationScreenerConfigProps> = ({
 
       setIsValidating(true);
       setError('');
-      
+
       try {
         // In a real implementation, you would check if the contract implements LSP8 interface
         // For now, we'll do basic validation
         const checksumAddress = ethers.getAddress(curatedListAddress);
-        
+
         // Only update parent if the checksum address is different from input
         if (checksumAddress !== curatedListAddress) {
           onCuratedListAddressChange(checksumAddress);
         }
-        
+
         // Mock validation - in real implementation would check contract code
         setValidationStatus('valid');
-        setContractInfo({ 
+        setContractInfo({
           name: 'Curated Collection',
           symbol: 'CC'
         });
-        
+
         toast({
           title: 'Contract validated',
           description: 'Curated list contract address appears to be valid',
@@ -108,7 +108,8 @@ const CurationScreenerConfig: React.FC<CurationScreenerConfigProps> = ({
     // Debounce validation
     const timeoutId = setTimeout(validateContract, 500);
     return () => clearTimeout(timeoutId);
-  }, [curatedListAddress, onCuratedListAddressChange, toast]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [curatedListAddress]);
 
   const handleAddressChange = (value: string) => {
     setError('');
@@ -183,18 +184,12 @@ const CurationScreenerConfig: React.FC<CurationScreenerConfigProps> = ({
           <Stack spacing={3}>
             <Radio value="pass" colorScheme="green">
               <VStack align="start" spacing={1}>
-                <Text fontSize="sm">Community members pass screening</Text>
-                <Text fontSize="xs" color="gray.600">
-                  Only addresses that are community members will trigger the assistant
-                </Text>
+                <Text fontSize="sm">Membership in list triggers pass in screening</Text>
               </VStack>
             </Radio>
             <Radio value="block" colorScheme="red">
               <VStack align="start" spacing={1}>
-                <Text fontSize="sm">Community members fail screening</Text>
-                <Text fontSize="xs" color="gray.600">
-                  Community member addresses will not trigger the assistant
-                </Text>
+                <Text fontSize="sm">Membership in list triggers failure in screening</Text>
               </VStack>
             </Radio>
           </Stack>
@@ -205,7 +200,7 @@ const CurationScreenerConfig: React.FC<CurationScreenerConfigProps> = ({
       <Box>
         <FormControl display="flex" alignItems="center">
           <FormLabel htmlFor="use-blocklist" mb="0" fontSize="sm" fontWeight="semibold">
-            Enable additional blocklist
+            Enable exclusion list
           </FormLabel>
           <Switch
             id="use-blocklist"
@@ -216,7 +211,7 @@ const CurationScreenerConfig: React.FC<CurationScreenerConfigProps> = ({
           />
         </FormControl>
         <Text fontSize="xs" color="gray.600" mt={1}>
-          Add specific addresses that should always be blocked, regardless of curation status
+          Add specific addresses that you want to exclude from curated list
         </Text>
       </Box>
 
@@ -224,12 +219,13 @@ const CurationScreenerConfig: React.FC<CurationScreenerConfigProps> = ({
       {useBlocklist && (
         <Box p={4} bg="gray.50" border="1px solid" borderColor="gray.200" borderRadius="lg">
           <AddressListManager
-            listName="Override Blocklist"
+            listName="Exclusion List"
             addresses={blocklistAddresses}
             onAddressesChange={onBlocklistAddressesChange}
             behavior="block"
             onBehaviorChange={() => {}} // Fixed behavior for blocklist
-            placeholder="Add address to always block (0x...)"
+            placeholder="Add address to exclude from curation (0x...)"
+            showBehaviorSelector={false} // Hide behavior selector for blocklist
           />
         </Box>
       )}
@@ -237,21 +233,18 @@ const CurationScreenerConfig: React.FC<CurationScreenerConfigProps> = ({
       {/* Help Text */}
       <Box p={4} bg="blue.50" border="1px solid" borderColor="blue.200" borderRadius="lg">
         <Text fontSize="xs" color="blue.800" fontWeight="semibold" mb={2}>
-          How Community Gate Screening Works:
+          How Curated List Screening Works:
         </Text>
         <VStack align="start" spacing={1}>
           <Text fontSize="xs" color="blue.700">
-            • Screens transactions by checking if sender is a community member
+            • Screens transactions based on source address curation status
           </Text>
           <Text fontSize="xs" color="blue.700">
-            • Uses sender address to verify membership in the curated community list
-          </Text>
-          <Text fontSize="xs" color="blue.700">
-            • Perfect for community-driven assistant activation systems
+            • Perfect for community-managed curated lists
           </Text>
           {useBlocklist && (
             <Text fontSize="xs" color="blue.700">
-              • Override blocklist takes precedence and always fails screening
+              • Exclusion list takes precedence and sidesteps curation status
             </Text>
           )}
         </VStack>

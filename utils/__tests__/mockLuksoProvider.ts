@@ -176,7 +176,7 @@ export class MockLuksoProvider {
           this.setupAddressList('UAPAddressList', config.addresses)
         }
       } else if (config.curatedListAddress) {
-        // Community Gate Screener
+        // Curated List Screener
         const paddedAddress = config.curatedListAddress.toLowerCase().replace('0x', '').padStart(64, '0')
         const returnValue = config.returnValueWhenCurated ? '01' : '00'
         const configData = '0x' + paddedAddress + returnValue.padStart(64, '0')
@@ -270,7 +270,7 @@ export class MockLuksoProvider {
         useANDLogic: true
       },
 
-      // Scenario 2: Single Community Gate Screener
+      // Scenario 2: Single Curated List Screener
       singleCommunityGateScreener: {
         selectedScreeners: ['0xd2e14d15bbd13a0b71a52b57fd7e7f758e073ff1_1234567890_abc123def'],
         screenerConfigs: {

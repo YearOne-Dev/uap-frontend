@@ -33,7 +33,7 @@ describe('Screener UI Workflow Integration', () => {
             configParams: [{ name: 'returnValueWhenInList', type: 'bool' }]
           },
           '0xd2e14d15bbd13a0b71a52b57fd7e7f758e073ff1': {
-            name: 'Community Gate',
+            name: 'Curated List',
             configParams: [
               { name: 'curatedListAddress', type: 'address' },
               { name: 'returnValueWhenCurated', type: 'bool' }

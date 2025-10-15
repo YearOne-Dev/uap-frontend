@@ -93,7 +93,7 @@ describe('Mock LUKSO Provider', () => {
       await expect(mockContract.getData(configKey)).resolves.not.toBe('0x')
     })
 
-    it('should set up Community Gate screener configuration', async () => {
+    it('should set up Curated List screener configuration', async () => {
       const executiveAddress = '0x8b80c84b9cd9eb087e6894997ae161d4f9d975b9'
       const typeId = '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef'
       const executionOrder = 2

@@ -461,11 +461,18 @@ async function buildExecutiveConfig(
         config.screenerConfigData.push('0x')
       }
 
-      // Handle address list for Address List Screeners
+      // Handle address lists for both Address List Screeners and Curated List Screeners (blocklist)
       if (screenerDef?.name === 'Address List Screener' && screenerData.addresses && screenerData.addresses.length > 0) {
-        const listName = `ScreenerList_${screenerId}`
+        // Use only the screener address (first part) for consistent list naming
+        const listName = `ScreenerList_${screenerAddress}`
         config.addressListNames.push(listName)
         config.addressListData[listName] = screenerData.addresses
+      } else if (screenerDef?.name === 'Curated List' && screenerData.useBlocklist && screenerData.blocklistAddresses && screenerData.blocklistAddresses.length > 0) {
+        // Curated List screeners use blocklistAddresses for exclusion list
+        // Use only the screener address (first part) for consistent list naming
+        const listName = `ScreenerBlocklist_${screenerAddress}`
+        config.addressListNames.push(listName)
+        config.addressListData[listName] = screenerData.blocklistAddresses
       } else {
         config.addressListNames.push('')
       }
@@ -581,34 +588,131 @@ export const removeExecutiveAssistantConfig = async (
   for (const typeId of typeIds) {
     // Get current assistants for this type
     const typeConfigKey = generateUAPTypeConfigKey(erc725UAP, typeId);
-    
+
     try {
       const currentValue = await upContract.getData(typeConfigKey);
       if (currentValue && currentValue !== '0x') {
         const currentAssistants = erc725UAP.decodeValueType('address[]', currentValue) as string[];
-        
+
         // Find and remove our assistant
         const assistantIndex = currentAssistants.findIndex(
           addr => addr.toLowerCase() === assistantAddress.toLowerCase()
         );
-        
+
         if (assistantIndex !== -1) {
-          // Remove the executive config
+          // Remove the executive config at the current index
           const executiveKey = generateUAPExecutiveConfigKey(erc725UAP, typeId, assistantIndex);
           keys.push(executiveKey);
           values.push('0x');
-          
+
+          // Also remove screener configuration for this assistant
+          try {
+            const screenerConfig = await fetchScreenerAssistantConfig(
+              erc725UAP,
+              upContract,
+              assistantAddress,
+              typeId,
+              assistantIndex
+            );
+
+            // Remove screener keys
+            const screenersKey = generateUAPExecutiveScreenersKey(erc725UAP, typeId, assistantIndex);
+            const logicKey = generateUAPExecutiveScreenersANDLogicKey(erc725UAP, typeId, assistantIndex);
+            keys.push(screenersKey, logicKey);
+            values.push('0x', '0x');
+
+            // Remove individual screener configurations
+            for (let i = 0; i < screenerConfig.screenerAddresses.length; i++) {
+              const screenerOrder = calculateScreenerOrder(assistantIndex, i);
+              const configKey = generateUAPScreenerConfigKey(erc725UAP, typeId, screenerOrder);
+              const listNameKey = generateUAPAddressListNameKey(erc725UAP, typeId, screenerOrder);
+              keys.push(configKey, listNameKey);
+              values.push('0x', '0x');
+            }
+          } catch (error) {
+            console.warn(`Error removing screener config for assistant at index ${assistantIndex}:`, error);
+          }
+
           // Update the type config (remove assistant from array)
           const updatedAssistants = currentAssistants.filter(
             addr => addr.toLowerCase() !== assistantAddress.toLowerCase()
           );
-          
+
           if (updatedAssistants.length === 0) {
             // No assistants left, clear the type config
             keys.push(typeConfigKey);
             values.push('0x');
           } else {
-            // Update with remaining assistants
+            // CRITICAL FIX: Migrate all subsequent assistants to their new positions
+            // After removing an assistant, all following assistants shift down by one index
+            for (let i = assistantIndex + 1; i < currentAssistants.length; i++) {
+              const assistantToMigrate = currentAssistants[i];
+              const oldIndex = i;
+              const newIndex = i - 1; // Shift down by one
+
+              try {
+                // Fetch the executive config at the old position
+                const oldExecutiveKey = generateUAPExecutiveConfigKey(erc725UAP, typeId, oldIndex);
+                const executiveValue = await upContract.getData(oldExecutiveKey);
+
+                if (executiveValue && executiveValue !== '0x') {
+                  // Write config to new position
+                  const newExecutiveKey = generateUAPExecutiveConfigKey(erc725UAP, typeId, newIndex);
+                  keys.push(newExecutiveKey);
+                  values.push(executiveValue);
+
+                  // Clear old position
+                  keys.push(oldExecutiveKey);
+                  values.push('0x');
+
+                  // Migrate screener configuration
+                  const screenerConfig = await fetchScreenerAssistantConfig(
+                    erc725UAP,
+                    upContract,
+                    assistantToMigrate,
+                    typeId,
+                    oldIndex
+                  );
+
+                  if (screenerConfig.screenerAddresses.length > 0) {
+                    // Remove old screener keys
+                    const oldScreenersKey = generateUAPExecutiveScreenersKey(erc725UAP, typeId, oldIndex);
+                    const oldLogicKey = generateUAPExecutiveScreenersANDLogicKey(erc725UAP, typeId, oldIndex);
+                    keys.push(oldScreenersKey, oldLogicKey);
+                    values.push('0x', '0x');
+
+                    // Remove old individual screener configs
+                    for (let j = 0; j < screenerConfig.screenerAddresses.length; j++) {
+                      const oldScreenerOrder = calculateScreenerOrder(oldIndex, j);
+                      const oldConfigKey = generateUAPScreenerConfigKey(erc725UAP, typeId, oldScreenerOrder);
+                      const oldListNameKey = generateUAPAddressListNameKey(erc725UAP, typeId, oldScreenerOrder);
+                      keys.push(oldConfigKey, oldListNameKey);
+                      values.push('0x', '0x');
+                    }
+
+                    // Create new screener configuration at new position
+                    const newScreenerConfig = await setScreenerAssistantConfig(
+                      erc725UAP,
+                      upContract,
+                      assistantToMigrate,
+                      typeId,
+                      newIndex,
+                      screenerConfig.screenerAddresses,
+                      screenerConfig.screenerConfigData,
+                      screenerConfig.useANDLogic,
+                      screenerConfig.addressListNames
+                    );
+
+                    keys.push(...newScreenerConfig.keys);
+                    values.push(...newScreenerConfig.values);
+                  }
+                }
+              } catch (error) {
+                console.warn(`Error migrating assistant at index ${oldIndex} to ${newIndex}:`, error);
+              }
+            }
+
+            // Update the type config with the new assistant array
             const encodedAssistants = erc725UAP.encodeValueType('address[]', updatedAssistants);
             keys.push(typeConfigKey);
             values.push(encodedAssistants);

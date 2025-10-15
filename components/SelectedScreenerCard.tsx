@@ -192,7 +192,7 @@ const SelectedScreenerCard: React.FC<SelectedScreenerCardProps> = ({
             />
           )}
 
-          {screener.name === 'Community Gate' && (
+          {screener.name === 'Curated List' && (
             <CurationScreenerConfig
               curatedListAddress={config?.curatedListAddress || ''}
               onCuratedListAddressChange={(address) => {

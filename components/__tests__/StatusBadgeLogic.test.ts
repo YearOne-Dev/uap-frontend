@@ -28,7 +28,7 @@ interface ScreenerStatusContext {
   isLoadedFromBlockchain: boolean
   config: any
   originalConfig?: any
-  screenerType: 'Address List Screener' | 'Community Gate' | 'Other'
+  screenerType: 'Address List Screener' | 'Curated List' | 'Other'
 }
 
 class StatusBadgeManager {
@@ -186,7 +186,7 @@ class StatusBadgeManager {
     
     if (screenerType === 'Address List Screener') {
       isConfigured = config?.addresses && config.addresses.length > 0
-    } else if (screenerType === 'Community Gate') {
+    } else if (screenerType === 'Curated List') {
       isConfigured = config?.curatedListAddress && config.curatedListAddress.trim() !== ''
     }
 
@@ -461,11 +461,11 @@ describe('Status Badge Logic', () => {
       expect(status).toEqual({ text: 'Unsaved Changes', colorScheme: 'orange' })
     })
 
-    it('should handle Community Gate screener configuration', () => {
+    it('should handle Curated List screener configuration', () => {
       const context: ScreenerStatusContext = {
         isLoadedFromBlockchain: false,
         config: { curatedListAddress: '0x123' },
-        screenerType: 'Community Gate'
+        screenerType: 'Curated List'
       }
       
       const status = statusManager.getScreenerStatus(context)

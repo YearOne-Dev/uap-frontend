@@ -48,9 +48,9 @@ const SCREENER_REGISTRY = {
     type: 'AddressList',
     configParams: ['returnValueWhenInList']
   },
-  // Community Gate Screener  
+  // Curated List Screener  
   '0xd2e14d15bbd13a0b71a52b57fd7e7f758e073ff1': {
-    name: 'Community Gate',
+    name: 'Curated List',
     type: 'CommunityGate',
     configParams: ['curatedListAddress', 'returnValueWhenCurated']
   }
@@ -157,10 +157,10 @@ export const inspectScreenerPayload = (
             screenerDebugInfo.addressListName = 'UAPAddressList'
             addressListNames.push('UAPAddressList')
           }
-        } else if (screener.name === 'Community Gate') {
+        } else if (screener.name === 'Curated List') {
           if (!config.curatedListAddress) {
             screenerDebugInfo.isValid = false
-            screenerDebugInfo.validationErrors.push('Community Gate requires curated list address')
+            screenerDebugInfo.validationErrors.push('Curated List requires curated list address')
           } else {
             // Encode configuration
             const abiCoder = new AbiCoder()

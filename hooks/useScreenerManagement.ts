@@ -150,6 +150,20 @@ export const useScreenerManagement = (): UseScreenerManagementReturn => {
                       config.addresses = []
                     }
                   }
+
+                  // For Curated List screener, load the blocklist if it exists
+                  if (screenerDef?.name === 'Curated List' && addressListName) {
+                    try {
+                      const blocklistAddresses = await getAddressList(erc725UAP, upContract, addressListName)
+                      config.useBlocklist = blocklistAddresses.length > 0
+                      config.blocklistAddresses = blocklistAddresses
+                    } catch (addressError) {
+                      console.warn(`Error loading blocklist ${addressListName}:`, addressError)
+                      config.useBlocklist = false
+                      config.blocklistAddresses = []
+                    }
+                  }
+
                   screenerConfigs[instanceId] = config
                 } catch (decodeError) {
                   console.warn(`Error decoding screener config for ${screenerAddress}:`, decodeError)
@@ -157,7 +171,7 @@ export const useScreenerManagement = (): UseScreenerManagementReturn => {
                 }
               } else {
                 const config: any = {}
-                
+
                 // Still check for Address List Screener even without configParams
                 if (screenerDef?.name === 'Address List Screener' && addressListName) {
                   try {
@@ -168,7 +182,20 @@ export const useScreenerManagement = (): UseScreenerManagementReturn => {
                     config.addresses = []
                   }
                 }
-                
+
+                // Check for Curated List screener blocklist even without configParams
+                if (screenerDef?.name === 'Curated List' && addressListName) {
+                  try {
+                    const blocklistAddresses = await getAddressList(erc725UAP, upContract, addressListName)
+                    config.useBlocklist = blocklistAddresses.length > 0
+                    config.blocklistAddresses = blocklistAddresses
+                  } catch (addressError) {
+                    console.warn(`Error loading blocklist ${addressListName}:`, addressError)
+                    config.useBlocklist = false
+                    config.blocklistAddresses = []
+                  }
+                }
+
                 screenerConfigs[instanceId] = config
               }
             }
