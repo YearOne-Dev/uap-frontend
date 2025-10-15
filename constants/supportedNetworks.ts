@@ -1,4 +1,4 @@
-import { ExecutiveAssistant } from '@/constants/CustomTypes';
+import { ExecutiveAssistant, ScreenerAssistant } from '@/constants/CustomTypes';
 import {
   burntPixRefinerMainnet,
   burntPixRefinerTestnet,
@@ -7,6 +7,12 @@ import {
   tipAssistantMainnet,
   tipAssistantTestnet,
 } from '@/constants/assistantsConfig';
+import {
+  notifierListScreenerMainnet,
+  notifierListScreenerTestnet,
+  notifierCurationScreenerMainnet,
+  notifierCurationScreenerTestnet,
+} from '@/constants/screenersConfig';
 
 interface ChainInfo {
   name: string;
@@ -25,6 +31,7 @@ interface ChainInfo {
   universalEverything: string;
   luksoSiteName: string;
   assistants: { [key: string]: ExecutiveAssistant };
+  screeners: { [key: string]: ScreenerAssistant };
 }
 
 export enum CHAINS {
@@ -43,7 +50,7 @@ export const supportedNetworks: { [key: string]: ChainInfo } = {
     ipfsGateway: 'https://api.universalprofile.cloud/ipfs',
     explorer: 'https://explorer.execution.mainnet.lukso.network/',
     token: 'LYX',
-    protocolAddress: '0x94de6507142a5f820b7fa8c01e9cde9c88ca8491',
+    protocolAddress: '0x289286ce00da26e723a0069d715882fab2d18ed4',
     defaultURDUP: '0x7870C5B8BC9572A8001C3f96f7ff59961B23500D',
     hasUPSupport: true,
     icon: '/lyx_icon_mainnet.svg',
@@ -54,6 +61,10 @@ export const supportedNetworks: { [key: string]: ChainInfo } = {
       [forwarderAssistantMainnet.address.toLowerCase()]:
         forwarderAssistantMainnet,
       [burntPixRefinerMainnet.address.toLowerCase()]: burntPixRefinerMainnet,
+    },
+    screeners: {
+      [notifierListScreenerMainnet.address.toLowerCase()]: notifierListScreenerMainnet,
+      [notifierCurationScreenerMainnet.address.toLowerCase()]: notifierCurationScreenerMainnet,
     },
   },
   '4201': {
@@ -66,7 +77,7 @@ export const supportedNetworks: { [key: string]: ChainInfo } = {
     ipfsGateway: 'https://api.universalprofile.cloud/ipfs',
     explorer: 'https://explorer.execution.testnet.lukso.network/',
     token: 'LYXt',
-    protocolAddress: '0xb59419c3d408304d026194c2034c028bc6be3726',
+    protocolAddress: '0xf6fa5d9b08a9e5a7bea5c816757e6b0dd548b920',
     defaultURDUP: '0x7870C5B8BC9572A8001C3f96f7ff59961B23500D',
     hasUPSupport: true,
     icon: '/lyx_icon_testnet.svg',
@@ -77,6 +88,10 @@ export const supportedNetworks: { [key: string]: ChainInfo } = {
       [forwarderAssistantTestnet.address.toLowerCase()]:
         forwarderAssistantTestnet,
       [burntPixRefinerTestnet.address.toLowerCase()]: burntPixRefinerTestnet,
+    },
+    screeners: {
+      [notifierListScreenerTestnet.address.toLowerCase()]: notifierListScreenerTestnet,
+      [notifierCurationScreenerTestnet.address.toLowerCase()]: notifierCurationScreenerTestnet,
     },
   },
 };

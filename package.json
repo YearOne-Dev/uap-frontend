@@ -9,21 +9,25 @@
     "lint": "next lint",
     "format": "prettier --write .",
     "format-check": "prettier --check .",
-    "typechain": "typechain --target ethers-v6 --out-dir types ./node_modules/@erc725/smart-contracts/artifacts/*.json"
+    "typechain": "typechain --target ethers-v6 --out-dir types ./node_modules/@lukso/lsp-smart-contracts/artifacts/*.json",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@chakra-ui/icons": "^2.1.1",
     "@chakra-ui/react": "^2.8.2",
     "@emotion/react": "^11.11.4",
     "@emotion/styled": "^11.11.5",
-    "@erc725/erc725.js": "^0.26.0",
-    "@lukso/lsp-smart-contracts": "^0.15.0",
+    "@erc725/erc725.js": "^0.28.1",
+    "@lukso/lsp-smart-contracts": "^0.16.2",
     "@lukso/lsp-utils": "^0.2.0",
     "axios": "^1.7.2",
     "ethers": "^6.13.5",
     "form-data": "^4.0.0",
     "framer-motion": "^11.2.10",
-    "next": "^14.2.5",
+    "next": "14.2.5",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.51.5",
@@ -32,17 +36,24 @@
   },
   "devDependencies": {
     "@erc725/smart-contracts": "^8.0.0",
+    "@testing-library/jest-dom": "^6.6.4",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
     "@typechain/ethers-v6": "^0.5.1",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "@vitest/coverage-v8": "^3.2.4",
+    "@vitest/ui": "^3.2.4",
     "eslint": "^8",
     "eslint-config-next": "14.2.5",
+    "jsdom": "^26.1.0",
     "prettier": "^3.1.0",
     "typechain": "^8.3.2",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.4"
   },
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=22.20.0"
   }
 }
