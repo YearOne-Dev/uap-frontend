@@ -1,17 +1,18 @@
 'use client';
 import React from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Box, Button, Flex, Text } from '@chakra-ui/react';
 import WalletConnectButton from '@/components/WalletConnectButton';
-import { getUrlNameByChainId } from '@/utils/universalProfile';
-import { useProfile } from '@/contexts/ProfileProvider';
 import { supportedNetworks } from '@/constants/supportedNetworks';
 
 const NavBar = () => {
-  const { chainId } = useProfile();
-  const networkName = chainId
-    ? getUrlNameByChainId(chainId)
-    : supportedNetworks['42'].urlName;
+  const pathname = usePathname();
+
+  // Extract network name from the current URL path
+  // Path format: /[networkName]/... or just /[networkName]
+  const pathSegments = pathname?.split('/').filter(Boolean) || [];
+  const networkName = pathSegments[0] || supportedNetworks['42'].urlName;
 
   return (
     <nav className="uap-topbar">
