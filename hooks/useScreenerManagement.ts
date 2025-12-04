@@ -139,7 +139,12 @@ export const useScreenerManagement = (): UseScreenerManagementReturn => {
                     const finalValue = param.type === 'bool' ? Boolean(decodedValue) : decodedValue.toString()
                     config[param.name] = finalValue
                   })
-                  
+
+                  // Store the addressListName if it exists
+                  if (addressListName) {
+                    config.addressListName = addressListName
+                  }
+
                   // For Address List Screener, also load the addresses from the address list
                   if (screenerDef?.name === 'Address List Screener' && addressListName) {
                     try {
@@ -171,6 +176,11 @@ export const useScreenerManagement = (): UseScreenerManagementReturn => {
                 }
               } else {
                 const config: any = {}
+
+                // Store the addressListName if it exists
+                if (addressListName) {
+                  config.addressListName = addressListName
+                }
 
                 // Still check for Address List Screener even without configParams
                 if (screenerDef?.name === 'Address List Screener' && addressListName) {

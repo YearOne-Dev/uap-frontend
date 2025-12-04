@@ -145,6 +145,11 @@ const SelectedScreenerCard: React.FC<SelectedScreenerCardProps> = ({
             <Text fontSize="xs" color="gray.600">
               {screener.description}
             </Text>
+            {config?.addressListName && (
+              <Text fontSize="xs" color="blue.600" fontStyle="italic">
+                Storage Name: {config.addressListName}
+              </Text>
+            )}
           </VStack>
 
           {/* Expand/Collapse Button */}
