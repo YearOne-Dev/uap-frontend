@@ -63,7 +63,7 @@ export default function Footer() {
           {/* Desktop links */}
           <Flex alignItems="center" gap={3} display={['none', 'none', 'flex']}>
             <Link
-              href="https://github.com/yearone-io/uap-protocol"
+              href="https://github.com/yearone-io/universal-assistant-protocol"
               isExternal
               fontSize="24px"
             >
@@ -89,7 +89,7 @@ export default function Footer() {
           {/* Mobile links */}
           <Flex gap={3} display={['flex', 'flex', 'none']} alignItems="center">
             <Link
-              href="https://github.com/yearone-io/uap-protocol"
+              href="https://github.com/yearone-io/universal-assistant-protocol"
               isExternal
               fontSize="24px"
             >
